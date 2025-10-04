@@ -1,0 +1,47 @@
+from pydantic import BaseModel, field_validator
+from datetime import datetime
+from .cluster import Cluster
+from ..entries import Node, NodeProperties, Edge, EdgePath
+
+
+class Metadata(BaseModel):
+    name: str
+    uid: str
+    creation_timestamp: datetime
+    labels: dict
+
+
+class Namespace(BaseModel):
+    metadata: Metadata
+    kind: str | None = "Namespace"
+
+    @field_validator("kind", mode="before")
+    @classmethod
+    def set_default_if_none(cls, v):
+        return v if v is not None else "Namespace"
+
+
+class NamespaceNode(Node):
+
+    @property
+    def _cluster_edge(self):
+        start_path = EdgePath(value=self.id, match_by="id")
+        cluster = Cluster(name=self._cluster)
+        end_path = EdgePath(value=cluster.uid, match_by="id")
+        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        return edge
+
+    @property
+    def edges(self):
+        return [self._cluster_edge]
+
+    @classmethod
+    def from_input(cls, **kwargs) -> "NamespaceNode":
+        ns_node = Namespace(**kwargs)
+        properties = NodeProperties(
+            name=ns_node.metadata.name,
+            displayname=ns_node.metadata.name,
+            uid=ns_node.metadata.uid,
+            namespace=None,
+        )
+        return cls(kinds=["K8sNamespace"], properties=properties)
