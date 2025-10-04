@@ -5,6 +5,7 @@ from typing import Optional
 from enum import Enum
 from sources.kubernetes.utils.guid import get_guid, NodeTypes, get_generic_guid
 import fnmatch
+from .cluster import Cluster
 
 
 class Verbs(str, Enum):
@@ -99,7 +100,8 @@ class ClusterRoleNode(Node):
     @property
     def _cluster_edge(self):
         start_path = EdgePath(value=self.id, match_by="id")
-        end_path = EdgePath(value=self._lookup.cluster["uid"], match_by="id")
+        cluster = Cluster(name=self._cluster)
+        end_path = EdgePath(value=cluster.uid, match_by="id")
         edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
         return edge
 

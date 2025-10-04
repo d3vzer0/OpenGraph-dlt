@@ -158,20 +158,36 @@ def kubernetes_resources(
         for service_account in service_accounts.items:
             yield service_account.to_dict()
 
-    @dlt.resource
+    @dlt.resource(columns=Resource)
     def resource_definitions():
         v1 = client.CoreV1Api()
         core_resources = v1.get_api_resources()
-        for core_resource in core_resources:
-            yield core_resource
+        for core_resource in core_resources.resources:
+            yield core_resource.to_dict()
 
     @dlt.transformer(data_from=nodes, columns=Graph)
-    def kube_graph(node: dict):
+    def kube_node_graph(node: dict):
         yield to_graph(NodeOutput, node)
 
     @dlt.transformer(data_from=pods, columns=Graph)
-    def pod_graph(pod: dict, columns=Graph):
+    def pod_graph(pod: dict):
         yield to_graph(PodNode, pod)
+
+    @dlt.transformer(data_from=deployments, columns=Graph)
+    def deployment_graph(deployment: dict):
+        yield to_graph(DeploymentNode, deployment)
+
+    @dlt.transformer(data_from=replicasets, columns=Graph)
+    def replicaset_graph(replicaset: dict):
+        yield to_graph(ReplicaSetNode, replicaset)
+
+    @dlt.transformer(data_from=replicasets, columns=Graph)
+    def statefulset_graph(statefulset: dict):
+        yield to_graph(StatefulSetNode, statefulset)
+
+    @dlt.transformer(data_from=replicasets, columns=Graph)
+    def daemonset_graph(daemonset: dict):
+        yield to_graph(DaemonSetNode, daemonset)
 
     @dlt.transformer(data_from=namespaces, columns=Graph)
     def namespace_graph(namespace: dict):
@@ -197,4 +213,21 @@ def kubernetes_resources(
     def cluster_role_binding_graph(cluster_role_binding: dict):
         yield to_graph(ClusterRoleNode, cluster_role_binding)
 
-    return pod_graph, namespace_graph, service_account_graph
+    @dlt.transformer(data_from=resource_definitions, columns=Graph)
+    def resource_definition_graph(resource_definition: dict):
+        yield to_graph(ResourceGraph, resource_definition)
+
+    return (
+        pod_graph,
+        namespace_graph,
+        service_account_graph,
+        deployment_graph,
+        daemonset_graph,
+        replicaset_graph,
+        statefulset_graph,
+        kube_node_graph,
+        role_binding_graph,
+        # role_graph,
+        cluster_role_binding_graph,
+        # cluster_role_graph,
+    )
