@@ -21,7 +21,7 @@ import uuid
 #     # print(items)
 
 
-@dlt.destination(batch_size=10)
+@dlt.destination(batch_size=100)
 def opengraph_file(items, table, output_path="./output"):
     output_dir = Path(output_path)
     output_dir.mkdir(parents=True, exist_ok=True)
