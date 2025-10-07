@@ -1,6 +1,9 @@
 # OpenGraph dlt Collectors
 A lightweight CLI for collecting service-specific resources and turning it into OpenGraph/BloodHound datasets. The long–term goal is to plug in multiple collectors; Kubernetes is the first source and serves as the reference implementation for future integrations. The kubernetes collector makes use of an (embedded) DuckDB database, which may not be needed for your usecase :) 
 
+[<img src="https://github.com/user-attachments/assets/542d70b6-52ea-49ee-b700-447d55704982">](https://github.com/d3vzer0/OpenGraph-dlt) 
+
+
 ## What’s in the box?
 - Python dlt-powered extract pipelines – exposes both raw resources and the OpenGraph transformer set;
 - Reusable OpenGraph destination – can either batch results into local (OpenGraph) JSON files or push them straight into BloodHound via its upload API;
