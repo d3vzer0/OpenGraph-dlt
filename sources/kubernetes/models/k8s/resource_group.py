@@ -13,8 +13,8 @@ class GroupVersion(BaseModel):
 class ResourceGroup(BaseModel):
     name: str
     api_version: Optional[str] = None
-    preferred_version: GroupVersion
-    versions: list[GroupVersion]
+    # preferred_version: GroupVersion
+    # versions: list[GroupVersion]
 
     @computed_field
     @property

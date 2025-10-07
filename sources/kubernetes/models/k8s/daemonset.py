@@ -44,6 +44,7 @@ class Spec(BaseModel):
 class DaemonSet(BaseModel):
     kind: str | None = "DaemonSet"
     metadata: Metadata
+    creation_timestamp: datetime
     spec: Spec
 
     @field_validator("kind", mode="before")

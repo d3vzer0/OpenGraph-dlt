@@ -13,6 +13,7 @@ from typing import Optional, Any, TypeVar, Annotated
 from sources.kubernetes.utils.guid import get_guid, get_generic_guid, NodeTypes
 from .volume import Volume as HostVolume
 from .cluster import Cluster
+import json
 
 
 def default_if_none(value: Any) -> Any:
@@ -90,6 +91,13 @@ class Pod(BaseModel):
     @field_validator("kind", mode="before")
     def set_default_if_none(cls, v):
         return v if v is not None else "Pod"
+
+    @field_validator("metadata", "spec", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class ExtendedProperties(NodeProperties):

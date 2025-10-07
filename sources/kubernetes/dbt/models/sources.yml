@@ -1,0 +1,189 @@
+version: 2
+sources:
+  - name: k8s_raw
+    schema: kubernetes 
+    description: "Raw Kubernetes resources loaded by DLT"
+    tables:
+      - name: pods
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      
+
+      - name: roles
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      
+
+      - name: role_bindings
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      
+
+      - name: cluster_roles
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      
+
+      - name: cluster_role_bindings
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      
+      - name: unmapped
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      
+      - name: service_accounts
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      
+      - name: nodes
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+
+      - name: namespaces
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+  
+      - name: statefulsets
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      - name: daemonsets
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+      - name: replicasets
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"
+
+      - name: deployments
+        description: "Data from Kubernetes"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: metadata
+            description: "Resource metadata (JSON)"
+          - name: spec
+            description: "Resource specification (JSON)"
+          - name: kind
+            description: "Resource kind"

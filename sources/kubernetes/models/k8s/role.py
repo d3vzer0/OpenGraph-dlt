@@ -1,10 +1,11 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from ..entries import Node, NodeProperties, Edge, EdgePath
-from typing import Optional
+from typing import Optional, Any
 from enum import Enum
 import fnmatch
 from sources.kubernetes.utils.guid import get_guid, get_generic_guid, NodeTypes
+import json
 
 
 class Verbs(str, Enum):
@@ -71,10 +72,18 @@ class Role(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "Role"
 
-    @field_validator("rules")
-    def validate_rules(cls, v):
-        if not v:
-            return []
+    @field_validator("rules", mode="before")
+    @classmethod
+    def parse_rules(cls, value: Any):
+        if isinstance(value, str):
+            value = json.loads(value)
+        return value or []
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
         return v
 
 
@@ -168,7 +177,8 @@ class RoleNode(Node):
 
     @property
     def edges(self):
-        return [self._namespace_edge, *self._rules_edge]
+        return [self._namespace_edge]
+        # return [self._namespace_edge, *self._rules_edge]
 
     @classmethod
     def from_input(cls, **kwargs) -> "RoleNode":

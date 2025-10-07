@@ -1,21 +1,11 @@
 import typer
-import dlt
-from destinations.opengraph.destination import opengraph
-from sources.kubernetes.source import kubernetes_resources
+from cli.sync import sync, convert
+from cli.collect import collect
 
 app = typer.Typer(pretty_exceptions_enable=False)
-
-
-@app.command()
-def kubernetes():
-    pipeline = dlt.pipeline(
-        pipeline_name="k8s_ingest",
-        destination=opengraph(api_url="http://localhost:8080"),
-    )
-    pipeline.run(
-        kubernetes_resources(kube_config="~/.kube/config"), table_name="kubernetes"
-    )
-
+app.add_typer(sync, name="sync")
+app.add_typer(convert, name="convert")
+app.add_typer(collect, name="collect")
 
 if __name__ == "__main__":
     app()

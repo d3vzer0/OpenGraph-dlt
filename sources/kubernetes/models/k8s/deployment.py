@@ -4,6 +4,7 @@ from ..entries import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
 from .pod import Container
+import json
 
 
 class Metadata(BaseModel):
@@ -49,6 +50,13 @@ class Deployment(BaseModel):
     @field_validator("kind", mode="before")
     def set_default_if_none(cls, v):
         return v if v is not None else "Deployment"
+
+    @field_validator("metadata", "spec", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class ExtendedProperties(NodeProperties):

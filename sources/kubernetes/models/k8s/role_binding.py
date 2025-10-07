@@ -10,6 +10,8 @@ from ..entries import (
 )
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
+from typing import Any
+import json
 
 
 class Subject(BaseModel):
@@ -45,9 +47,22 @@ class RoleBinding(BaseModel):
         return v if v is not None else "RoleBinding"
 
     @field_validator("subjects", mode="before")
-    def validate_subjects(cls, v):
-        if not v:
-            return []
+    def validate_subjects(cls, value):
+        if isinstance(value, str):
+            value = json.loads(value)
+        return value or []
+
+    @field_validator("role_ref", mode="before")
+    def validate_role_ref(cls, value):
+        if isinstance(value, str):
+            value = json.loads(value)
+        return value
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
         return v
 
 

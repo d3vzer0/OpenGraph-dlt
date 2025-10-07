@@ -3,6 +3,7 @@ from datetime import datetime
 from ..entries import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
+import json
 
 
 class Secret(BaseModel):
@@ -43,6 +44,13 @@ class ServiceAccount(BaseModel):
     @field_validator("kind", mode="before")
     def set_default_if_none(cls, v):
         return v if v is not None else "ServiceAccount"
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class ExtendedProperties(NodeProperties):

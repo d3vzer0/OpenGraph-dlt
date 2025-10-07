@@ -1,9 +1,17 @@
-from pydantic import BaseModel, ConfigDict, Field, BeforeValidator, computed_field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    BeforeValidator,
+    computed_field,
+    field_validator,
+)
 from datetime import datetime
 from ..entries import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
 from typing import Optional
+import json
 
 
 class Metadata(BaseModel):
@@ -17,6 +25,13 @@ class Metadata(BaseModel):
 class Generic(BaseModel):
     metadata: Metadata
     kind: str
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class ExtendedProperties(NodeProperties):

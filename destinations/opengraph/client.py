@@ -62,15 +62,6 @@ class BloodHound:
         response = self.request(method="POST", path=path)
         return response
 
-    # def upload(self, body: str):
-    #     job_id = self._start_upload()
-    #     response = self._start_upload_job(job_id, body.encode())
-    #     if response.status_code == 202:
-    #         self._stop_upload_job(job_id)
-    #     else:
-    #         print("Issue with uploading job")
-    #         print(response.json())
-
     def query(self, query: str):
         path = "/api/v2/graphs/cypher"
         response = self.request(

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator
 from ..entries import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
 
@@ -6,15 +6,23 @@ from sources.kubernetes.utils.guid import get_guid, NodeTypes
 class User(BaseModel):
     name: str
     api_group: str
-    groups: list[str] = []
     kind: str = "User"
+
+    @computed_field
+    @property
+    def uid(self) -> str:
+        return get_guid(self.name, NodeTypes.K8sUser, "")
 
 
 class Group(BaseModel):
     name: str
     api_group: str
-    members: list[str] = []
     kind: str = "Group"
+
+    @computed_field
+    @property
+    def uid(self) -> str:
+        return get_guid(self.name, NodeTypes.K8sGroup, "")
 
 
 class UserNode(Node):
@@ -36,7 +44,7 @@ class UserNode(Node):
     def from_input(cls, **kwargs) -> "UserNode":
         model = User(**kwargs)
         properties = NodeProperties(
-            name=model.name, displayname=model.name, uid="", namespace=None
+            name=model.name, displayname=model.name, uid=model.uid, namespace=None
         )
         return cls(kinds=["K8sUser"], properties=properties)
 
@@ -50,6 +58,6 @@ class GroupNode(Node):
     def from_input(cls, **kwargs) -> "GroupNode":
         model = Group(**kwargs)
         properties = NodeProperties(
-            name=model.name, displayname=model.name, uid="", namespace=None
+            name=model.name, displayname=model.name, uid=model.uid, namespace=None
         )
         return cls(kinds=["K8sGroup"], properties=properties)

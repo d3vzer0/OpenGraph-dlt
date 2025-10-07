@@ -1,11 +1,12 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from ..entries import Node, NodeProperties, Edge, EdgePath
-from typing import Optional
+from typing import Optional, Any
 from enum import Enum
 from sources.kubernetes.utils.guid import get_guid, NodeTypes, get_generic_guid
 import fnmatch
 from .cluster import Cluster
+import json
 
 
 class Verbs(str, Enum):
@@ -52,6 +53,7 @@ class Metadata(BaseModel):
     name: str
     uid: str
     creation_timestamp: datetime
+    namespace: str | None = ""
     labels: dict | None = None
 
 
@@ -78,9 +80,17 @@ class ClusterRole(BaseModel):
         return v if v is not None else "ClusterRole"
 
     @field_validator("rules", mode="before")
-    def validate_rules(cls, v):
-        if not v:
-            return []
+    @classmethod
+    def parse_rules(cls, value: Any):
+        if isinstance(value, str):
+            value = json.loads(value)
+        return value or []
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
         return v
 
 
@@ -165,7 +175,9 @@ class ClusterRoleNode(Node):
 
     @property
     def edges(self):
-        return [self._cluster_edge, *self._rules_edge]
+        return [self._cluster_edge]
+
+        # return [self._cluster_edge, *self._rules_edge]
 
     @classmethod
     def from_input(cls, **kwargs) -> "ClusterRoleNode":

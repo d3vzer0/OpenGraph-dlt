@@ -1,0 +1,8 @@
+default:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ./k8s_stage.duckdb
+      schema: analytics
+      threads: 4

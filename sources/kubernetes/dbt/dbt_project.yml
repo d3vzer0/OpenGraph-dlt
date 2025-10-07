@@ -1,0 +1,21 @@
+name: 'k8s_project'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  k8s_project:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: view
+      +schema: marts

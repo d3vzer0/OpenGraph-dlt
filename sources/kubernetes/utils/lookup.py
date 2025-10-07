@@ -9,10 +9,11 @@ from pathlib import Path
 
 class LookupManager:
 
-    def __init__(self, directory: str = "./output"):
+    def __init__(self, client, directory: str = "./output"):
         self.directory = directory
         self.db = "data"
-        self.con: DuckDBPyConnection = duckdb.connect()
+        self.schema = "k8s_lookup.kubernetes"
+        self.client = client
 
     def _load_json(self, filename: str) -> Dict[str, Any]:
         filepath = os.path.join(self.directory, filename)
@@ -22,21 +23,27 @@ class LookupManager:
             return json.load(f)
 
     def _find_uid(self, *args) -> str:
-        self.con.execute(*args)
-        result = self.con.fetchone()
+        # with self.client.execute_query("SELECT * FROM pods") as cursor:
+        #     return cursor.fetchall()
+        self.client.execute(*args)
+        result = self.client.fetchone()
+        # print(result)
         return str(result[0]) if result else ""
 
     def _find_resources(self, *args) -> list:
-        self.con.execute(*args)
-        results = self.con.fetchall()
+        # with self.client.execute_query("SELECT * FROM pods") as cursor:
+        #     return cursor.fetchall()
+        self.client.execute(*args)
+        results = self.client.fetchall()
+        # print(results)
         return results
 
-    def nodes(self, name: str) -> str:
-        self.con.execute(
-            f"SELECT metadata.uid FROM nodes WHERE metadata.name = ?", [name]
-        )
-        result = self.con.fetchone()
-        return str(result[0]) if result else ""
+    # def nodes(self, name: str) -> str:
+    #     self.con.execute(
+    #         f"SELECT metadata.uid FROM nodes WHERE metadata.name = ?", [name]
+    #     )
+    #     result = self.con.fetchone()
+    #     return str(result[0]) if result else ""
 
     def custom_resource_definitions(self, resource: str) -> str:
         return self._find_uid(
@@ -77,7 +84,9 @@ class LookupManager:
         return self._find_uid(f"SELECT uid FROM users WHERE name = ?", [name])
 
     def groups(self, name: str) -> str:
-        return self._find_uid(f"SELECT uid FROM groups WHERE name = ?", [name])
+        return self._find_uid(
+            f"SELECT uid FROM {self.schema}.groups WHERE name = ?", [name]
+        )
 
     def allowed_system_resources(self, resource_type: str):
         return self._find_resources(

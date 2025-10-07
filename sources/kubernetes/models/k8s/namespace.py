@@ -2,6 +2,7 @@ from pydantic import BaseModel, field_validator
 from datetime import datetime
 from .cluster import Cluster
 from ..entries import Node, NodeProperties, Edge, EdgePath
+import json
 
 
 class Metadata(BaseModel):
@@ -19,6 +20,13 @@ class Namespace(BaseModel):
     @classmethod
     def set_default_if_none(cls, v):
         return v if v is not None else "Namespace"
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class NamespaceNode(Node):
