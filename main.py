@@ -1,4 +1,5 @@
 import typer
+
 from cli.sync import sync, convert
 from cli.collect import collect
 

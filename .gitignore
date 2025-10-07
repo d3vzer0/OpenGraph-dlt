@@ -1,6 +1,8 @@
 # Custom
-.duckdb
+*.duckdb
+
 output
+graph
 .vscode
 logs
 dbt_packages

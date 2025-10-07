@@ -104,7 +104,6 @@ class ClusterRoleBindingNode(Node):
         return EdgePath(value=target_id, match_by="id")
 
     def _get_target_group(self, target_name: str) -> "EdgePath":
-        target_id = self._lookup.groups(target_name)
         target_id = get_guid(target_name, NodeTypes.K8sGroup, self._cluster)
         return EdgePath(value=target_id, match_by="id")
 

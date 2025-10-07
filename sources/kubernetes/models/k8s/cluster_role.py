@@ -121,7 +121,6 @@ class ClusterRoleNode(Node):
             for key in VERB_TO_PERMISSION.keys():
                 if fnmatch.fnmatch(key, verb.value) and key != "*":
                     matched.append(key)
-                    # matched.append(verb.value)
         return matched
 
     def _rule_edge(self, rule: Rule):
@@ -130,7 +129,6 @@ class ClusterRoleNode(Node):
 
         start_path = EdgePath(value=self.id, match_by="id")
         matched_verbs = self._matching_verbs(rule.verbs)
-        # verb_permissions = [VERB_TO_PERMISSION[verb] for verb in matched_verbs]
 
         all_allowed_resources = []
         for resource in rule.resources:
@@ -150,18 +148,6 @@ class ClusterRoleNode(Node):
                     properties={"verbs": matched_verbs},
                 )
             )
-            # for verb_permission in verb_permissions:
-            #     # print(verb_permission)
-            #     targets.append(
-            #         Edge(
-            #             kind=verb_permission,
-            #             start=start_path,
-            #             end=EdgePath(
-            #                 value=get_generic_guid(name, f"K8s{kind}", self._cluster),
-            #                 match_by="id",
-            #             ),
-            #         )
-            #     )
 
         return targets
 
@@ -175,9 +161,7 @@ class ClusterRoleNode(Node):
 
     @property
     def edges(self):
-        return [self._cluster_edge]
-
-        # return [self._cluster_edge, *self._rules_edge]
+        return [self._cluster_edge, *self._rules_edge]
 
     @classmethod
     def from_input(cls, **kwargs) -> "ClusterRoleNode":

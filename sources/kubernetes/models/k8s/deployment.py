@@ -67,9 +67,9 @@ class ExtendedProperties(NodeProperties):
 class DeploymentNode(Node):
     properties: ExtendedProperties
 
-    @property
-    def _volume_edges(self):
-        print()
+    # @property
+    # def _volume_edges(self):
+    #     print()
 
     @property
     def edges(self):

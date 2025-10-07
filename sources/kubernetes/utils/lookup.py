@@ -1,18 +1,14 @@
+from duckdb import DuckDBPyConnection
+from typing import Dict, Any
 import json
 import os
-import duckdb
-from duckdb import DuckDBPyConnection
-import glob
-from typing import Dict, Any, Optional
-from pathlib import Path
 
 
 class LookupManager:
 
-    def __init__(self, client, directory: str = "./output"):
+    def __init__(self, client: DuckDBPyConnection, directory: str = "./output"):
         self.directory = directory
-        self.db = "data"
-        self.schema = "k8s_lookup.kubernetes"
+        self.schema = "k8s_lookup.kubernetes_staging"
         self.client = client
 
     def _load_json(self, filename: str) -> Dict[str, Any]:
@@ -23,107 +19,39 @@ class LookupManager:
             return json.load(f)
 
     def _find_uid(self, *args) -> str:
-        # with self.client.execute_query("SELECT * FROM pods") as cursor:
-        #     return cursor.fetchall()
         self.client.execute(*args)
         result = self.client.fetchone()
-        # print(result)
         return str(result[0]) if result else ""
 
     def _find_resources(self, *args) -> list:
-        # with self.client.execute_query("SELECT * FROM pods") as cursor:
-        #     return cursor.fetchall()
         self.client.execute(*args)
         results = self.client.fetchall()
-        # print(results)
         return results
 
-    # def nodes(self, name: str) -> str:
-    #     self.con.execute(
-    #         f"SELECT metadata.uid FROM nodes WHERE metadata.name = ?", [name]
-    #     )
-    #     result = self.con.fetchone()
-    #     return str(result[0]) if result else ""
-
-    def custom_resource_definitions(self, resource: str) -> str:
-        return self._find_uid(
-            f"SELECT uid FROM custom_resource_definitions WHERE name = ?",
-            [resource],
-        )
-
-    def resource_definitions(self, resource: str) -> str:
-        return self._find_uid(
-            f"SELECT uid FROM resource_definitions WHERE name = ?", [resource]
-        )
-
-    def service_accounts(self, name: str, namespace: str) -> str:
-        return self._find_uid(
-            f"SELECT metadata.uid FROM serviceaccounts WHERE metadata.name = ? AND metadata.namespace = ?",
-            [name, namespace],
-        )
-
-    def roles(self, name: str, namespace: str) -> str:
-        return self._find_uid(
-            f"SELECT metadata.uid FROM roles WHERE metadata.name = ? AND metadata.namespace = ?",
-            [name, namespace],
-        )
-
-    def cluster_roles(self, name: str) -> str:
-        return self._find_uid(
-            f"SELECT metadata.uid FROM cluster_roles WHERE metadata.name = ?",
-            [name],
-        )
-
-    def namespaces(self, name) -> str:
-        return self._find_uid(
-            f"SELECT metadata.uid FROM namespaces WHERE metadata.name = ?",
-            [name],
-        )
-
-    def users(self, name: str) -> str:
-        return self._find_uid(f"SELECT uid FROM users WHERE name = ?", [name])
-
-    def groups(self, name: str) -> str:
-        return self._find_uid(
-            f"SELECT uid FROM {self.schema}.groups WHERE name = ?", [name]
-        )
-
-    def allowed_system_resources(self, resource_type: str):
+    def allowed_system_resources(self, resource_type: str) -> list[tuple]:
         return self._find_resources(
             f"""SELECT 
-                r.metadata.name,
-                r.kind,
-                rd.singular_name,
-                rd.name AS definition
-            FROM resources r
-            JOIN resource_definitions rd ON r.kind = rd.kind
+                name,
+                kind,
+                definition,
+                singular_name
+            FROM {self.schema}.resources_with_definitions
             WHERE definition GLOB ?;""",
             [resource_type],
         )
 
-    def allowed_namespaced_resources(self, resource_type: str, namespace: str):
-        return self._find_resources(
+    def allowed_namespaced_resources(
+        self, resource_type: str, namespace: str
+    ) -> list[tuple]:
+        results = self._find_resources(
             f"""SELECT 
-                r.metadata.name,
-                r.kind,
-                rd.singular_name,
-                rd.name AS definition
-            FROM resources r
-            JOIN resource_definitions rd ON r.kind = rd.kind
-            WHERE definition GLOB ? AND metadata.namespace = ?;""",
+                name,
+                kind,
+                namespace,
+                singular_name,
+                definition
+            FROM {self.schema}.resources_with_definitions
+            WHERE definition GLOB ? AND namespace = ?;""",
             [resource_type, namespace],
         )
-
-    def bootstrap(self, query_path: Path) -> None:
-        bootstrap_files = glob.glob(f"{query_path}/*.sql")
-        for query in bootstrap_files:
-            with open(query, "r") as query_file:
-                sql_content = query_file.read()
-                self.con.execute(sql_content)
-        self.con.close()
-
-    # @property
-    # def endpoint_slices(self) -> Dict[str, Any]:
-    #     if self._endpoint_slices is None:
-    #         self._endpoint_slices = self._load_json("endpoint-slices.json")
-    #     return self._endpoint_slices
+        return results

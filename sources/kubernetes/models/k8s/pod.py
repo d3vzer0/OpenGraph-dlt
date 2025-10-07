@@ -5,6 +5,7 @@ from pydantic import (
     BeforeValidator,
     field_validator,
     PrivateAttr,
+    computed_field,
 )
 from datetime import datetime
 from pydantic_core import PydanticUseDefault
@@ -75,6 +76,7 @@ class Metadata(BaseModel):
     uid: str
     namespace: str
     creation_timestamp: datetime
+    resource_version: str
     labels: dict | None = {}
     owner_references: list[OwnerReferences] | None = None
 

@@ -1,11 +1,8 @@
-from typing_extensions import Annotated
 from kubernetes import client, config
-from pathlib import Path
-from enum import Enum
 from kubernetes.dynamic import DynamicClient
 from sources.kubernetes.utils.lookup import LookupManager
 from .models.k8s.pod import Pod, PodNode, Volume as PodVolume
-from .models.k8s.volume import Volume
+from .models.k8s.volume import Volume, VolumeNode
 from .models.k8s.namespace import Namespace, NamespaceNode
 from .models.k8s.daemonset import DaemonSet, DaemonSetNode
 from .models.k8s.replicaset import ReplicaSet, ReplicaSetNode
@@ -19,7 +16,7 @@ from .models.k8s.role_binding import RoleBinding, RoleBindingNode
 from .models.k8s.cluster_role import ClusterRole, ClusterRoleNode
 from .models.k8s.cluster_role_binding import ClusterRoleBinding, ClusterRoleBindingNode
 from .models.k8s.service_account import ServiceAccount, ServiceAccountNode
-from .models.k8s.resource import Resource, ResourceNode, ResourceLookup
+from .models.k8s.resource import Resource, ResourceNode
 from .models.graph import GraphEntries, Graph
 from .models.k8s.identities import User, UserNode, Group, GroupNode
 from .models.entries import Node as GraphNode
@@ -52,10 +49,11 @@ RESOURCE_TYPES = {
 }
 
 
-@dlt.source
+@dlt.source()
 def kubernetes_resources(
     kube_config: None | str = None, cluster: str = dlt.config.value
 ):
+
     config.load_kube_config(kube_config)
     api_client = client.ApiClient()
     dyn_client = DynamicClient(api_client)
@@ -103,13 +101,13 @@ def kubernetes_resources(
             yield deployment.to_dict()
 
     @dlt.resource(columns=Pod, table_name="pods")
-    def pods():
+    def pods(incremental=dlt.sources.incremental("metadata.resource_version")):
         v1 = client.CoreV1Api()
         pods = v1.list_pod_for_all_namespaces()
         for pod in pods.items:
             yield pod.to_dict()
 
-    @dlt.transformer(data_from=pods, columns=Volume, table_name="volumes")
+    @dlt.transformer(data_from=pods, columns=Volume, table_name="cust_volumes")
     def volumes(pod: dict):
         volumes = pod["spec"]["volumes"]
         if volumes:
@@ -133,13 +131,13 @@ def kubernetes_resources(
         for roleb in rolebs.items:
             yield roleb.to_dict()
 
-    @dlt.transformer(data_from=role_bindings, table_name="users", columns=User)
+    @dlt.transformer(data_from=role_bindings, table_name="cust_users", columns=User)
     def users_role(role_binding):
         for subject in role_binding["subjects"]:
             if subject["kind"] == "User":
                 yield subject
 
-    @dlt.transformer(data_from=role_bindings, table_name="groups", columns=Group)
+    @dlt.transformer(data_from=role_bindings, table_name="cust_groups", columns=Group)
     def groups_role(role_binding):
         for subject in role_binding["subjects"]:
             if subject["kind"] == "Group":
@@ -159,14 +157,16 @@ def kubernetes_resources(
         for roleb in rolebs.items:
             yield roleb.to_dict()
 
-    @dlt.transformer(data_from=cluster_role_bindings, table_name="users", columns=User)
+    @dlt.transformer(
+        data_from=cluster_role_bindings, table_name="cust_users", columns=User
+    )
     def users_cluster_role(role_binding):
         for subject in role_binding["subjects"]:
             if subject["kind"] == "User":
                 yield subject
 
     @dlt.transformer(
-        data_from=cluster_role_bindings, table_name="groups", columns=Group
+        data_from=cluster_role_bindings, table_name="cust_groups", columns=Group
     )
     def groups_cluster_role(role_binding):
         for subject in role_binding["subjects"]:
@@ -190,7 +190,9 @@ def kubernetes_resources(
                 yield resource.to_dict()
 
     @dlt.transformer(
-        data_from=resource_definitions, table_name="api_groups", columns=ResourceGroup
+        data_from=resource_definitions,
+        table_name="cust_api_groups",
+        columns=ResourceGroup,
     )
     def api_groups(item):
         if item["group"]:
@@ -244,7 +246,6 @@ def kubernetes_fs(bucket_url: str):
             file_glob=f"{subdir}/**/*.jsonl.gz",
         )
         reader = (files | read_jsonl()).with_name(resource_name)
-        print(base_dir)
         return reader
 
     return (
@@ -258,10 +259,13 @@ def kubernetes_fs(bucket_url: str):
         json_resource(bucket_url, "daemonsets", "daemonsets_fs"),
         json_resource(bucket_url, "roles", "roles_fs"),
         json_resource(bucket_url, "role_bindings", "role_bindings_fs"),
+        json_resource(bucket_url, "cluster_roles", "cluster_roles_fs"),
         json_resource(bucket_url, "cluster_role_bindings", "cluster_role_bindings_fs"),
         json_resource(bucket_url, "resource_definitions", "resource_definitions_fs"),
         json_resource(bucket_url, "users", "users_fs"),
         json_resource(bucket_url, "groups", "groups_fs"),
+        json_resource(bucket_url, "unmapped", "unmapped_fs"),
+        json_resource(bucket_url, "cust_volumes", "volumes_fs"),
     )
 
 
@@ -272,10 +276,6 @@ def kubernetes_opengraph(
     lookup: LookupManager,
     raw_source,
 ):
-    if raw_source is None:
-        raise ValueError("kubernetes_opengraph requires a preloaded raw_source")
-    if lookup is None:
-        raise ValueError("kubernetes_opengraph requires a LookupManager instance")
 
     def build_graph(model_cls: Type[T], resource: dict) -> Graph:
         node = model_cls.from_input(**resource)
@@ -288,20 +288,29 @@ def kubernetes_opengraph(
         return Graph(graph=entries)
 
     @dlt.transformer(data_from=raw_source.pods_fs, columns=Graph)
-    def pods_graph(pods: dict):
+    def pods_graph(pods: list):
         for pod in pods:
             yield build_graph(PodNode, pod)
+
+    @dlt.transformer(data_from=raw_source.volumes_fs, columns=Graph)
+    def volumes_graph(volumes: list):
+        for volume in volumes:
+            yield build_graph(VolumeNode, volume)
 
     @dlt.transformer(data_from=raw_source.namespaces_fs, columns=Graph)
     def namespaces_graph(namespaces):
         for namespace in namespaces:
             yield build_graph(NamespaceNode, namespace)
 
-    # @dlt.transformer(data_from=raw_source.nodes, columns=Graph)
-    # @parse_json_fields
-    # def nodes_graph(nodes):
-    #     for node in nodes:
-    #         yield build_graph(NodeOutput, node)
+    @dlt.transformer(data_from=raw_source.unmapped_fs, columns=Graph)
+    def unmapped_graph(resources):
+        for resource in resources:
+            yield build_graph(GenericNode, resource)
+
+    @dlt.transformer(data_from=raw_source.nodes_fs, columns=Graph)
+    def nodes_graph(nodes):
+        for node in nodes:
+            yield build_graph(NodeOutput, node)
 
     @dlt.transformer(data_from=raw_source.deployments_fs, columns=Graph)
     def deployments_graph(deployments):
@@ -328,6 +337,11 @@ def kubernetes_opengraph(
         for role_binding in role_bindings:
             yield build_graph(RoleBindingNode, role_binding)
 
+    @dlt.transformer(data_from=raw_source.cluster_roles_fs, columns=Graph)
+    def cluster_roles_graph(roles):
+        for role in roles:
+            yield build_graph(ClusterRoleNode, role)
+
     @dlt.transformer(data_from=raw_source.cluster_role_bindings_fs, columns=Graph)
     def cluster_role_bindings_graph(cluster_role_bindings):
         for cluster_role_binding in cluster_role_bindings:
@@ -349,19 +363,17 @@ def kubernetes_opengraph(
             yield build_graph(GroupNode, group)
 
     # @dlt.transformer(data_from=raw_source.statefulsets, columns=Graph)
-    # @parse_json_fields
     # def statefulsets(statefulset):
     #     yield build_graph(StatefulSetNode, statefulset)
 
     # @dlt.transformer(data_from=raw_source.daemonsets, columns=Graph)
-    # @parse_json_fields
     # def daemonsets(daemonset):
     #     yield build_graph(DaemonSetNode, daemonset)
 
     return (
         pods_graph,
         namespaces_graph,
-        # nodes_graph,
+        nodes_graph,
         service_accounts_graph,
         deployments_graph,
         replicasets_graph,
@@ -371,6 +383,9 @@ def kubernetes_opengraph(
         # daemonsets,
         roles_graph,
         role_bindings_graph,
+        cluster_roles_graph,
         cluster_role_bindings_graph,
         resource_definitions_graph,
+        volumes_graph,
+        unmapped_graph,
     )
