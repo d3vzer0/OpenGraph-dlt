@@ -75,7 +75,7 @@ class Metadata(BaseModel):
     name: str
     uid: str
     namespace: str
-    creation_timestamp: datetime
+    creation_timestamp: datetime | None = None
     resource_version: str
     labels: dict | None = {}
     owner_references: list[OwnerReferences] | None = None

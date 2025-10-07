@@ -10,7 +10,7 @@ class Spec(BaseModel):
 class Metadata(BaseModel):
     name: str
     uid: str
-    creation_timestamp: datetime
+    creation_timestamp: datetime | None = None
     labels: dict | None = None
     namespace: str
 

@@ -23,6 +23,17 @@ pip install
 3. Option 2: Use UV to initiate the project/dependenceis
 
 ## Getting started
+### 0. Configure config.toml
+Configure the dlt config.toml with the apropriate values. Create a config file in <project_root>/.dlt/config.toml with the following contents:
+
+```
+[extract]
+workers=10 # The amount of parallel workers for collection
+
+[sources.source.kubernetes_resources.cluster]
+cluster = "colima" # The name of your kubernetes cluster/name for this collector
+```
+
 ### 1. Collecting resources
 The `collect` CLI pulls raw objects from a kubernetes cluster and stores them as Parquet/JSONL on the local filesystem. The kubernetes collector additionally generates a DuckDB lookup used during graph conversion.
 

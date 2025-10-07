@@ -52,7 +52,7 @@ VERB_TO_PERMISSION = {
 class Metadata(BaseModel):
     name: str
     uid: str
-    creation_timestamp: datetime
+    creation_timestamp: datetime | None = None
     namespace: str | None = ""
     labels: dict | None = None
 

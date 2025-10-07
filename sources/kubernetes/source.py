@@ -58,49 +58,49 @@ def kubernetes_resources(
     api_client = client.ApiClient()
     dyn_client = DynamicClient(api_client)
 
-    @dlt.resource(columns=KubeNode, table_name="nodes")
+    @dlt.resource(columns=KubeNode, table_name="nodes", parallelized=True)
     def nodes():
         v1 = client.CoreV1Api()
         nodes = v1.list_node()
         for node in nodes.items:
             yield node.to_dict()
 
-    @dlt.resource(columns=Namespace, table_name="namespaces")
+    @dlt.resource(columns=Namespace, table_name="namespaces", parallelized=True)
     def namespaces():
         v1 = client.CoreV1Api()
         namespaces = v1.list_namespace()
         for ns in namespaces.items:
             yield ns.to_dict()
 
-    @dlt.resource(columns=DaemonSet, table_name="daemonsets")
+    @dlt.resource(columns=DaemonSet, table_name="daemonsets", parallelized=True)
     def daemonsets():
         v1 = client.AppsV1Api()
         daemonsets = v1.list_daemon_set_for_all_namespaces()
         for daemonset in daemonsets.items:
             yield daemonset.to_dict()
 
-    @dlt.resource(columns=StatefulSet, table_name="statefulsets")
+    @dlt.resource(columns=StatefulSet, table_name="statefulsets", parallelized=True)
     def statefulsets():
         v1 = client.AppsV1Api()
         statefulsets = v1.list_stateful_set_for_all_namespaces()
         for replica in statefulsets.items:
             yield replica.to_dict()
 
-    @dlt.resource(columns=ReplicaSet, table_name="replicasets")
+    @dlt.resource(columns=ReplicaSet, table_name="replicasets", parallelized=True)
     def replicasets():
         v1 = client.AppsV1Api()
         replicasets = v1.list_replica_set_for_all_namespaces()
         for replica in replicasets.items:
             yield replica.to_dict()
 
-    @dlt.resource(columns=Deployment, table_name="deployments")
+    @dlt.resource(columns=Deployment, table_name="deployments", parallelized=True)
     def deployments():
         v1 = client.AppsV1Api()
         deployments = v1.list_deployment_for_all_namespaces()
         for deployment in deployments.items:
             yield deployment.to_dict()
 
-    @dlt.resource(columns=Pod, table_name="pods")
+    @dlt.resource(columns=Pod, table_name="pods", parallelized=True)
     def pods(incremental=dlt.sources.incremental("metadata.resource_version")):
         v1 = client.CoreV1Api()
         pods = v1.list_pod_for_all_namespaces()
@@ -117,14 +117,14 @@ def kubernetes_resources(
                     continue
                 yield {"node_name": node_name, "path": volume["host_path"]["path"]}
 
-    @dlt.resource(columns=Role, table_name="roles")
+    @dlt.resource(columns=Role, table_name="roles", parallelized=True)
     def roles():
         v1 = client.RbacAuthorizationV1Api()
         roles = v1.list_role_for_all_namespaces()
         for role in roles.items:
             yield role.to_dict()
 
-    @dlt.resource(columns=RoleBinding, table_name="role_bindings")
+    @dlt.resource(columns=RoleBinding, table_name="role_bindings", parallelized=True)
     def role_bindings():
         v1 = client.RbacAuthorizationV1Api()
         rolebs = v1.list_role_binding_for_all_namespaces()
@@ -143,14 +143,18 @@ def kubernetes_resources(
             if subject["kind"] == "Group":
                 yield subject
 
-    @dlt.resource(columns=ClusterRole, table_name="cluster_roles")
+    @dlt.resource(columns=ClusterRole, table_name="cluster_roles", parallelized=True)
     def cluster_roles():
         v1 = client.RbacAuthorizationV1Api()
         roles = v1.list_cluster_role()
         for role in roles.items:
             yield role.to_dict()
 
-    @dlt.resource(columns=ClusterRoleBinding, table_name="cluster_role_bindings")
+    @dlt.resource(
+        columns=ClusterRoleBinding,
+        table_name="cluster_role_bindings",
+        parallelized=True,
+    )
     def cluster_role_bindings():
         v1 = client.RbacAuthorizationV1Api()
         rolebs = v1.list_cluster_role_binding()
@@ -173,14 +177,18 @@ def kubernetes_resources(
             if subject["kind"] == "Group":
                 yield subject
 
-    @dlt.resource(columns=ServiceAccount, table_name="service_accounts")
+    @dlt.resource(
+        columns=ServiceAccount, table_name="service_accounts", parallelized=True
+    )
     def service_accounts():
         v1 = client.CoreV1Api()
         service_accounts = v1.list_service_account_for_all_namespaces()
         for service_account in service_accounts.items:
             yield service_account.to_dict()
 
-    @dlt.resource(columns=Resource, table_name="resource_definitions")
+    @dlt.resource(
+        columns=Resource, table_name="resource_definitions", parallelized=True
+    )
     def resource_definitions():
         api_client = client.ApiClient()
         dyn_client = DynamicClient(api_client)
@@ -199,7 +207,10 @@ def kubernetes_resources(
             yield {"name": item["group"], "api_version": item["api_version"]}
 
     @dlt.transformer(
-        data_from=resource_definitions, table_name="unmapped", columns=Generic
+        data_from=resource_definitions,
+        table_name="unmapped",
+        columns=Generic,
+        parallelized=True,
     )
     def unmapped_resources(resource: dict):
         resource_filter = (

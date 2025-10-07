@@ -10,7 +10,7 @@ class Metadata(BaseModel):
     name: str
     uid: str
     namespace: str
-    creation_timestamp: datetime
+    creation_timestamp: datetime | None = None
     labels: dict | None = {}
 
     @field_validator("labels", mode="before")
@@ -44,7 +44,7 @@ class Spec(BaseModel):
 class DaemonSet(BaseModel):
     kind: str | None = "DaemonSet"
     metadata: Metadata
-    creation_timestamp: datetime
+    creation_timestamp: datetime | None = None
     spec: Spec
 
     @field_validator("kind", mode="before")
