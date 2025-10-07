@@ -38,7 +38,7 @@ Once the raw dataset exists, convert it into OpenGraph with the sync or convert 
 $ convert kubernetes [OPTIONS] INPUT_PATH OUTPUT_PATH
 ```
 **Arguments**:
-* `INPUT_PATH`: Where the kubernetes resources were be saved in parquet/jsonl format [required]
+* `INPUT_PATH`: Where the kubernetes resources were saved by the collect command (parquet/jsonl) [required]
 * `OUTPUT_PATH`: Where the kubernetes graph will be stored in OpenGraph format [required]
 This will read the staged dataset from the specified path, generate the OpenGraph format and save the file(s), depending on the batch size, to OUTPUT_PATH/kubernetes-<batch-hash>.json
 
