@@ -3,6 +3,6 @@ default:
   outputs:
     dev:
       type: duckdb
-      path: ./k8s_stage.duckdb
+      path: ./k8s_lookup.duckdb
       schema: analytics
       threads: 4
