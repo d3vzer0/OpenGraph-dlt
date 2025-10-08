@@ -3,6 +3,14 @@ from datetime import datetime
 from typing import Literal
 
 
+class InlinePolicy(BaseModel):
+    EntityType: str
+    EntityName: str
+    EntityId: str
+    PolicyName: str
+    PolicyDocument: dict
+
+
 class Policy(BaseModel):
     PolicyName: str
     PolicyId: str

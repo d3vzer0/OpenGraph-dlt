@@ -3,7 +3,7 @@ from .models.aws.group import Group, GroupNode
 from .models.aws.membership import UserGroupMembership
 from .models.aws.role import Role, RoleNode
 from .models.aws.user import User, UserNode
-from .models.aws.policy import Policy, PolicyAttachment
+from .models.aws.policy import Policy, PolicyAttachment, InlinePolicy
 from .models.aws.ec2_instance import EC2Instance, EC2InstanceRole
 from .models.aws.resource import Resource
 from .models.entries import Edge, EdgePath, EdgeProperties, Node as GraphNode
@@ -39,6 +39,7 @@ def aws_resources(
         paginator = iam.get_paginator("list_users")
         for page in paginator.paginate():
             for user in page.get("Users", []):
+                print(user)
                 yield _with_account(user)
 
     @dlt.resource(
@@ -56,6 +57,66 @@ def aws_resources(
         for page in paginator.paginate():
             for role in page.get("Roles", []):
                 yield _with_account(role)
+
+    @dlt.transformer(
+        name="user_inline_policies",
+        columns=InlinePolicy,
+        data_from=users,
+        table_name="inline_policies",
+    )
+    def user_inline_policies(user: dict):
+        paginator = iam.get_paginator("list_user_policies")
+        user_name = user["UserName"]
+        for page in paginator.paginate(UserName=user_name):
+            for policy in page.get("PolicyNames", []):
+                document = iam.get_user_policy(UserName=user_name, PolicyName=policy)
+                yield {
+                    "EntityType": "User",
+                    "EntityName": user_name,
+                    "EntityId": user["RoleId"],
+                    "PolicyName": policy,
+                    "PolicyDocument": document.get("PolicyDocument"),
+                }
+
+    @dlt.transformer(
+        name="group_inline_policies",
+        columns=InlinePolicy,
+        data_from=groups,
+        table_name="inline_policies",
+    )
+    def group_inline_policies(group: dict):
+        paginator = iam.get_paginator("list_group_policies")
+        group_name = group["GroupName"]
+        for page in paginator.paginate(GroupName=group_name):
+            for policy in page.get("PolicyNames", []):
+                document = iam.get_group_policy(GroupName=group_name, PolicyName=policy)
+                yield {
+                    "EntityType": "Group",
+                    "EntityName": group_name,
+                    "EntityId": group["RoleId"],
+                    "PolicyName": policy,
+                    "PolicyDocument": document.get("PolicyDocument"),
+                }
+
+    @dlt.transformer(
+        name="role_inline_policies",
+        columns=InlinePolicy,
+        data_from=roles,
+        table_name="inline_policies",
+    )
+    def role_inline_policies(role: dict):
+        paginator = iam.get_paginator("list_role_policies")
+        role_name = role["RoleName"]
+        for page in paginator.paginate(RoleName=role_name):
+            for policy in page.get("PolicyNames", []):
+                document = iam.get_role_policy(RoleName=role_name, PolicyName=policy)
+                yield {
+                    "EntityType": "Role",
+                    "EntityName": role_name,
+                    "EntityId": role["RoleId"],
+                    "PolicyName": policy,
+                    "PolicyDocument": document.get("PolicyDocument"),
+                }
 
     @dlt.transformer(
         data_from=users,
@@ -181,6 +242,9 @@ def aws_resources(
         resources,
         ec2_instances,
         ec2_instance_roles,
+        user_inline_policies,
+        group_inline_policies,
+        role_inline_policies,
     )
 
 
