@@ -4,6 +4,7 @@ from .models.aws.membership import UserGroupMembership
 from .models.aws.role import Role, RoleNode
 from .models.aws.user import User, UserNode
 from .models.aws.policy import Policy, PolicyAttachment
+from .models.aws.ec2_instance import EC2Instance, EC2InstanceRole
 from .models.aws.resource import Resource
 from .models.entries import Edge, EdgePath, EdgeProperties, Node as GraphNode
 from .models.graph import GraphEntries, Graph
@@ -25,6 +26,8 @@ def aws_resources(
     iam = session.client("iam", endpoint_url=endpoint_url)
     sts = session.client("sts", endpoint_url=endpoint_url)
     re = session.client("resource-explorer-2", region_name=region_name)
+    ec2 = session.client("ec2", region_name=region_name)
+
     account_id = sts.get_caller_identity()["Account"]
 
     def _with_account(record: dict) -> dict:
@@ -94,6 +97,42 @@ def aws_resources(
                 yield resource
 
     @dlt.transformer(
+        name="ec2_instances",
+        data_from=resources,
+        columns=EC2Instance,
+        parallelized=True,
+    )
+    def ec2_instances(resource):
+        if resource["ResourceType"] == "ec2:instance":
+            instance_id = resource["Arn"].split("/")[-1]
+            instance_details = ec2.describe_instances(InstanceIds=[instance_id])
+            for reservation in instance_details.get("Reservations", []):
+                for instance in reservation.get("Instances", []):
+                    yield instance
+
+    @dlt.transformer(
+        name="ec2_instance_roles",
+        data_from=ec2_instances,
+        columns=EC2InstanceRole,
+        parallelized=True,
+    )
+    def ec2_instance_roles(instance):
+        profile_info = instance["IamInstanceProfile"]
+        if profile_info:
+            profile_arn = profile_info["Arn"]
+            profile_name = profile_arn.split("/")[-1]
+            profile = iam.get_instance_profile(InstanceProfileName=profile_name)[
+                "InstanceProfile"
+            ]
+            for role in profile.get("Roles", []):
+                yield {
+                    "InstanceId": instance["InstanceId"],
+                    "InstanceArn": instance["Arn"],
+                    "InstanceRegion": instance["Region"],
+                    **role,
+                }
+
+    @dlt.transformer(
         data_from=policies,
         name="policy_attachments",
         columns=PolicyAttachment,
@@ -140,6 +179,8 @@ def aws_resources(
         user_group_memberships,
         policy_attachments,
         resources,
+        ec2_instances,
+        ec2_instance_roles,
     )
 
 

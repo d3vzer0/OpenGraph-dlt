@@ -8,6 +8,7 @@ class NodeTypes(str, Enum):
     AWSGroup = "AWSGroup"
     AWSRole = "AWSRole"
     AWSIdentityProvider = "AWSIdentityProvider"
+    AWSEC2Instance = "AWSEC2Instance"
 
 
 def _compose_identity(
