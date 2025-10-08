@@ -3,8 +3,11 @@ import dlt
 from sources.kubernetes.source import (
     kubernetes_resources,
 )
+from sources.aws.source import (
+    aws_resources,
+)
 from dlt.sources.filesystem import readers
-from dlt.destinations import filesystem, duckdb
+from dlt.destinations import filesystem
 from typing import Annotated
 from pathlib import Path
 
@@ -16,6 +19,25 @@ OutputPath = Annotated[
         exists=True, file_okay=True, dir_okay=True, readable=True, resolve_path=True
     ),
 ]
+
+
+@collect.command()
+def aws(output_path: OutputPath):
+    dest = filesystem(
+        bucket_url=str(output_path),
+    )
+
+    pipeline = dlt.pipeline(
+        pipeline_name="aws_stage",
+        destination=dest,
+        dataset_name="aws",
+        progress="enlighten",
+    )
+
+    pipeline.run(
+        aws_resources(),
+        write_disposition="replace",
+    )
 
 
 @collect.command()
