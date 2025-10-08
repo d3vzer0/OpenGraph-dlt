@@ -141,10 +141,16 @@ def aws_resources(
         paginator = iam.get_paginator("list_policies")
         for page in paginator.paginate(Scope="All", OnlyAttached=True):
             for policy in page.get("Policies", []):
+                version_id = policy["DefaultVersionId"]
+                version = iam.get_policy_version(
+                    PolicyArn=policy["Arn"],
+                    VersionId=version_id,
+                )
                 policy["AccountId"] = policy.get("Arn", "").split(":")[4] or account_id
                 policy["IsAWSManaged"] = policy["Arn"].startswith(
                     "arn:aws:iam::aws:policy/"
                 )
+                policy["PolicyDocument"] = version["PolicyVersion"]["Document"]
                 yield policy
 
     @dlt.resource(name="resources", columns=Resource, parallelized=True)

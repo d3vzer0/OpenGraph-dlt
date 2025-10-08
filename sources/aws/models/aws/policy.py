@@ -4,7 +4,7 @@ from typing import Literal
 
 
 class InlinePolicy(BaseModel):
-    EntityType: str
+    EntityType: Literal["User", "Group", "Role"]
     EntityName: str
     EntityId: str
     PolicyName: str
@@ -22,6 +22,7 @@ class Policy(BaseModel):
     UpdateDate: datetime | None
     AccountId: str | None
     IsAWSManaged: bool
+    PolicyDocument: dict
 
 
 class PolicyAttachment(BaseModel):
