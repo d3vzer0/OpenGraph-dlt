@@ -4,6 +4,7 @@ from .models.aws.membership import UserGroupMembership
 from .models.aws.role import Role, RoleNode
 from .models.aws.user import User, UserNode
 from .models.aws.policy import Policy, PolicyAttachment
+from .models.aws.resource import Resource
 from .models.entries import Edge, EdgePath, EdgeProperties, Node as GraphNode
 from .models.graph import GraphEntries, Graph
 import boto3
@@ -23,6 +24,7 @@ def aws_resources(
     session = boto3.session.Session(profile_name=profile_name, region_name=region_name)
     iam = session.client("iam", endpoint_url=endpoint_url)
     sts = session.client("sts", endpoint_url=endpoint_url)
+    re = session.client("resource-explorer-2", region_name=region_name)
     account_id = sts.get_caller_identity()["Account"]
 
     def _with_account(record: dict) -> dict:
@@ -81,6 +83,16 @@ def aws_resources(
                 )
                 yield policy
 
+    @dlt.resource(name="resources", columns=Resource, parallelized=True)
+    def resources():
+        view_arn = re.list_views()["Views"][0]
+        paginator = re.get_paginator("search")
+        for page in paginator.paginate(
+            ViewArn=view_arn, QueryString="arn", MaxResults=1000
+        ):
+            for resource in page.get("Resources", []):
+                yield resource
+
     @dlt.transformer(
         data_from=policies,
         name="policy_attachments",
@@ -127,6 +139,7 @@ def aws_resources(
         policies,
         user_group_memberships,
         policy_attachments,
+        resources,
     )
 
 

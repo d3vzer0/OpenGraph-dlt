@@ -27,17 +27,26 @@ def aws(output_path: OutputPath):
         bucket_url=str(output_path),
     )
 
-    pipeline = dlt.pipeline(
-        pipeline_name="aws_stage",
-        destination=dest,
+    # pipeline = dlt.pipeline(
+    #     pipeline_name="aws_stage",
+    #     destination=dest,
+    #     dataset_name="aws",
+    #     progress="enlighten",
+    # )
+
+    lookup = dlt.pipeline(
+        pipeline_name="aws_lookup",
+        destination="duckdb",
         dataset_name="aws",
         progress="enlighten",
     )
 
-    pipeline.run(
-        aws_resources(),
-        write_disposition="replace",
-    )
+    lookup.run(aws_resources().with_resources("resources"))
+
+    # pipeline.run(
+    #     aws_resources().with_resources("resources"),
+    #     write_disposition="replace",
+    # )
 
 
 @collect.command()
