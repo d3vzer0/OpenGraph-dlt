@@ -36,4 +36,8 @@ def opengraph_file(items, table, output_path="./output"):
     file_name = f"{table['name']}-{str(uuid.uuid4())}.json"
     file_path = output_dir / file_name
     with file_path.open("w", encoding="utf-8") as fh:
-        json.dump(aggregated.model_dump(mode="json"), fh, indent=2)
+        json.dump(
+            aggregated.model_dump(mode="json", exclude_none=True, exclude_unset=True),
+            fh,
+            indent=2,
+        )
