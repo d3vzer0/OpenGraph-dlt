@@ -9,26 +9,21 @@ class NodeTypes(str, Enum):
     AWSRole = "AWSRole"
     AWSIdentityProvider = "AWSIdentityProvider"
     AWSEC2Instance = "AWSEC2Instance"
+    AWSPolicy = "AWSPolicy"
+    AWSInlinePolicy = "AWSInlinePolicy"
 
 
-def _compose_identity(
-    name: str, account_id: Optional[str], scope: Optional[str], node_type: NodeTypes
-) -> str:
-    segments = [
-        "aws",
-        account_id or "__unknown__",
-        scope or "__global__",
-        node_type.value,
-        name,
-    ]
-    return "::".join(segments)
+def gen_node_type(node_type: str) -> str:
+    pascal_case = "".join(x for x in node_type.title() if not x.isspace())
+    return f"AWS{pascal_case}"
 
 
-def get_guid(
+def gen_guid(
     name: str,
-    node_type: NodeTypes,
-    account_id: Optional[str] = None,
-    scope: Optional[str] = None,
+    node_type: str,
+    account_id,
+    scope: Optional[str] = "global",
 ) -> str:
-    identity = _compose_identity(name, account_id, scope, node_type)
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, identity))
+    uuid_namespace = uuid.NAMESPACE_DNS
+    resource_path = f"{name}.{node_type}.{account_id}.{scope}"
+    return str(uuid.uuid5(uuid_namespace, resource_path))

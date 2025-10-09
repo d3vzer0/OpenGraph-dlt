@@ -6,9 +6,13 @@ from sources.kubernetes.source import (
     kubernetes_fs,
 )
 
+from sources.aws.source import aws_fs, aws_opengraph
+
 from destinations.opengraph.client import BloodHound
 from destinations.opengraph.destination import opengraph_file
 from sources.kubernetes.utils.lookup import LookupManager
+from sources.aws.utils.lookup import LookupManager as AWSLookupManager
+
 from typing import Annotated
 from dataclasses import dataclass
 from pathlib import Path
@@ -59,6 +63,20 @@ class ConvertOptions:
 #     ],
 # ):
 #     ctx.obj = ConvertOptions(output=output)
+
+
+@convert.command()
+def aws(input_path: InputPath, output_path: OutputPath):
+    client = duckdb.connect("aws_lookup.duckdb", read_only=True)
+    lookup = AWSLookupManager(client)
+    fs_source = aws_fs(str(input_path))
+
+    pipeline = dlt.pipeline(
+        pipeline_name="aws_opengraph_convert",
+        destination=opengraph_file(output_path="./graph"),
+        progress="enlighten",
+    )
+    pipeline.run(aws_opengraph(lookup=lookup, raw_source=fs_source))
 
 
 # @sync.command()

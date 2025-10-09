@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 from sources.aws.utils.guid import NodeTypes
@@ -10,23 +10,23 @@ from .role import Role
 
 
 class EC2InstanceRole(Role):
-    InstanceId: str
-    InstanceRegion: Optional[str] = None
-    InstanceArn: Optional[str] = None
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    instance_id: str = Field(alias="InstanceId")
+    instance_region: Optional[str] = Field(alias="InstanceRegion", default=None)
+    instance_arn: Optional[str] = Field(alias="InstanceArn", default=None)
 
 
 class EC2Instance(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    InstanceId: str
-    InstanceType: str
-    Arn: Optional[str] = None
-    LaunchTime: Optional[datetime] = None
-    # State: Optional[dict] = None
-    # IamInstanceProfile: Optional[dict] = None
-    PrivateIpAddress: Optional[str] = None
-    PublicIpAddress: Optional[str] = None
-    AccountId: Optional[str] = None
-    Region: Optional[str] = None
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    instance_id: str = Field(alias="InstanceId")
+    instance_type: str = Field(alias="InstanceType")
+    arn: Optional[str] = Field(alias="Arn", default=None)
+    launch_time: Optional[datetime] = Field(alias="LaunchTime", default=None)
+    private_ip_address: Optional[str] = Field(alias="PrivateIpAddress", default=None)
+    public_ip_address: Optional[str] = Field(alias="PublicIpAddress", default=None)
+    account_id: Optional[str] = Field(alias="AccountId", default=None)
+    region: Optional[str] = Field(alias="Region", default=None)
 
 
 class EC2InstanceProperties(NodeProperties):

@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
-from sources.aws.utils.guid import NodeTypes, get_guid
+from sources.aws.utils.guid import NodeTypes, gen_guid
+from sources.aws.utils.lookup import LookupManager
 
 
 class NodeProperties(BaseModel):
@@ -10,7 +11,8 @@ class NodeProperties(BaseModel):
     name: str
     displayname: str
     arn: Optional[str] = None
-    aws_account_id: Optional[str] = None
+    aws_account_id: str
+    aws_region: str
     description: Optional[str] = None
     created_at: Optional[datetime] = None
     last_seen: datetime = Field(default_factory=datetime.utcnow)
@@ -26,13 +28,10 @@ class Node(BaseModel, ABC):
 
     @computed_field
     def id(self) -> str:
-        primary_kind = (
-            self.kinds[0] if self.kinds else NodeTypes.AWSIdentityProvider.value
-        )
-        node_type = NodeTypes(primary_kind)
         account = self.properties.aws_account_id or self._account_id
-        return get_guid(
-            self.properties.name, node_type, account_id=account, scope=self._scope
+        name = self.properties.arn if self.properties.arn else self.properties.name
+        return gen_guid(
+            name, self.kinds[0], account_id=account, scope=self.properties.aws_region
         )
 
     @classmethod

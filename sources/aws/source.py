@@ -1,9 +1,17 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
 from .models.aws.group import Group, GroupNode
-from .models.aws.membership import UserGroupMembership
+from .models.aws.membership import UserGroupMembership, MembershipEdges
+from sources.aws.utils.lookup import LookupManager
 from .models.aws.role import Role, RoleNode
 from .models.aws.user import User, UserNode
-from .models.aws.policy import Policy, PolicyAttachment, InlinePolicy
+from .models.aws.policy import (
+    Policy,
+    PolicyNode,
+    PolicyAttachment,
+    InlinePolicy,
+    InlinePolicyNode,
+    PolicyAttachmentEdges,
+)
 from .models.aws.ec2_instance import EC2Instance, EC2InstanceRole
 from .models.aws.resource import Resource
 from .models.entries import Edge, EdgePath, EdgeProperties, Node as GraphNode
@@ -39,7 +47,6 @@ def aws_resources(
         paginator = iam.get_paginator("list_users")
         for page in paginator.paginate():
             for user in page.get("Users", []):
-                print(user)
                 yield _with_account(user)
 
     @dlt.resource(
@@ -63,6 +70,7 @@ def aws_resources(
         columns=InlinePolicy,
         data_from=users,
         table_name="inline_policies",
+        parallelized=True,
     )
     def user_inline_policies(user: dict):
         paginator = iam.get_paginator("list_user_policies")
@@ -73,9 +81,11 @@ def aws_resources(
                 yield {
                     "EntityType": "User",
                     "EntityName": user_name,
-                    "EntityId": user["RoleId"],
+                    "EntityId": user["UserId"],
+                    "EntityArn": user["Arn"],
                     "PolicyName": policy,
                     "PolicyDocument": document.get("PolicyDocument"),
+                    "AccountId": account_id,
                 }
 
     @dlt.transformer(
@@ -83,6 +93,7 @@ def aws_resources(
         columns=InlinePolicy,
         data_from=groups,
         table_name="inline_policies",
+        parallelized=True,
     )
     def group_inline_policies(group: dict):
         paginator = iam.get_paginator("list_group_policies")
@@ -93,9 +104,11 @@ def aws_resources(
                 yield {
                     "EntityType": "Group",
                     "EntityName": group_name,
-                    "EntityId": group["RoleId"],
+                    "EntityId": group["GroupId"],
+                    "EntityArn": group["Arn"],
                     "PolicyName": policy,
                     "PolicyDocument": document.get("PolicyDocument"),
+                    "AccountId": account_id,
                 }
 
     @dlt.transformer(
@@ -103,6 +116,7 @@ def aws_resources(
         columns=InlinePolicy,
         data_from=roles,
         table_name="inline_policies",
+        parallelized=True,
     )
     def role_inline_policies(role: dict):
         paginator = iam.get_paginator("list_role_policies")
@@ -114,8 +128,10 @@ def aws_resources(
                     "EntityType": "Role",
                     "EntityName": role_name,
                     "EntityId": role["RoleId"],
+                    "EntityArn": role["Arn"],
                     "PolicyName": policy,
                     "PolicyDocument": document.get("PolicyDocument"),
+                    "AccountId": account_id,
                 }
 
     @dlt.transformer(
@@ -130,6 +146,7 @@ def aws_resources(
         for group in groups_response.get("Groups", []):
             yield {
                 "UserName": username,
+                "UserArn": user["Arn"],
                 "GroupName": group["GroupName"],
                 "GroupId": group["GroupId"],
                 "GroupArn": group["Arn"],
@@ -236,6 +253,7 @@ def aws_resources(
                     "EntityId": entity.get(fields["EntityId"]),
                     "EntityArn": entity.get("Arn"),
                     "AccountId": account,
+                    "PolicyDocument": policy["PolicyDocument"],
                 }
 
     return (
@@ -264,8 +282,83 @@ def aws_fs(bucket_url: str):
         return (files | read_jsonl()).with_name(resource_name)
 
     return (
-        json_resource("users", "users"),
-        # json_resource("groups", "groups"),
-        # json_resource("roles", "roles"),
-        # json_resource("user_group_memberships", "user_group_memberships"),
+        json_resource("policy_attachments", "policy_attachments_fs"),
+        json_resource("users", "users_fs"),
+        json_resource("policies", "policies_fs"),
+        json_resource("groups", "groups_fs"),
+        json_resource("roles", "roles_fs"),
+        json_resource("inline_policies", "inline_policies_fs"),
+        json_resource("user_group_memberships", "user_group_memberships_fs"),
+    )
+
+
+@dlt.source(name="aws_opengraph")
+def aws_opengraph(
+    *,
+    lookup: LookupManager,
+    raw_source,
+):
+
+    def build_graph(model_cls, resource: dict) -> Graph:
+        node = model_cls.from_input(**resource)
+        node._lookup = lookup
+        entries = GraphEntries(
+            nodes=[node],
+            edges=[edge for edge in node.edges if edge],
+        )
+        return Graph(graph=entries)
+
+    def build_graph_edges(model_cls, resource: dict) -> Graph:
+        node = model_cls.from_input(**resource)
+        node._lookup = lookup
+        entries = GraphEntries(
+            nodes=[],
+            edges=[edge for edge in node.edges],
+        )
+        return Graph(graph=entries)
+
+    @dlt.transformer(data_from=raw_source.policies_fs, columns=Graph)
+    def policies_graph(policies: list):
+        for policy in policies:
+            yield build_graph(PolicyNode, policy)
+
+    @dlt.transformer(data_from=raw_source.groups_fs, columns=Graph)
+    def groups_graph(groups: list):
+        for group in groups:
+            yield build_graph(GroupNode, group)
+
+    @dlt.transformer(data_from=raw_source.user_group_memberships_fs, columns=Graph)
+    def memberships_graph(memberships: list):
+        for membership in memberships:
+            yield build_graph_edges(MembershipEdges, membership)
+
+    @dlt.transformer(data_from=raw_source.users_fs, columns=Graph)
+    def users_graph(users: list):
+        for user in users:
+            yield build_graph(UserNode, user)
+
+    @dlt.transformer(data_from=raw_source.roles_fs, columns=Graph)
+    def roles_graph(roles: list):
+        for role in roles:
+            yield build_graph(RoleNode, role)
+
+    @dlt.transformer(data_from=raw_source.policy_attachments_fs, columns=Graph)
+    def policies_attachment_graph(policies: list):
+        for policy in policies:
+            yield build_graph_edges(PolicyAttachmentEdges, policy)
+
+    @dlt.transformer(data_from=raw_source.inline_policies_fs, columns=Graph)
+    def inline_policies_graph(policies: list):
+
+        for policy in policies:
+            yield build_graph(InlinePolicyNode, policy)
+
+    return (
+        users_graph,
+        roles_graph,
+        policies_attachment_graph,
+        groups_graph,
+        policies_graph,
+        memberships_graph,
+        inline_policies_graph,
     )
