@@ -1,0 +1,8 @@
+default:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ./aws_lookup.duckdb
+      schema: analytics
+      threads: 4

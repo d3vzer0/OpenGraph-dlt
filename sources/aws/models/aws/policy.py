@@ -8,6 +8,20 @@ from sources.aws.utils.guid import NodeTypes, gen_guid
 from sources.aws.utils.lookup import LookupManager
 
 
+class PolicyStatement(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    effect: str = Field(alias="Effect")
+    principal: dict = Field(alias="Principal")
+    action: str = Field(alias="Action")
+    condition: dict = Field(alias="Condition")
+
+
+class PolicyStatementOutput(PolicyStatement):
+    entity_type: Literal["User", "Group", "Role"] = Field(alias="EntityType")
+    entity_arn: str = Field(alias="EntityArn")
+    policy: str
+
+
 class InlinePolicy(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -71,7 +85,7 @@ class InlinePolicyNode(Node):
         end = EdgePath(value=self.id, match_by="id")
         return [
             Edge(
-                kind="AWSAttachesInlinePolicy",
+                kind="AWSAttachesPolicy",
                 start=start,
                 end=end,
             )

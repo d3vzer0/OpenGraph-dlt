@@ -1,0 +1,26 @@
+version: 2
+sources:
+  - name: aws_raw
+    schema: aws 
+    description: "Raw AWS resources loaded by DLT"
+    tables:
+      - name: roles
+        description: "Role data from AWS"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: arn
+            description: "AWS Role arn"
+          - name: role_name
+            description: "AWS Role name"
+          - name: role_id
+            description: "AWS Role ID"
+          - name: account_id
+            description: "AWS Account ID"
+          - name: role_id
+            description: "Role id"
+          - name: assume_role_policy_document
+            description: "Role allow policy document"
+      
