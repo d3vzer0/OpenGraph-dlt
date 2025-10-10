@@ -66,14 +66,14 @@ class ConvertOptions:
 
 
 @convert.command()
-def aws(input_path: InputPath, output_path: OutputPath):
+def aws(input_path: InputPath, output_path: OutputPath = Path("./graph")):
     client = duckdb.connect("aws_lookup.duckdb", read_only=True)
     lookup = AWSLookupManager(client)
     fs_source = aws_fs(str(input_path))
 
     pipeline = dlt.pipeline(
         pipeline_name="aws_opengraph_convert",
-        destination=opengraph_file(output_path="./graph"),
+        destination=opengraph_file(output_path=str(output_path)),
         progress="enlighten",
     )
     pipeline.run(aws_opengraph(lookup=lookup, raw_source=fs_source))
@@ -81,13 +81,13 @@ def aws(input_path: InputPath, output_path: OutputPath):
 
 # @sync.command()
 @convert.command()
-def kubernetes(input_path: InputPath, output_path: OutputPath):
+def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph")):
     client = duckdb.connect("k8s_lookup.duckdb", read_only=True)
     lookup = LookupManager(client)
-    fs_source = kubernetes_fs("./output/kubernetes")
+    fs_source = kubernetes_fs(str(input_path))
     pipeline = dlt.pipeline(
         pipeline_name="k8s_opengraph_convert",
-        destination=opengraph_file(output_path="./graph"),
+        destination=opengraph_file(output_path=str(output_path)),
         progress="enlighten",
     )
     pipeline.run(
