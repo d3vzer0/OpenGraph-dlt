@@ -4,9 +4,9 @@ from dlt.common.typing import TDataItems
 from dlt.common.schema import TTableSchema
 from destinations.opengraph.models.graph import Graph, GraphEntries, MetaData
 from .client import BloodHound
+from collections import defaultdict
 from pathlib import Path
 import json
-import uuid
 
 
 # @dlt.destination(batch_size=1000)
@@ -20,9 +20,12 @@ import uuid
 #     client = BloodHound(token_key, token_id, api_url)
 #     # print(items)
 
+DEST_PART = defaultdict(int)
+
 
 @dlt.destination(batch_size=100)
-def opengraph_file(items, table, output_path="./output"):
+def opengraph_file(items: TDataItems, table: TTableSchema, output_path="./output"):
+    DEST_PART[table["name"]] += 1
     output_dir = Path(output_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     merged = GraphEntries(nodes=[], edges=[])
@@ -33,7 +36,8 @@ def opengraph_file(items, table, output_path="./output"):
         merged.edges.extend(graph.graph.edges)
 
     aggregated = Graph(graph=merged)
-    file_name = f"{table['name']}-{str(uuid.uuid4())}.json"
+
+    file_name = f"{table['name']}-{DEST_PART[table["name"]]}.json"
     file_path = output_dir / file_name
     with file_path.open("w", encoding="utf-8") as fh:
         json.dump(
