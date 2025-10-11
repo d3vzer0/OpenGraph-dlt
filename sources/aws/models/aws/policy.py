@@ -74,8 +74,7 @@ class ExtendedInlinePolicyProperties(NodeProperties):
     source_entity_type: str
 
 
-class InlinePolicyNode(Node):
-    properties: ExtendedInlinePolicyProperties
+class GlobalPolicy(Node):
     _policy: InlinePolicy = PrivateAttr()
     _lookup: LookupManager = PrivateAttr()
 
@@ -126,6 +125,10 @@ class InlinePolicyNode(Node):
 
         return allowed_roles
 
+
+class InlinePolicyNode(GlobalPolicy):
+    properties: ExtendedInlinePolicyProperties
+
     @property
     def _principal_guid(self) -> str:
         node_type = self._ENTITY_NODE_TYPES[self.properties.source_entity_type]
@@ -168,9 +171,8 @@ class InlinePolicyNode(Node):
         return node
 
 
-class PolicyNode(Node):
+class PolicyNode(GlobalPolicy):
     properties: NodeProperties
-    _policy: Policy = PrivateAttr()
 
     @property
     def edges(self):
