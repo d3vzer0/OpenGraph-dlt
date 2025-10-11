@@ -9,6 +9,7 @@ class LookupManager:
     def __init__(self, client: DuckDBPyConnection, directory: str = "./output"):
         self.directory = directory
         self.schema = "aws_lookup.aws"
+        self.staging_schema = "aws_lookup.aws_staging"
         self.client = client
 
     def _find_arn(self, *args) -> str:
@@ -49,6 +50,19 @@ class LookupManager:
             WHERE role_name = ?;
             """,
             [role_name],
+        )
+
+    def role_trusts(self, role_arn: str) -> list:
+        return self._find_resources(
+            f"""SELECT
+            arn,
+            role_name,
+            condition,
+            principal
+            FROM {self.staging_schema}.role_trust_statements
+            WHERE arn = ? and effect = 'Allow' and action = 'sts:AssumeRole'
+            """,
+            [role_arn],
         )
 
     def allowed_resources(self, target: str) -> list[tuple]:

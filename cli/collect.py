@@ -22,18 +22,7 @@ OutputPath = Annotated[
 
 
 @collect.command()
-def aws(output_path: OutputPath):
-    dest = filesystem(
-        bucket_url=str(output_path),
-    )
-
-    # pipeline = dlt.pipeline(
-    #     pipeline_name="aws_stage",
-    #     destination=dest,
-    #     dataset_name="aws",
-    #     progress="enlighten",
-    # )
-
+def aws_bootstrap():
     lookup = dlt.pipeline(
         pipeline_name="aws_lookup",
         destination="duckdb",
@@ -41,12 +30,31 @@ def aws(output_path: OutputPath):
         progress="enlighten",
     )
 
-    lookup.run(aws_resources().with_resources("resources"))
+    lookup.run(aws_resources().with_resources("resources", "users", "groups", "roles"))
+    dbt = dlt.dbt.package(
+        lookup,
+        "sources/aws/dbt",
+    )
+    dbt.run_all()
 
-    # pipeline.run(
-    #     aws_resources().with_resources("resources"),
-    #     write_disposition="replace",
-    # )
+
+@collect.command()
+def aws(output_path: OutputPath):
+    dest = filesystem(
+        bucket_url=str(output_path),
+    )
+
+    pipeline = dlt.pipeline(
+        pipeline_name="aws_stage",
+        destination=dest,
+        dataset_name="aws",
+        progress="enlighten",
+    )
+
+    pipeline.run(
+        aws_resources(),
+        write_disposition="replace",
+    )
 
 
 @collect.command()

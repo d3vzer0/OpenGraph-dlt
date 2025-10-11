@@ -6,6 +6,19 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from ..entries import Edge, EdgePath, EdgeProperties, NodeProperties, Node
 from sources.aws.utils.guid import NodeTypes, gen_guid
 from sources.aws.utils.lookup import LookupManager
+import fnmatch
+
+
+def flatten_principals(principal_obj: dict) -> list[str]:
+    principals: list[str] = []
+    for key, value in principal_obj.items():
+        if isinstance(value, list):
+            principals.extend(value)
+        elif isinstance(value, str):
+            principals.append(value)
+        elif isinstance(value, dict):
+            principals.extend(flatten_principals(value))
+    return principals
 
 
 class PolicyStatement(BaseModel):
@@ -63,12 +76,55 @@ class ExtendedInlinePolicyProperties(NodeProperties):
 
 class InlinePolicyNode(Node):
     properties: ExtendedInlinePolicyProperties
+    _policy: InlinePolicy = PrivateAttr()
+    _lookup: LookupManager = PrivateAttr()
 
     _ENTITY_NODE_TYPES = {
         "User": "AWSUser",
         "Group": "AWSGroup",
         "Role": "AWSRole",
     }
+
+    def does_role_match(self, principals: list[str]) -> bool:
+        for principal in principals:
+            if f"{self._account_id}:root" in principal:
+                return True
+            elif fnmatch.fnmatch(principal, self._policy.entity_arn):
+                return True
+        return False
+
+    def verify_roles(self, roles: list) -> list[Edge]:
+        allowed_roles = []
+        for role_arn, role_name, condition, principal in roles:
+            match_principal = self.does_role_match(flatten_principals(principal))
+            if match_principal:
+                start = EdgePath(value=self._principal_guid, match_by="id")
+                role_id = gen_guid(
+                    name=role_arn,
+                    node_type=NodeTypes.AWSRole.value,
+                    account_id=self.properties.aws_account_id,
+                )
+                end = EdgePath(value=role_id, match_by="id")
+                edge = Edge(
+                    kind="AWSCanASsumeRole",
+                    start=start,
+                    end=end,
+                )
+                allowed_roles.append(edge)
+        return allowed_roles
+
+    @property
+    def _assume_roles(self) -> list[Edge]:
+        allowed_roles = []
+        for statement in self._policy.policy_document["Statement"]:
+            if (
+                statement["Action"] == "sts:AssumeRole"
+                and statement["Effect"] == "Allow"
+            ):
+                get_roles = self._lookup.role_trusts(statement["Resource"])
+                allowed_roles.extend(self.verify_roles(get_roles))
+
+        return allowed_roles
 
     @property
     def _principal_guid(self) -> str:
@@ -80,7 +136,7 @@ class InlinePolicyNode(Node):
         )
 
     @property
-    def edges(self):
+    def _attaches_policy(self):
         start = EdgePath(value=self._principal_guid, match_by="id")
         end = EdgePath(value=self.id, match_by="id")
         return [
@@ -90,6 +146,10 @@ class InlinePolicyNode(Node):
                 end=end,
             )
         ]
+
+    @property
+    def edges(self) -> list[Edge]:
+        return [*self._attaches_policy, *self._assume_roles]
 
     @classmethod
     def from_input(cls, **kwargs) -> "InlinePolicyNode":
@@ -104,14 +164,24 @@ class InlinePolicyNode(Node):
         )
         node = cls(kinds=[NodeTypes.AWSInlinePolicy.value], properties=properties)
         node.attach_context(model.account_id)
+        node._policy = model
         return node
 
 
 class PolicyNode(Node):
     properties: NodeProperties
+    _policy: Policy = PrivateAttr()
 
     @property
     def edges(self):
+        for statement in self._policy.policy_document["Statement"]:
+            if (
+                statement["Action"] == "sts:AssumeRole"
+                and statement["Effect"] == "Allow"
+            ):
+                print(statement)
+        # print
+        # print(self._policy.policy_document)
         return []
 
     @classmethod
@@ -128,6 +198,7 @@ class PolicyNode(Node):
         )
         node = cls(kinds=[NodeTypes.AWSPolicy.value], properties=properties)
         node.attach_context(model.account_id)
+        node._policy = model
         return node
 
 
