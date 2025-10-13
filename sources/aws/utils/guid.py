@@ -11,6 +11,7 @@ class NodeTypes(str, Enum):
     AWSEC2Instance = "AWSEC2Instance"
     AWSPolicy = "AWSPolicy"
     AWSInlinePolicy = "AWSInlinePolicy"
+    AWSEKSCluster = "AWSEKSCluster"
 
 
 def gen_node_type(node_type: str) -> str:

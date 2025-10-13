@@ -17,6 +17,7 @@ from typing import Annotated
 from dataclasses import dataclass
 from pathlib import Path
 
+from kubernetes import config
 
 sync = typer.Typer(pretty_exceptions_enable=False)
 convert = typer.Typer(pretty_exceptions_enable=False)
@@ -38,8 +39,14 @@ InputPath = Annotated[
 
 @dataclass
 class SyncOptions:
-    session: BloodHound
-    job_id: int | None = None
+    bhe_uri: Annotated[str, typer.Option(envvar="BHE_URI")]
+    token_id: Annotated[str, typer.Option(envvar="BHE_API_ID")]
+    token_key = Annotated[str, typer.Option(envvar="BHE_API_KEY")]
+
+
+#  bhe_uri: Annotated[str, typer.Option(envvar="BHE_URI")],
+#     token_id: Annotated[str, typer.Option(envvar="BHE_API_ID")],
+#     token_key: Annotated[str, typer.Option(envvar="BHE_API_KEY")],
 
 
 @dataclass
@@ -82,6 +89,9 @@ def aws(input_path: InputPath, output_path: OutputPath = Path("./graph")):
 # @sync.command()
 @convert.command()
 def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph")):
+    contexts, active = config.list_kube_config_contexts()
+    cluster_name = active["context"]["cluster"]
+
     client = duckdb.connect("k8s_lookup.duckdb", read_only=True)
     lookup = LookupManager(client)
     fs_source = kubernetes_fs(str(input_path))
@@ -91,5 +101,5 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
         progress="enlighten",
     )
     pipeline.run(
-        kubernetes_opengraph(cluster="colima", lookup=lookup, raw_source=fs_source)
+        kubernetes_opengraph(cluster=cluster_name, lookup=lookup, raw_source=fs_source)
     )

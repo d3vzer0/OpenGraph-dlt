@@ -3,6 +3,12 @@ from .models.aws.group import Group, GroupNode
 from .models.aws.membership import UserGroupMembership, MembershipEdges
 from sources.aws.utils.lookup import LookupManager
 from .models.aws.role import Role, RoleNode
+from .models.aws.eks import (
+    EKSCluster,
+    EKSAccesssEntry,
+    EKSlusterNode,
+    EKSAccessEntryEdges,
+)
 from .models.aws.user import User, UserNode
 from .models.aws.policy import (
     Policy,
@@ -36,6 +42,7 @@ def aws_resources(
     sts = session.client("sts", endpoint_url=endpoint_url)
     re = session.client("resource-explorer-2", region_name=region_name)
     ec2 = session.client("ec2", region_name=region_name)
+    eks_client = session.client("eks", region_name=region_name)
 
     account_id = sts.get_caller_identity()["Account"]
 
@@ -181,6 +188,41 @@ def aws_resources(
             for resource in page.get("Resources", []):
                 yield resource
 
+    @dlt.resource(name="eks", columns=EKSCluster, parallelized=True)
+    def eks():
+        paginator = eks_client.get_paginator("list_clusters")
+        for page in paginator.paginate():
+            for cluster_name in page.get("clusters", []):
+                cluster = eks_client.describe_cluster(name=cluster_name)["cluster"]
+                cluster["accountId"] = cluster["arn"].split(":")[4]
+                cluster["region"] = cluster["arn"].split(":")[3]
+                yield cluster
+
+    @dlt.transformer(
+        name="eks_cluster_access_entries",
+        data_from=eks,
+        columns=EKSAccesssEntry,
+        parallelized=True,
+    )
+    def eks_cluster_access_entries(cluster: dict):
+        region = cluster["arn"].split(":")[3]
+        access_entries = eks_client.list_access_entries(clusterName=cluster["name"])
+        for principal in access_entries["accessEntries"]:
+            detail = eks_client.describe_access_entry(
+                clusterName=cluster["name"],
+                principalArn=principal,
+            )
+            associated = eks_client.list_associated_access_policies(
+                clusterName=cluster["name"],
+                principalArn=principal,
+            )
+            yield {
+                **detail["accessEntry"],
+                "accountId": cluster["accountId"],
+                "region": cluster["region"],
+                "policies": associated["associatedAccessPolicies"],
+            }
+
     @dlt.transformer(
         name="ec2_instances",
         data_from=resources,
@@ -195,27 +237,27 @@ def aws_resources(
                 for instance in reservation.get("Instances", []):
                     yield instance
 
-    @dlt.transformer(
-        name="ec2_instance_roles",
-        data_from=ec2_instances,
-        columns=EC2InstanceRole,
-        parallelized=True,
-    )
-    def ec2_instance_roles(instance):
-        profile_info = instance["IamInstanceProfile"]
-        if profile_info:
-            profile_arn = profile_info["Arn"]
-            profile_name = profile_arn.split("/")[-1]
-            profile = iam.get_instance_profile(InstanceProfileName=profile_name)[
-                "InstanceProfile"
-            ]
-            for role in profile.get("Roles", []):
-                yield {
-                    "InstanceId": instance["InstanceId"],
-                    "InstanceArn": instance["Arn"],
-                    "InstanceRegion": instance["Region"],
-                    **role,
-                }
+    # @dlt.transformer(
+    #     name="ec2_instance_roles",
+    #     data_from=ec2_instances,
+    #     columns=EC2InstanceRole,
+    #     parallelized=True,
+    # )
+    # def ec2_instance_roles(instance):
+    #     profile_info = instance["IamInstanceProfile"]
+    #     if profile_info:
+    #         profile_arn = profile_info["Arn"]
+    #         profile_name = profile_arn.split("/")[-1]
+    #         profile = iam.get_instance_profile(InstanceProfileName=profile_name)[
+    #             "InstanceProfile"
+    #         ]
+    #         for role in profile.get("Roles", []):
+    #             yield {
+    #                 "InstanceId": instance["InstanceId"],
+    #                 "InstanceArn": instance["Arn"],
+    #                 "InstanceRegion": instance["Region"],
+    #                 **role,
+    #             }
 
     @dlt.transformer(
         data_from=policies,
@@ -266,10 +308,12 @@ def aws_resources(
         policy_attachments,
         resources,
         ec2_instances,
-        ec2_instance_roles,
+        # ec2_instance_roles,
         user_inline_policies,
         group_inline_policies,
         role_inline_policies,
+        eks,
+        eks_cluster_access_entries,
     )
 
 
@@ -290,6 +334,8 @@ def aws_fs(bucket_url: str):
         json_resource("roles", "roles_fs"),
         json_resource("inline_policies", "inline_policies_fs"),
         json_resource("user_group_memberships", "user_group_memberships_fs"),
+        json_resource("eks", "eks_fs"),
+        json_resource("eks_cluster_access_entries", "eks_cluster_access_entries_fs"),
     )
 
 
@@ -350,9 +396,18 @@ def aws_opengraph(
 
     @dlt.transformer(data_from=raw_source.inline_policies_fs, columns=Graph)
     def inline_policies_graph(policies: list):
-
         for policy in policies:
             yield build_graph(InlinePolicyNode, policy)
+
+    @dlt.transformer(data_from=raw_source.eks_fs, columns=Graph)
+    def eks_graph(eks_clusters: list):
+        for eks_cluster in eks_clusters:
+            yield build_graph(EKSlusterNode, eks_cluster)
+
+    @dlt.transformer(data_from=raw_source.eks_cluster_access_entries_fs, columns=Graph)
+    def eks_cluster_access_entries_graph(entries: list):
+        for entry in entries:
+            yield build_graph_edges(EKSAccessEntryEdges, entry)
 
     return (
         users_graph,
@@ -362,4 +417,6 @@ def aws_opengraph(
         policies_graph,
         memberships_graph,
         inline_policies_graph,
+        eks_graph,
+        eks_cluster_access_entries_graph,
     )

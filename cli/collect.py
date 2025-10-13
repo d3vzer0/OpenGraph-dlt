@@ -11,6 +11,9 @@ from dlt.destinations import filesystem
 from typing import Annotated
 from pathlib import Path
 
+from kubernetes import config
+
+
 collect = typer.Typer()
 
 OutputPath = Annotated[
@@ -59,6 +62,10 @@ def aws(output_path: OutputPath):
 
 @collect.command()
 def kubernetes(output_path: OutputPath):
+
+    contexts, active = config.list_kube_config_contexts()
+    cluster_name = active["context"]["cluster"]
+
     dest = filesystem(
         bucket_url=str(output_path),
     )
@@ -73,7 +80,7 @@ def kubernetes(output_path: OutputPath):
     pipeline.run(
         kubernetes_resources(
             kube_config="~/.kube/config",
-            cluster="colima",
+            cluster=cluster_name,
         ),
         write_disposition="replace",
     )

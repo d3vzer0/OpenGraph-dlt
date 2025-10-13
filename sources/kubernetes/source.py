@@ -284,7 +284,7 @@ def kubernetes_fs(bucket_url: str):
 @dlt.source(name="kubernetes_opengraph")
 def kubernetes_opengraph(
     *,
-    cluster: str = dlt.config.value,
+    cluster: str,
     lookup: LookupManager,
     raw_source,
 ):
@@ -293,6 +293,7 @@ def kubernetes_opengraph(
         node = model_cls.from_input(**resource)
         node._cluster = cluster
         node._lookup = lookup
+
         entries = GraphEntries(
             nodes=[node],
             edges=[edge for edge in node.edges if edge],
@@ -372,7 +373,7 @@ def kubernetes_opengraph(
     @dlt.transformer(data_from=raw_source.groups_fs, columns=Graph)
     def groups_graph(groups):
         for group in groups:
-            yield build_graph(GroupNode, group)
+            return build_graph(GroupNode, group)
 
     # @dlt.transformer(data_from=raw_source.statefulsets, columns=Graph)
     # def statefulsets(statefulset):

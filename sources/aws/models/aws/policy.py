@@ -181,14 +181,14 @@ class PolicyNode(GlobalPolicy):
 
     @property
     def edges(self):
-        for statement in self._policy.policy_document["Statement"]:
-            if (
-                statement["Action"] == "sts:AssumeRole"
-                and statement["Effect"] == "Allow"
-            ):
-                print(statement)
-        # print
-        # print(self._policy.policy_document)
+        # for statement in self._policy.policy_document["Statement"]:
+        #     if (
+        #         statement["Action"] == "sts:AssumeRole"
+        #         and statement["Effect"] == "Allow"
+        #     ):
+        #         print(statement)
+        # # print
+        # # print(self._policy.policy_document)
         return []
 
     @classmethod
