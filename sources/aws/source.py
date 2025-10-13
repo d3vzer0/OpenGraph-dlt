@@ -7,6 +7,7 @@ from .models.aws.user import User, UserNode
 from .models.aws.policy import (
     Policy,
     PolicyNode,
+    PolicyStatementOutput,
     PolicyAttachment,
     InlinePolicy,
     InlinePolicyNode,

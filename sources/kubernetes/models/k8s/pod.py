@@ -201,6 +201,9 @@ class PodNode(Node):
     @classmethod
     def from_input(cls, **kwargs) -> "PodNode":
         kube_pod = Pod(**kwargs)
+        if "name" in kube_pod.metadata.labels:
+            del kube_pod.metadata.labels["name"]
+
         properties = ExtendedProperties(
             name=kube_pod.metadata.name,
             displayname=kube_pod.metadata.name,

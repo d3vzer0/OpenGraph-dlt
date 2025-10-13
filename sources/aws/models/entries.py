@@ -27,6 +27,7 @@ class Node(BaseModel, ABC):
     _scope: Optional[str] = PrivateAttr(default=None)
 
     @computed_field
+    @property
     def id(self) -> str:
         account = self.properties.aws_account_id or self._account_id
         name = self.properties.arn if self.properties.arn else self.properties.name

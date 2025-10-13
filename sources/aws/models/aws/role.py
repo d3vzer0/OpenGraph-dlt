@@ -32,6 +32,11 @@ class RoleProperties(NodeProperties):
 class RoleNode(Node):
     properties: RoleProperties
 
+    # @property
+    # def _assume_role(self):
+    #     identities_allowed = []
+    #     for statement in self.properties.assume_role_policy["Statement"]:
+
     @property
     def edges(self):
         return []

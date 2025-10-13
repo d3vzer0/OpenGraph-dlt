@@ -97,19 +97,24 @@ class GlobalPolicy(Node):
         for role_arn, role_name, condition, principal in roles:
             match_principal = self.does_role_match(flatten_principals(principal))
             if match_principal:
-                start = EdgePath(value=self._principal_guid, match_by="id")
+                start_principal = EdgePath(value=self._principal_guid, match_by="id")
                 role_id = gen_guid(
                     name=role_arn,
                     node_type=NodeTypes.AWSRole.value,
                     account_id=self.properties.aws_account_id,
                 )
                 end = EdgePath(value=role_id, match_by="id")
-                edge = Edge(
-                    kind="AWSCanASsumeRole",
-                    start=start,
+                principal_edge = Edge(
+                    kind="AWSCanAssumeRole",
+                    start=start_principal,
                     end=end,
                 )
-                allowed_roles.append(edge)
+                # allowed_roles.append(edge)
+
+                start_policy = EdgePath(value=self.id, match_by="id")
+                policy_edge = Edge(kind="AWSAllowsAssume", start=start_policy, end=end)
+                allowed_roles.append(policy_edge)
+
         return allowed_roles
 
     @property

@@ -18,8 +18,8 @@ from .models.k8s.cluster_role_binding import ClusterRoleBinding, ClusterRoleBind
 from .models.k8s.service_account import ServiceAccount, ServiceAccountNode
 from .models.k8s.resource import Resource, ResourceNode
 from .models.graph import GraphEntries, Graph
-from .models.k8s.identities import User, UserNode, Group, GroupNode
 from .models.entries import Node as GraphNode
+from .models.k8s.identities import User, UserNode, Group, GroupNode
 from functools import wraps
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, readers
 
@@ -273,10 +273,11 @@ def kubernetes_fs(bucket_url: str):
         json_resource(bucket_url, "cluster_roles", "cluster_roles_fs"),
         json_resource(bucket_url, "cluster_role_bindings", "cluster_role_bindings_fs"),
         json_resource(bucket_url, "resource_definitions", "resource_definitions_fs"),
-        json_resource(bucket_url, "users", "users_fs"),
-        json_resource(bucket_url, "groups", "groups_fs"),
+        json_resource(bucket_url, "cust_users", "users_fs"),
+        json_resource(bucket_url, "cust_groups", "groups_fs"),
         json_resource(bucket_url, "unmapped", "unmapped_fs"),
         json_resource(bucket_url, "cust_volumes", "volumes_fs"),
+        # json_resource(bucket_url, "cust_", "volumes_fs"),
     )
 
 
@@ -368,7 +369,7 @@ def kubernetes_opengraph(
         for user in users:
             yield build_graph(UserNode, user)
 
-    @dlt.transformer(data_from=raw_source.users_fs, columns=Graph)
+    @dlt.transformer(data_from=raw_source.groups_fs, columns=Graph)
     def groups_graph(groups):
         for group in groups:
             yield build_graph(GroupNode, group)
