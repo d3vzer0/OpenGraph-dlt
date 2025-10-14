@@ -39,8 +39,8 @@ class CollectorProperties(BaseModel):
 
 
 class MetaDataCollector(BaseModel):
-    name: str = "KubePyHound-0.0.3"
-    version: str = "beta"
+    name: str = "opengraph-dlt-k8s"
+    version: str = "0.0.3"
     properties: CollectorProperties = Field(default_factory=CollectorProperties)
 
 

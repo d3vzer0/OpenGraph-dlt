@@ -15,7 +15,7 @@ class CollectorProperties(BaseModel):
 
 
 class MetaDataCollector(BaseModel):
-    name: str = "AWSOpenGraphCollector"
+    name: str = "opengraph-dlt-aws"
     version: str = "0.1.0"
     properties: CollectorProperties = Field(default_factory=CollectorProperties)
 
