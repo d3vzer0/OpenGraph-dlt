@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: virtual-eks-admin-view-policy
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]   # includes secrets
+    verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: virtual-eks-admin-view-policy-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: virtual-eks-admin-view-policy
+subjects:
+  - kind: AWSIAM
+    name: 
