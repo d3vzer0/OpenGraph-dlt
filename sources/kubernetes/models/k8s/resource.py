@@ -1,7 +1,6 @@
-from pydantic import BaseModel, model_validator, computed_field, Field, field_validator
+from pydantic import BaseModel, computed_field, Field, field_validator
 from ..entries import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
-from typing_extensions import Self
 from typing import Optional
 import json
 
@@ -17,7 +16,7 @@ class Resource(BaseModel):
     categories: Optional[list[str]] = []
     kind: str
     group: Optional[str] = None
-    api_version: str = None
+    api_version: str | None = None
     singular_name: str | None = Field(alias="singularName", default=None)
     name: str
     namespaced: bool = False

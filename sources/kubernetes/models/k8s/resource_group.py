@@ -1,7 +1,6 @@
-from pydantic import BaseModel, model_validator, computed_field
-from ..entries import Node, NodeProperties, Edge, EdgePath
+from pydantic import BaseModel, computed_field
+from ..entries import Node, NodeProperties
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
-from typing_extensions import Self
 from typing import Optional
 
 
@@ -13,8 +12,6 @@ class GroupVersion(BaseModel):
 class ResourceGroup(BaseModel):
     name: str
     api_version: Optional[str] = None
-    # preferred_version: GroupVersion
-    # versions: list[GroupVersion]
 
     @computed_field
     @property

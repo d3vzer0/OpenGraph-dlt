@@ -28,10 +28,7 @@ def get_guid(
     name: str, resource_type: NodeTypes, cluster: str, namespace: str = "__global__"
 ) -> str:
     uuid_namespace = uuid.NAMESPACE_DNS
-    # name = f"kubecluster/{cluster}/{scope}/{resource_type}/{name}"
-    # print(resource_type.value, name, cluster, namespace)
     resource_path = f"{name}.{resource_type.value}.{namespace}.{cluster}"
-    # print(resource_path)
     return str(uuid.uuid5(uuid_namespace, resource_path))
 
 
@@ -40,5 +37,4 @@ def get_generic_guid(
 ) -> str:
     uuid_namespace = uuid.NAMESPACE_DNS
     resource_path = f"{name}.{resource_type}.{namespace}.{cluster}"
-    # print()
     return str(uuid.uuid5(uuid_namespace, resource_path))

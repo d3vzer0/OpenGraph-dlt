@@ -5,7 +5,6 @@ from pydantic import (
     BeforeValidator,
     field_validator,
     PrivateAttr,
-    computed_field,
 )
 from datetime import datetime
 from pydantic_core import PydanticUseDefault
@@ -13,8 +12,6 @@ from ..entries import Node, NodeProperties, Edge, EdgePath
 from typing import Optional, Any, TypeVar, Annotated
 from sources.kubernetes.utils.guid import get_guid, get_generic_guid, NodeTypes
 from .volume import Volume as HostVolume
-from .service_account import ServiceAccountNode
-from .cluster import Cluster
 import json
 
 

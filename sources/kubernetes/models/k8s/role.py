@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
-from ..entries import Node, NodeProperties, Edge, EdgePath
+from ..entries import Node, NodeProperties, Edge, EdgePath, EdgeProperties
 from typing import Optional, Any
 from enum import Enum
 import fnmatch
@@ -146,7 +146,7 @@ class RoleNode(Node):
                         ),
                         match_by="id",
                     ),
-                    properties={"verbs": matched_verbs},
+                    properties=EdgeProperties(verbs=matched_verbs),
                 )
             )
 

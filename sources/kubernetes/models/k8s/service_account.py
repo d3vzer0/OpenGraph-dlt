@@ -54,7 +54,7 @@ class ServiceAccount(BaseModel):
 
 
 class ExtendedProperties(NodeProperties):
-    # namespace: str
+    namespace: str
     bla: str | None = None
 
 

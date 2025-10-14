@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, computed_field, ConfigDict
+from pydantic import BaseModel, computed_field, ConfigDict
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
 from ..entries import Node, NodeProperties, Edge, EdgePath
 

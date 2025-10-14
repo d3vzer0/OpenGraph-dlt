@@ -4,12 +4,10 @@ from ..entries import (
     Node,
     NodeProperties,
     Edge,
+    EdgeProperties,
     EdgePath,
-    StaleReference,
-    SourceRef,
 )
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
-from typing import Any
 import json
 
 
@@ -120,7 +118,7 @@ class ClusterRoleBindingNode(Node):
                     kind="KubeInheritsRole",
                     start=get_sa_path,
                     end=self._role_path,
-                    properties={"composed": True},
+                    properties=EdgeProperties(composed=True),
                 )
 
                 edges.append(sa_edge)
