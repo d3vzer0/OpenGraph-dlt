@@ -19,6 +19,7 @@ class Verbs(str, Enum):
     deletecollection = "deletecollection"
     proxy = "proxy"
     wildcard = "*"
+    impersonate = "impersonate"
 
     def __str__(self):
         return self.value

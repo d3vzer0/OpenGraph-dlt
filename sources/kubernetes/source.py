@@ -20,6 +20,8 @@ from .models.k8s.resource import Resource, ResourceNode
 from .models.graph import GraphEntries, Graph
 from .models.entries import Node as GraphNode
 from .models.k8s.identities import User, UserNode, Group, GroupNode
+from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
+
 from functools import wraps
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, readers
 
@@ -402,3 +404,32 @@ def kubernetes_opengraph(
         volumes_graph,
         unmapped_graph,
     )
+
+
+@dlt.source(name="kubernetes_opengraph_eks")
+def kubernetes_eks_opengraph(
+    *,
+    cluster: str,
+    lookup: LookupManager,
+):
+
+    def build_graph(model_cls: Type[T], resource: dict) -> Graph:
+        node = model_cls.from_input(**resource)
+        node._cluster = cluster
+        node._lookup = lookup
+
+        entries = GraphEntries(
+            nodes=[node],
+            edges=[edge for edge in node.edges if edge],
+        )
+        return Graph(graph=entries)
+
+    @dlt.resource(name="eks_virtual_cluster_roles", columns=Graph)
+    def eks_cluster_roles():
+
+        virtual_admin = EKSVirtualClusterAdminRole()
+        print(virtual_admin.model_dump())
+
+        yield build_graph(ClusterRoleNode, virtual_admin.model_dump())
+
+    return eks_cluster_roles

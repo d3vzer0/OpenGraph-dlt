@@ -3,6 +3,7 @@ import dlt
 import duckdb
 from sources.kubernetes.source import (
     kubernetes_opengraph,
+    kubernetes_eks_opengraph,
     kubernetes_fs,
 )
 
@@ -103,3 +104,20 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
     pipeline.run(
         kubernetes_opengraph(cluster=cluster_name, lookup=lookup, raw_source=fs_source)
     )
+
+
+@convert.command()
+def eks(output_path: OutputPath = Path("./graph")):
+    contexts, active = config.list_kube_config_contexts()
+    cluster_name = active["context"]["cluster"]
+
+    client = duckdb.connect("k8s_lookup.duckdb", read_only=True)
+    lookup = LookupManager(client)
+
+    pipeline = dlt.pipeline(
+        pipeline_name="k8s_opengraph_eks_convert",
+        destination=opengraph_file(output_path=str(output_path)),
+        progress="enlighten",
+    )
+
+    pipeline.run(kubernetes_eks_opengraph(cluster=cluster_name, lookup=lookup))
