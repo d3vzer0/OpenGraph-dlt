@@ -12,6 +12,10 @@ AWS_EKS_ACCESS_POLICY_GROUPS = {
     "AmazonEKSServicePolicy": ["eks:service-operations", "system:authenticated"],
     "AmazonEKSPrometheusPolicy": ["system:monitoring", "system:authenticated"],
     "AmazonEKSClusterInsightsPolicy": ["system:monitoring"],
+    "AmazonEKSAdminPolicy": ["system:authenticated"],
+    "AmazonEKSAdminViewPolicy": ["system:authenticated"],
+    "AmazonEKSEditPolicy": ["system:authenticated"],
+    "AmazonEKSViewPolicy": ["system:authenticated"],
 }
 
 
