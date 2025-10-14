@@ -39,7 +39,7 @@ class CollectorProperties(BaseModel):
 
 
 class MetaDataCollector(BaseModel):
-    name: str = "KubePyHound-0.0.1"
+    name: str = "KubePyHound-0.0.3"
     version: str = "beta"
     properties: CollectorProperties = Field(default_factory=CollectorProperties)
 
