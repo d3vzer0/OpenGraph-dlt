@@ -16,7 +16,7 @@ class Volume(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return get_guid(self.name, NodeTypes.K8sVolume, "")
+        return get_guid(self.name, NodeTypes.KubeVolume, "")
 
 
 class ExtendedProperties(NodeProperties):
@@ -31,7 +31,7 @@ class VolumeNode(Node):
     def _node_edge(self):
         start_path = EdgePath(value=self.id, match_by="id")
         end_path_id = get_guid(
-            self.properties.node_name, NodeTypes.K8sNode, self._cluster
+            self.properties.node_name, NodeTypes.KubeNode, self._cluster
         )
         end_path = EdgePath(value=end_path_id, match_by="id")
         edge = Edge(kind="KubeHostedOn", start=start_path, end=end_path)

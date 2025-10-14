@@ -82,7 +82,7 @@ class ClusterRoleBindingNode(Node):
     def _role_path(self):
         role_id = get_guid(
             self.properties.role_ref,
-            NodeTypes.K8sClusterRole,
+            NodeTypes.KubeClusterRole,
             self._cluster,
         )
         edge_path = EdgePath(value=role_id, match_by="id")
@@ -95,16 +95,16 @@ class ClusterRoleBindingNode(Node):
 
     def _service_account_path(self, target: str, namespace):
         target_id = get_guid(
-            target, NodeTypes.K8sServiceAccount, self._cluster, namespace
+            target, NodeTypes.KubeServiceAccount, self._cluster, namespace
         )
         return EdgePath(value=target_id, match_by="id")
 
     def _get_target_user(self, target_name: str) -> "EdgePath":
-        target_id = get_guid(target_name, NodeTypes.K8sUser, self._cluster)
+        target_id = get_guid(target_name, NodeTypes.KubeUser, self._cluster)
         return EdgePath(value=target_id, match_by="id")
 
     def _get_target_group(self, target_name: str) -> "EdgePath":
-        target_id = get_guid(target_name, NodeTypes.K8sGroup, self._cluster)
+        target_id = get_guid(target_name, NodeTypes.KubeGroup, self._cluster)
         return EdgePath(value=target_id, match_by="id")
 
     @property

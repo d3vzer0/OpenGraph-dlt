@@ -11,7 +11,7 @@ class User(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return get_guid(self.name, NodeTypes.K8sUser, "")
+        return get_guid(self.name, NodeTypes.KubeUser, "")
 
 
 class Group(BaseModel):
@@ -22,7 +22,7 @@ class Group(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return get_guid(self.name, NodeTypes.K8sGroup, "")
+        return get_guid(self.name, NodeTypes.KubeGroup, "")
 
 
 class UserNode(Node):
@@ -30,7 +30,7 @@ class UserNode(Node):
     @property
     def _authenticated_group_edge(self):
         # target_id = self._lookup.groups("system:authenticated")
-        target_id = get_guid("system:authenticated", NodeTypes.K8sGroup, self._cluster)
+        target_id = get_guid("system:authenticated", NodeTypes.KubeGroup, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)

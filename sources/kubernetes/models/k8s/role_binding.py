@@ -76,23 +76,23 @@ class RoleBindingNode(Node):
     properties: ExtendedProperties
 
     def _get_target_user(self, target_name: str) -> "EdgePath":
-        target_id = get_guid(target_name, NodeTypes.K8sUser, self._cluster)
+        target_id = get_guid(target_name, NodeTypes.KubeUser, self._cluster)
         return EdgePath(value=target_id, match_by="id")
 
     def _get_target_group(self, target_name: str) -> "EdgePath":
-        target_id = get_guid(target_name, NodeTypes.K8sGroup, self._cluster)
+        target_id = get_guid(target_name, NodeTypes.KubeGroup, self._cluster)
         return EdgePath(value=target_id, match_by="id")
 
     def _service_account_path(self, target: str, namespace):
         target_id = get_guid(
-            target, NodeTypes.K8sServiceAccount, self._cluster, namespace
+            target, NodeTypes.KubeServiceAccount, self._cluster, namespace
         )
         return EdgePath(value=target_id, match_by="id")
 
     @property
     def _namespace_edge(self):
         target_id = get_guid(
-            self.properties.namespace, NodeTypes.K8sNamespace, self._cluster
+            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
@@ -103,7 +103,7 @@ class RoleBindingNode(Node):
     def _role_path(self):
         role_id = get_guid(
             self.properties.role_ref,
-            NodeTypes.K8sScopedRole,
+            NodeTypes.KubeScopedRole,
             self._cluster,
             namespace=self.properties.namespace,
         )

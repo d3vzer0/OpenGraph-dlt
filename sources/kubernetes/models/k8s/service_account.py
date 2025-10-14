@@ -63,9 +63,8 @@ class ServiceAccountNode(Node):
 
     @property
     def _namespace_edge(self):
-        # target_id = self._lookup.namespaces(self.properties.namespace)
         target_id = get_guid(
-            self.properties.namespace, NodeTypes.K8sNamespace, self._cluster
+            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
@@ -74,9 +73,8 @@ class ServiceAccountNode(Node):
 
     @property
     def _authenticated_group_edge(self):
-        # target_id = self._lookup.groups("system:authenticated")
         target_id = get_guid(
-            "system:serviceaccounts", NodeTypes.K8sGroup, self._cluster
+            "system:serviceaccounts", NodeTypes.KubeGroup, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
@@ -85,9 +83,8 @@ class ServiceAccountNode(Node):
 
     @property
     def _service_accounts_edge(self):
-        # target_id = self._lookup.groups("system:serviceaccounts")
         target_id = get_guid(
-            "system:serviceaccounts", NodeTypes.K8sServiceAccount, self._cluster
+            "system:serviceaccounts", NodeTypes.KubeServiceAccount, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")

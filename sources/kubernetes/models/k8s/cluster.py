@@ -11,7 +11,7 @@ class Cluster(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return get_guid(self.name, NodeTypes.K8sCluster, self.name)
+        return get_guid(self.name, NodeTypes.KubeCluster, self.name)
 
 
 class ClusterNode(Node):

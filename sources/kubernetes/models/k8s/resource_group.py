@@ -19,7 +19,7 @@ class ResourceGroup(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return get_guid(self.name, NodeTypes.K8sResourceGroup, "")
+        return get_guid(self.name, NodeTypes.KubeResourceGroup, "")
 
 
 class ResourceGroupNode(Node):

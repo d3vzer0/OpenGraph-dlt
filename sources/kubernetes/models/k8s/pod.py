@@ -13,6 +13,7 @@ from ..entries import Node, NodeProperties, Edge, EdgePath
 from typing import Optional, Any, TypeVar, Annotated
 from sources.kubernetes.utils.guid import get_guid, get_generic_guid, NodeTypes
 from .volume import Volume as HostVolume
+from .service_account import ServiceAccountNode
 from .cluster import Cluster
 import json
 
@@ -116,7 +117,7 @@ class PodNode(Node):
     @property
     def _namespace_edge(self):
         target_id = get_guid(
-            self.properties.namespace, NodeTypes.K8sNamespace, self._cluster
+            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
@@ -127,7 +128,7 @@ class PodNode(Node):
     def _node_edge(self):
         if self.properties.node_name:
             target_id = get_guid(
-                self.properties.node_name, NodeTypes.K8sNode, self._cluster
+                self.properties.node_name, NodeTypes.KubeNode, self._cluster
             )
             start_path = EdgePath(value=self.id, match_by="id")
             end_path = EdgePath(value=target_id, match_by="id")
@@ -138,9 +139,14 @@ class PodNode(Node):
 
     @property
     def _service_account_edge(self):
+        print(
+            self.properties.service_account_name,
+            self._cluster,
+            self.properties.namespace,
+        )
         target_id = get_guid(
             self.properties.service_account_name,
-            NodeTypes.K8sServiceAccount,
+            NodeTypes.KubeServiceAccount,
             self._cluster,
             namespace=self.properties.namespace,
         )
@@ -157,7 +163,7 @@ class PodNode(Node):
             for owner in self._pod.metadata.owner_references:
                 end_path_id = get_generic_guid(
                     owner.name,
-                    f"K8s{owner.kind}",
+                    f"Kube{owner.kind}",
                     cluster=self._cluster,
                     namespace=self.properties.namespace,
                 )
@@ -175,7 +181,7 @@ class PodNode(Node):
                     node_name=self.properties.node_name, path=volume.host_path.path
                 )
                 end_path_id = get_guid(
-                    volume_object.name, NodeTypes.K8sVolume, self._cluster
+                    volume_object.name, NodeTypes.KubeVolume, self._cluster
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
                 edges.append(

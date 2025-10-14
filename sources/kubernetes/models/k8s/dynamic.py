@@ -55,7 +55,7 @@ class DynamicNode(Node):
     def _namespace_edge(self):
         # target_id = self._lookup.namespaces(self.properties.namespace)
         target_id = get_guid(
-            self.properties.namespace, NodeTypes.K8sNamespace, self._cluster
+            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")

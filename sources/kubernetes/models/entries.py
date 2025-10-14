@@ -50,11 +50,10 @@ class StaleReferenceCollector(BaseModel):
 class NodeProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: str
-    namespace: str | None
     displayname: str
-    exists: bool = True
+    namespace: str | None
     last_seen: datetime = Field(default_factory=datetime.now)
-    uid: str
+    uid: str | None
 
 
 class Node(BaseModel, ABC):

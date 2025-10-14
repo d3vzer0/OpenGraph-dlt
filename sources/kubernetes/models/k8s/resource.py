@@ -30,7 +30,7 @@ class Resource(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return get_guid(self.name, NodeTypes.K8sResource, "")
+        return get_guid(self.name, NodeTypes.KubeResource, "")
 
     @field_validator("group", mode="after")
     @classmethod
@@ -60,7 +60,7 @@ class ResourceNode(Node):
         if self.properties.api_group_name:
             target_id = get_guid(
                 self.properties.api_group_name,
-                NodeTypes.K8sResourceGroup,
+                NodeTypes.KubeResourceGroup,
                 self._cluster,
             )
             start_path = EdgePath(value=self.id, match_by="id")
@@ -99,12 +99,12 @@ class ResourceNode(Node):
 #         if self.properties.api_group_name:
 #             target_id = get_guid(
 #                 self.properties.api_group_name,
-#                 NodeTypes.K8sResourceGroup,
+#                 NodeTypes.KubeResourceGroup,
 #                 self._cluster,
 #             )
 #             start_path = EdgePath(value=self.id, match_by="id")
 #             end_path = EdgePath(value=target_id, match_by="id")
-#             edge = Edge(kind="K8sInResourceGroup", start=start_path, end=end_path)
+#             edge = Edge(kind="KubeInResourceGroup", start=start_path, end=end_path)
 #             return edge
 #         else:
 #             return None
@@ -128,4 +128,4 @@ class ResourceNode(Node):
 #             api_group_uid=model.api_group_uid,
 #             uid=model.uid,
 #         )
-#         return cls(kinds=["K8sResource"], properties=properties)
+#         return cls(kinds=["KubeResource"], properties=properties)
