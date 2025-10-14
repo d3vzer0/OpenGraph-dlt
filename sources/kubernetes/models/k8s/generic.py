@@ -58,4 +58,4 @@ class GenericNode(Node):
             uid=model.metadata.uid,
             kind=model.kind,
         )
-        return cls(kinds=[f"K8s{model.kind}"], properties=properties)
+        return cls(kinds=[f"Kube{model.kind}"], properties=properties)

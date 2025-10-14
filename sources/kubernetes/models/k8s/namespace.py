@@ -36,7 +36,7 @@ class NamespaceNode(Node):
         start_path = EdgePath(value=self.id, match_by="id")
         cluster = Cluster(name=self._cluster)
         end_path = EdgePath(value=cluster.uid, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     @property
@@ -52,4 +52,4 @@ class NamespaceNode(Node):
             uid=ns_node.metadata.uid,
             namespace=None,
         )
-        return cls(kinds=["K8sNamespace"], properties=properties)
+        return cls(kinds=["KubeNamespace"], properties=properties)

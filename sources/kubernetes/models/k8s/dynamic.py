@@ -7,16 +7,16 @@ from sources.kubernetes.utils.guid import NodeTypes
 
 
 VERB_TO_PERMISSION = {
-    "get": "K8sCanGet",
-    "list": "K8sCanList",
-    "watch": "K8sCanWatch",
-    "create": "K8sCanCreate",
-    "update": "K8sCanUpdate",
-    "patch": "K8sCanPatch",
-    "delete": "K8sCanDelete",
-    "deletecollection": "K8sCanDeleteCollection",
-    "proxy": "K8sCanProxy",
-    "*": "K8sCanAll",
+    "get": "KubeCanGet",
+    "list": "KubeCanList",
+    "watch": "KubeCanWatch",
+    "create": "KubeCanCreate",
+    "update": "KubeCanUpdate",
+    "patch": "KubeCanPatch",
+    "delete": "KubeCanDelete",
+    "deletecollection": "KubeCanDeleteCollection",
+    "proxy": "KubeCanProxy",
+    "*": "KubeCanAll",
 }
 
 
@@ -59,7 +59,7 @@ class DynamicNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     @property
@@ -89,7 +89,7 @@ class DynamicNode(Node):
             **kube_resource.metadata.labels,
         )
         return cls(
-            kinds=[f"K8s{kube_resource.kind}"],
+            kinds=[f"Kube{kube_resource.kind}"],
             properties=properties,
             source_role_uid=kube_resource.role.uid,
             source_role_permissions=kube_resource.role.permissions,

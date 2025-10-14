@@ -96,7 +96,7 @@ class RoleBindingNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     @property
@@ -113,7 +113,7 @@ class RoleBindingNode(Node):
     @property
     def _role_edge(self):
         start_path = EdgePath(value=self.id, match_by="id")
-        edge = Edge(kind="K8sReferencesRole", start=start_path, end=self._role_path)
+        edge = Edge(kind="KubeReferencesRole", start=start_path, end=self._role_path)
         return edge
 
     @property
@@ -126,10 +126,10 @@ class RoleBindingNode(Node):
                     target.namespace if target.namespace else self.properties.namespace
                 )
                 get_sa_path = self._service_account_path(target.name, namespace)
-                sa_edge = Edge(kind="K8sAuthorizes", start=rb_path, end=get_sa_path)
+                sa_edge = Edge(kind="KubeAuthorizes", start=rb_path, end=get_sa_path)
 
                 role_edge = Edge(
-                    kind="K8sInheritsRole",
+                    kind="KubeInheritsRole",
                     start=get_sa_path,
                     end=self._role_path,
                     properties={"composed": True},
@@ -140,11 +140,11 @@ class RoleBindingNode(Node):
 
             elif target.kind == "User":
                 end_path = self._get_target_user(target.name)
-                edges.append(Edge(kind="K8sAuthorizes", start=rb_path, end=end_path))
+                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
 
             elif target.kind == "Group":
                 end_path = self._get_target_group(target.name)
-                edges.append(Edge(kind="K8sAuthorizes", start=rb_path, end=end_path))
+                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
 
             else:
                 print(
@@ -171,6 +171,6 @@ class RoleBindingNode(Node):
             uid=model.metadata.uid,
         )
         return cls(
-            kinds=["K8sScopedRoleBinding", "K8sRoleBinding"],
+            kinds=["KubeScopedRoleBinding", "KubeRoleBinding"],
             properties=properties,
         )

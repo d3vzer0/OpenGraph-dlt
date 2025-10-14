@@ -34,7 +34,7 @@ class VolumeNode(Node):
             self.properties.node_name, NodeTypes.K8sNode, self._cluster
         )
         end_path = EdgePath(value=end_path_id, match_by="id")
-        edge = Edge(kind="K8sHostedOn", start=start_path, end=end_path)
+        edge = Edge(kind="KubeHostedOn", start=start_path, end=end_path)
         return edge
 
     @property
@@ -51,5 +51,5 @@ class VolumeNode(Node):
             namespace=None,
             uid=model.uid,
         )
-        node = cls(kinds=["K8sVolume"], properties=properties)
+        node = cls(kinds=["KubeVolume"], properties=properties)
         return node

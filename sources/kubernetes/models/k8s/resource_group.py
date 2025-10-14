@@ -34,4 +34,4 @@ class ResourceGroupNode(Node):
         properties = NodeProperties(
             name=model.name, displayname=model.name, uid=model.uid, namespace=None
         )
-        return cls(kinds=["K8sResourceGroup"], properties=properties)
+        return cls(kinds=["KubeResourceGroup"], properties=properties)

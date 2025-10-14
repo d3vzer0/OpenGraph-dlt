@@ -71,5 +71,5 @@ class StatefulSetNode(Node):
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        node = cls(kinds=["K8sStatefulSet"], properties=properties)
+        node = cls(kinds=["KubeStatefulSet"], properties=properties)
         return node

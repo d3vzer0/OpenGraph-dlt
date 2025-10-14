@@ -72,5 +72,5 @@ class DaemonSetNode(Node):
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        node = cls(kinds=["K8sDaemonSet"], properties=properties)
+        node = cls(kinds=["KubeDaemonSet"], properties=properties)
         return node

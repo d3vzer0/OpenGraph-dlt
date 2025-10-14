@@ -25,16 +25,16 @@ class Verbs(str, Enum):
 
 
 VERB_TO_PERMISSION = {
-    "get": "K8sCanGet",
-    "list": "K8sCanList",
-    "watch": "K8sCanWatch",
-    "create": "K8sCanCreate",
-    "update": "K8sCanUpdate",
-    "patch": "K8sCanPatch",
-    "delete": "K8sCanDelete",
-    "deletecollection": "K8sCanDeleteCollection",
-    "proxy": "K8sCanProxy",
-    "*": "K8sCanAll",
+    "get": "KubeCanGet",
+    "list": "KubeCanList",
+    "watch": "KubeCanWatch",
+    "create": "KubeCanCreate",
+    "update": "KubeCanUpdate",
+    "patch": "KubeCanPatch",
+    "delete": "KubeCanDelete",
+    "deletecollection": "KubeCanDeleteCollection",
+    "proxy": "KubeCanProxy",
+    "*": "KubeCanAll",
 }
 
 
@@ -116,7 +116,7 @@ class RoleNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     def _rule_edge(self, rule: Rule):
@@ -138,11 +138,11 @@ class RoleNode(Node):
         for name, kind, r_namespace, singular, rd in all_allowed_resources:
             targets.append(
                 Edge(
-                    kind="K8sHasPermissions",
+                    kind="KubeHasPermissions",
                     start=start_path,
                     end=EdgePath(
                         value=get_generic_guid(
-                            name, f"K8s{kind}", self._cluster, namespace
+                            name, f"Kube{kind}", self._cluster, namespace
                         ),
                         match_by="id",
                     ),
@@ -174,6 +174,6 @@ class RoleNode(Node):
             uid=model.metadata.uid,
         )
         return cls(
-            kinds=["K8sScopedRole", "K8sRole"],
+            kinds=["KubeScopedRole", "KubeRole"],
             properties=properties,
         )

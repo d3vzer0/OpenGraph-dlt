@@ -31,21 +31,21 @@ class Verbs(str, Enum):
 
 
 VERB_TO_PERMISSION = {
-    "get": "K8sCanGet",
-    "list": "K8sCanList",
-    "watch": "K8sCanWatch",
-    "create": "K8sCanCreate",
-    "update": "K8sCanUpdate",
-    "patch": "K8sCanPatch",
-    "delete": "K8sCanDelete",
-    "deletecollection": "K8sCanDeleteCollection",
-    "proxy": "K8sCanProxy",
-    "impersonate": "K8sCanImpersonate",
-    "approve": "K8sCanApprove",
-    "sign": "K8sCanSign",
-    "escalate": "K8sCanEscalate",
-    "bind": "K8sCanBind",
-    "*": "K8sCanAll",
+    "get": "KubeCanGet",
+    "list": "KubeCanList",
+    "watch": "KubeCanWatch",
+    "create": "KubeCanCreate",
+    "update": "KubeCanUpdate",
+    "patch": "KubeCanPatch",
+    "delete": "KubeCanDelete",
+    "deletecollection": "KubeCanDeleteCollection",
+    "proxy": "KubeCanProxy",
+    "impersonate": "KubeCanImpersonate",
+    "approve": "KubeCanApprove",
+    "sign": "KubeCanSign",
+    "escalate": "KubeCanEscalate",
+    "bind": "KubeCanBind",
+    "*": "KubeCanAll",
 }
 
 
@@ -112,7 +112,7 @@ class ClusterRoleNode(Node):
         start_path = EdgePath(value=self.id, match_by="id")
         cluster = Cluster(name=self._cluster)
         end_path = EdgePath(value=cluster.uid, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     def _matching_verbs(self, verbs: list) -> list:
@@ -139,10 +139,10 @@ class ClusterRoleNode(Node):
         for name, kind, singular, rd in all_allowed_resources:
             targets.append(
                 Edge(
-                    kind="K8sHasPermissions",
+                    kind="KubeHasPermissions",
                     start=start_path,
                     end=EdgePath(
-                        value=get_generic_guid(name, f"K8s{kind}", self._cluster),
+                        value=get_generic_guid(name, f"Kube{kind}", self._cluster),
                         match_by="id",
                     ),
                     properties={"verbs": matched_verbs},
@@ -174,7 +174,7 @@ class ClusterRoleNode(Node):
             namespace=None,
         )
         return cls(
-            kinds=["K8sClusterRole", "K8sRole"],
+            kinds=["KubeClusterRole", "KubeRole"],
             properties=properties,
         )
 

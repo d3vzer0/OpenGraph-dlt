@@ -69,7 +69,7 @@ class ServiceAccountNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     @property
@@ -80,7 +80,7 @@ class ServiceAccountNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sMemberOf", start=start_path, end=end_path)
+        edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
 
     @property
@@ -91,7 +91,7 @@ class ServiceAccountNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sMemberOf", start=start_path, end=end_path)
+        edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
 
     @property
@@ -111,4 +111,4 @@ class ServiceAccountNode(Node):
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        return cls(kinds=["K8sServiceAccount"], properties=properties)
+        return cls(kinds=["KubeServiceAccount"], properties=properties)

@@ -64,12 +64,12 @@ class ReplicaSetNode(Node):
             for owner in self._replicaset.metadata.owner_references:
                 end_path_id = get_generic_guid(
                     owner.name,
-                    f"K8s{owner.kind}",
+                    f"Kube{owner.kind}",
                     cluster=self._cluster,
                     namespace=self.properties.namespace,
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
-                edges.append(Edge(kind="K8sOwnedBy", start=start_path, end=end_path))
+                edges.append(Edge(kind="KubeOwnedBy", start=start_path, end=end_path))
         return edges
 
     @property
@@ -85,6 +85,6 @@ class ReplicaSetNode(Node):
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        node = cls(kinds=["K8sReplicaSet"], properties=properties)
+        node = cls(kinds=["KubeReplicaSet"], properties=properties)
         node._replicaset = model
         return node

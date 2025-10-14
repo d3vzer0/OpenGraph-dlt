@@ -91,7 +91,7 @@ class ClusterRoleBindingNode(Node):
     @property
     def _role_edge(self):
         start_path = EdgePath(value=self.id, match_by="id")
-        return Edge(kind="K8sReferencesRole", start=start_path, end=self._role_path)
+        return Edge(kind="KubeReferencesRole", start=start_path, end=self._role_path)
 
     def _service_account_path(self, target: str, namespace):
         target_id = get_guid(
@@ -114,10 +114,10 @@ class ClusterRoleBindingNode(Node):
         for target in self.properties.subjects:
             if target.kind == "ServiceAccount":
                 get_sa_path = self._service_account_path(target.name, target.namespace)
-                sa_edge = Edge(kind="K8sAuthorizes", start=rb_path, end=get_sa_path)
+                sa_edge = Edge(kind="KubeAuthorizes", start=rb_path, end=get_sa_path)
 
                 role_edge = Edge(
-                    kind="K8sInheritsRole",
+                    kind="KubeInheritsRole",
                     start=get_sa_path,
                     end=self._role_path,
                     properties={"composed": True},
@@ -128,11 +128,11 @@ class ClusterRoleBindingNode(Node):
 
             elif target.kind == "User":
                 end_path = self._get_target_user(target.name)
-                edges.append(Edge(kind="K8sAuthorizes", start=rb_path, end=end_path))
+                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
 
             elif target.kind == "Group":
                 end_path = self._get_target_group(target.name)
-                edges.append(Edge(kind="K8sAuthorizes", start=rb_path, end=end_path))
+                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
 
         return edges
 
@@ -152,6 +152,6 @@ class ClusterRoleBindingNode(Node):
             namespace=None,
         )
         return cls(
-            kinds=["K8sClusterRoleBinding", "K8sRoleBinding"],
+            kinds=["KubeClusterRoleBinding", "KubeRoleBinding"],
             properties=properties,
         )

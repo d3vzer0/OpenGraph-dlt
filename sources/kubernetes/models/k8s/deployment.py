@@ -84,5 +84,5 @@ class DeploymentNode(Node):
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        node = cls(kinds=["K8sDeployment"], properties=properties)
+        node = cls(kinds=["KubeDeployment"], properties=properties)
         return node

@@ -120,7 +120,7 @@ class PodNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     @property
@@ -131,7 +131,7 @@ class PodNode(Node):
             )
             start_path = EdgePath(value=self.id, match_by="id")
             end_path = EdgePath(value=target_id, match_by="id")
-            edge = Edge(kind="K8sRunsOn", start=start_path, end=end_path)
+            edge = Edge(kind="KubeRunsOn", start=start_path, end=end_path)
             return edge
         else:
             return None
@@ -146,7 +146,7 @@ class PodNode(Node):
         )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sRunsAs", start=start_path, end=end_path)
+        edge = Edge(kind="KubeRunsAs", start=start_path, end=end_path)
         return edge
 
     @property
@@ -162,7 +162,7 @@ class PodNode(Node):
                     namespace=self.properties.namespace,
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
-                edges.append(Edge(kind="K8sOwnedBy", start=start_path, end=end_path))
+                edges.append(Edge(kind="KubeOwnedBy", start=start_path, end=end_path))
         return edges
 
     @property
@@ -180,7 +180,7 @@ class PodNode(Node):
                 end_path = EdgePath(value=end_path_id, match_by="id")
                 edges.append(
                     Edge(
-                        kind="K8sAttaches",
+                        kind="KubeAttaches",
                         start=start_path,
                         end=end_path,
                         properties={"name": volume.name, "type": "HostPath"},
@@ -214,6 +214,6 @@ class PodNode(Node):
             **kube_pod.metadata.labels,
             **kube_pod.spec.containers[0].security_context.model_dump(),
         )
-        node = cls(kinds=["K8sPod"], properties=properties)
+        node = cls(kinds=["KubePod"], properties=properties)
         node._pod = kube_pod
         return node

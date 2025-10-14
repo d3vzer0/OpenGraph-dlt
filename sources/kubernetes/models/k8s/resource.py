@@ -65,7 +65,7 @@ class ResourceNode(Node):
             )
             start_path = EdgePath(value=self.id, match_by="id")
             end_path = EdgePath(value=target_id, match_by="id")
-            edge = Edge(kind="K8sInResourceGroup", start=start_path, end=end_path)
+            edge = Edge(kind="KubeInResourceGroup", start=start_path, end=end_path)
             return edge
         else:
             return None
@@ -88,7 +88,7 @@ class ResourceNode(Node):
             api_group_name=model.group,
             uid=model.uid,
         )
-        return cls(kinds=["K8sResource"], properties=properties)
+        return cls(kinds=["KubeResource"], properties=properties)
 
 
 # class CustomResourceNode(Node):

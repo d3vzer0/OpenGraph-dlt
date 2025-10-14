@@ -37,7 +37,7 @@ class NodeOutput(GraphNode):
         target_id = get_guid("system:authenticated", NodeTypes.K8sGroup, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sMemberOf", start=start_path, end=end_path)
+        edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
 
     @property
@@ -46,7 +46,7 @@ class NodeOutput(GraphNode):
         target_id = get_guid("system:nodes", NodeTypes.K8sGroup, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sMemberOf", start=start_path, end=end_path)
+        edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
 
     @property
@@ -54,7 +54,7 @@ class NodeOutput(GraphNode):
         target_id = get_guid(self._cluster, NodeTypes.K8sCluster, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sBelongsTo", start=start_path, end=end_path)
+        edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     @property
@@ -74,6 +74,6 @@ class NodeOutput(GraphNode):
             uid=node_out.metadata.uid,
             namespace=None,
         )
-        # resource_path = f"{properties.name}.{NodeTypes.K8sNode.value}.system.a0704eb1-8213-5055-b822-238ec31feeca"
+        # resource_path = f"{properties.name}.{NodeTypes.KubeNode.value}.system.a0704eb1-8213-5055-b822-238ec31feeca"
         # print(resource_path)
-        return cls(kinds=["K8sNode"], properties=properties)
+        return cls(kinds=["KubeNode"], properties=properties)

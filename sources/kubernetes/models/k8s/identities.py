@@ -33,7 +33,7 @@ class UserNode(Node):
         target_id = get_guid("system:authenticated", NodeTypes.K8sGroup, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="K8sMemberOf", start=start_path, end=end_path)
+        edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
 
     @property
@@ -46,7 +46,7 @@ class UserNode(Node):
         properties = NodeProperties(
             name=model.name, displayname=model.name, uid=model.uid, namespace=None
         )
-        return cls(kinds=["K8sUser"], properties=properties)
+        return cls(kinds=["KubeUser"], properties=properties)
 
 
 class GroupNode(Node):
@@ -60,4 +60,4 @@ class GroupNode(Node):
         properties = NodeProperties(
             name=model.name, displayname=model.name, uid=model.uid, namespace=None
         )
-        return cls(kinds=["K8sGroup"], properties=properties)
+        return cls(kinds=["KubeGroup"], properties=properties)

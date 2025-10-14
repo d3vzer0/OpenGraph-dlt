@@ -26,4 +26,4 @@ class ClusterNode(Node):
         properties = NodeProperties(
             name=cluster.name, displayname=cluster.name, uid=cluster.uid, namespace=None
         )
-        return cls(kinds=["K8sCluster"], properties=properties)
+        return cls(kinds=["KubeCluster"], properties=properties)
