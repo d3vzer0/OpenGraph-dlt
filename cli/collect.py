@@ -6,6 +6,8 @@ from sources.kubernetes.source import (
 from sources.aws.source import (
     aws_resources,
 )
+
+from sources.rapid7.source import rapid7_source
 from dlt.sources.filesystem import readers
 from dlt.destinations import filesystem
 from typing import Annotated
@@ -156,6 +158,7 @@ def kubernetes(output_path: OutputPath):
 
 @collect.command()
 def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
+
     pipeline = dlt.pipeline(
         pipeline_name="bloodhound_lookup",
         destination="duckdb",
@@ -170,3 +173,16 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
         "sources/bloodhound/dbt",
     )
     dbt.run_all()
+
+
+@collect.command()
+def rapid7():
+    pipeline = dlt.pipeline(
+        pipeline_name="rest_api_rapid7",
+        destination="duckdb",
+        dataset_name="rapid7",
+        progress="enlighten",
+    )
+
+    load_info = pipeline.run(rapid7_source())
+    print(load_info)
