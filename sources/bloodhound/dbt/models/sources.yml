@@ -1,0 +1,34 @@
+version: 2
+sources:
+  - name: bloodhound
+    schema: bloodhound 
+    description: "BloodHound nodes loaded by DLT"
+    tables:
+      - name: node
+        description: "Data from BloodHound"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: id
+            description: "Node ID"
+          - name: graph_id
+            description: "Graph ID"
+          - name: kind_ids
+            description: "Node kind IDs"
+          - name: properties
+            description: "Node properties"
+      
+      - name: kind
+        description: "Kind mapping from BloodHound"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: id
+            description: "Node ID"
+          - name: name
+            description: "Kind name"
+

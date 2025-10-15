@@ -13,6 +13,8 @@ from pathlib import Path
 
 from kubernetes import config
 
+from dlt.sources.sql_database import sql_database
+from typing import List, Annotated
 
 collect = typer.Typer()
 
@@ -148,5 +150,23 @@ def kubernetes(output_path: OutputPath):
     dbt = dlt.dbt.package(
         lookup,
         "sources/kubernetes/dbt",
+    )
+    dbt.run_all()
+
+
+@collect.command()
+def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
+    pipeline = dlt.pipeline(
+        pipeline_name="bloodhound_lookup",
+        destination="duckdb",
+        dataset_name="bloodhound",
+        progress="enlighten",
+    )
+
+    source = sql_database().with_resources("node", "kind")
+    pipeline.run(source, write_disposition="replace")
+    dbt = dlt.dbt.package(
+        pipeline,
+        "sources/bloodhound/dbt",
     )
     dbt.run_all()
