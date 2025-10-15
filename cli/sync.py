@@ -4,7 +4,6 @@ import duckdb
 from sources.kubernetes.source import (
     kubernetes_opengraph,
     kubernetes_eks_opengraph,
-    kubernetes_fs,
 )
 
 from sources.aws.source import aws_fs, aws_opengraph
@@ -95,14 +94,15 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
 
     client = duckdb.connect("k8s_lookup.duckdb", read_only=True)
     lookup = LookupManager(client)
-    fs_source = kubernetes_fs(str(input_path))
     pipeline = dlt.pipeline(
         pipeline_name="k8s_opengraph_convert",
         destination=opengraph_file(output_path=str(output_path)),
         progress="enlighten",
     )
     pipeline.run(
-        kubernetes_opengraph(cluster=cluster_name, lookup=lookup, raw_source=fs_source)
+        kubernetes_opengraph(
+            cluster=cluster_name, lookup=lookup, bucket_url=str(input_path)
+        )
     )
 
 
