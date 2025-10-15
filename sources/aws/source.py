@@ -317,34 +317,19 @@ def aws_resources(
     )
 
 
-@dlt.source(name="aws_fs")
-def aws_fs(bucket_url: str):
-    def json_resource(subdir: str, resource_name: str):
-        files = filesystemsource(
-            bucket_url=bucket_url,
-            file_glob=f"{subdir}/**/*.jsonl.gz",
-        )
-        return (files | read_jsonl()).with_name(resource_name)
-
-    return (
-        json_resource("policy_attachments", "policy_attachments_fs"),
-        json_resource("users", "users_fs"),
-        json_resource("policies", "policies_fs"),
-        json_resource("groups", "groups_fs"),
-        json_resource("roles", "roles_fs"),
-        json_resource("inline_policies", "inline_policies_fs"),
-        json_resource("user_group_memberships", "user_group_memberships_fs"),
-        json_resource("eks", "eks_fs"),
-        json_resource("eks_cluster_access_entries", "eks_cluster_access_entries_fs"),
-    )
-
-
 @dlt.source(name="aws_opengraph")
 def aws_opengraph(
     *,
     lookup: LookupManager,
-    raw_source,
+    bucket_url: str = dlt.config.value,
 ):
+
+    def json_resource(subdir: str):
+        files = filesystemsource(
+            bucket_url=bucket_url,
+            file_glob=f"{subdir}/**/*.jsonl.gz",
+        )
+        return (files | read_jsonl()).with_name(f"{subdir}_fs")
 
     def build_graph(model_cls, resource: dict) -> Graph:
         node = model_cls.from_input(**resource)
@@ -364,47 +349,59 @@ def aws_opengraph(
         )
         return Graph(graph=entries)
 
-    @dlt.transformer(data_from=raw_source.policies_fs, columns=Graph)
+    @dlt.transformer(data_from=json_resource("policies"), columns=Graph)
     def policies_graph(policies: list):
         for policy in policies:
             yield build_graph(PolicyNode, policy)
 
-    @dlt.transformer(data_from=raw_source.groups_fs, columns=Graph)
+    @dlt.transformer(data_from=json_resource("groups"), columns=Graph)
     def groups_graph(groups: list):
         for group in groups:
             yield build_graph(GroupNode, group)
 
-    @dlt.transformer(data_from=raw_source.user_group_memberships_fs, columns=Graph)
+    @dlt.transformer(
+        data_from=json_resource("user_group_memberships"),
+        columns=Graph,
+    )
     def memberships_graph(memberships: list):
         for membership in memberships:
             yield build_graph_edges(MembershipEdges, membership)
 
-    @dlt.transformer(data_from=raw_source.users_fs, columns=Graph)
+    @dlt.transformer(data_from=json_resource("users"), columns=Graph)
     def users_graph(users: list):
         for user in users:
             yield build_graph(UserNode, user)
 
-    @dlt.transformer(data_from=raw_source.roles_fs, columns=Graph)
+    @dlt.transformer(data_from=json_resource("roles"), columns=Graph)
     def roles_graph(roles: list):
         for role in roles:
             yield build_graph(RoleNode, role)
 
-    @dlt.transformer(data_from=raw_source.policy_attachments_fs, columns=Graph)
+    @dlt.transformer(
+        data_from=json_resource("policy_attachments"),
+        columns=Graph,
+    )
     def policies_attachment_graph(policies: list):
         for policy in policies:
             yield build_graph_edges(PolicyAttachmentEdges, policy)
 
-    @dlt.transformer(data_from=raw_source.inline_policies_fs, columns=Graph)
+    @dlt.transformer(
+        data_from=json_resource("inline_policies"),
+        columns=Graph,
+    )
     def inline_policies_graph(policies: list):
         for policy in policies:
             yield build_graph(InlinePolicyNode, policy)
 
-    @dlt.transformer(data_from=raw_source.eks_fs, columns=Graph)
+    @dlt.transformer(data_from=json_resource("eks"), columns=Graph)
     def eks_graph(eks_clusters: list):
         for eks_cluster in eks_clusters:
             yield build_graph(EKSlusterNode, eks_cluster)
 
-    @dlt.transformer(data_from=raw_source.eks_cluster_access_entries_fs, columns=Graph)
+    @dlt.transformer(
+        data_from=json_resource("eks_cluster_access_entries"),
+        columns=Graph,
+    )
     def eks_cluster_access_entries_graph(entries: list):
         for entry in entries:
             yield build_graph_edges(EKSAccessEntryEdges, entry)

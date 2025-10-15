@@ -6,7 +6,7 @@ from sources.kubernetes.source import (
     kubernetes_eks_opengraph,
 )
 
-from sources.aws.source import aws_fs, aws_opengraph
+from sources.aws.source import aws_opengraph
 
 from destinations.opengraph.client import BloodHound
 from destinations.opengraph.destination import opengraph_file
@@ -76,14 +76,13 @@ class ConvertOptions:
 def aws(input_path: InputPath, output_path: OutputPath = Path("./graph")):
     client = duckdb.connect("aws_lookup.duckdb", read_only=True)
     lookup = AWSLookupManager(client)
-    fs_source = aws_fs(str(input_path))
 
     pipeline = dlt.pipeline(
         pipeline_name="aws_opengraph_convert",
         destination=opengraph_file(output_path=str(output_path)),
         progress="enlighten",
     )
-    pipeline.run(aws_opengraph(lookup=lookup, raw_source=fs_source))
+    pipeline.run(aws_opengraph(lookup=lookup, bucket_url=str(input_path)))
 
 
 # @sync.command()
