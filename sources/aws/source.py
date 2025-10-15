@@ -198,6 +198,22 @@ def aws_resources(
                 cluster["region"] = cluster["arn"].split(":")[3]
                 yield cluster
 
+    # @dlt.resource(columns=Role, table_name="eks_virtual_roles", parallelized=True)
+    # def eks_virtual_roles():
+    #     v1 = client.RbacAuthorizationV1Api()
+    #     roles = v1.list_role_for_all_namespaces()
+    #     for role in roles.items:
+    #         yield role.to_dict()
+
+    # @dlt.resource(
+    #     columns=ClusterRole, table_name="eks_virtual_cluster_roles", parallelized=True
+    # )
+    # def eks_vritual_cluster_roles():
+    #     v1 = client.RbacAuthorizationV1Api()
+    #     roles = v1.list_cluster_role()
+    #     for role in roles.items:
+    #         yield role.to_dict()
+
     @dlt.transformer(
         name="eks_cluster_access_entries",
         data_from=eks,

@@ -50,6 +50,6 @@ class EC2InstanceNode(Node):
     # @classmethod
     # def from_input(cls, **kwargs) -> "EC2InstanceNode":
 
-    #     node = cls(kinds=[NodeTypes.AWSEC2Instance.value], properties=properties)
+    #     node = cls(kinds=["AWS", NodeTypes.AWSEC2Instance.value], properties=properties)
     #     node.attach_context(model.AccountId, scope=model.Region)
     #     return node

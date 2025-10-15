@@ -32,7 +32,7 @@ class Node(BaseModel, ABC):
         account = self.properties.aws_account_id or self._account_id
         name = self.properties.arn if self.properties.arn else self.properties.name
         return gen_guid(
-            name, self.kinds[0], account_id=account, scope=self.properties.aws_region
+            name, self.kinds[1], account_id=account, scope=self.properties.aws_region
         )
 
     @classmethod

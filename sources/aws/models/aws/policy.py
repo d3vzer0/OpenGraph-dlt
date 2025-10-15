@@ -170,7 +170,9 @@ class InlinePolicyNode(GlobalPolicy):
             source_entity=model.entity_arn,
             source_entity_type=model.entity_type,
         )
-        node = cls(kinds=[NodeTypes.AWSInlinePolicy.value], properties=properties)
+        node = cls(
+            kinds=["AWS", NodeTypes.AWSInlinePolicy.value], properties=properties
+        )
         node.attach_context(model.account_id)
         node._policy = model
         return node
@@ -203,7 +205,7 @@ class PolicyNode(GlobalPolicy):
             created_at=model.create_date,
             is_aws_managed=model.is_aws_managed,
         )
-        node = cls(kinds=[NodeTypes.AWSPolicy.value], properties=properties)
+        node = cls(kinds=["AWS", NodeTypes.AWSPolicy.value], properties=properties)
         node.attach_context(model.account_id)
         node._policy = model
         return node

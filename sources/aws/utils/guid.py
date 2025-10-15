@@ -4,19 +4,19 @@ from typing import Optional
 
 
 class NodeTypes(str, Enum):
-    AWSUser = "AWSUser"
-    AWSGroup = "AWSGroup"
-    AWSRole = "AWSRole"
-    AWSIdentityProvider = "AWSIdentityProvider"
-    AWSEC2Instance = "AWSEC2Instance"
-    AWSPolicy = "AWSPolicy"
-    AWSInlinePolicy = "AWSInlinePolicy"
-    AWSEKSCluster = "AWSEKSCluster"
+    AWSUser = "User"
+    AWSGroup = "Group"
+    AWSRole = "Role"
+    AWSIdentityProvider = "IdentityProvider"
+    AWSEC2Instance = "EC2Instance"
+    AWSPolicy = "Policy"
+    AWSInlinePolicy = "InlinePolicy"
+    AWSEKSCluster = "EKSCluster"
 
 
 def gen_node_type(node_type: str) -> str:
     pascal_case = "".join(x for x in node_type.title() if not x.isspace())
-    return f"AWS{pascal_case}"
+    return pascal_case
 
 
 def gen_guid(
