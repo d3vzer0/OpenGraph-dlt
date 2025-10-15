@@ -56,6 +56,6 @@ class RoleNode(Node):
             description=model.description,
             created_at=model.create_date,
         )
-        node = cls(kinds=["AWS", NodeTypes.AWSRole.value], properties=properties)
+        node = cls(kinds=[NodeTypes.AWSRole.value], properties=properties)
         node.attach_context(model.account_id)
         return node

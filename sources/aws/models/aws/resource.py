@@ -54,6 +54,6 @@ class ResourceNode(Node):
         )
 
         kind = gen_node_type(model.resource_type)
-        node = cls(kinds=["AWS", kind], properties=node_properties)
+        node = cls(kinds=[kind, "BaseAWS"], properties=node_properties)
         node.attach_context(model.owning_account_id)
         return node

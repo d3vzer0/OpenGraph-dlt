@@ -71,7 +71,7 @@ class EKSlusterNode(Node):
             aws_region=model.region,
             created_at=model.created_at,
         )
-        node = cls(kinds=["AWS", NodeTypes.AWSEKSCluster.value], properties=props)
+        node = cls(kinds=[NodeTypes.AWSEKSCluster.value], properties=props)
         node.attach_context(model.account_id, scope=model.region)
         return node
 
