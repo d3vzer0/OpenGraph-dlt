@@ -176,7 +176,17 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
 
 
 @collect.command()
-def rapid7():
+def rapid7(
+    insecure: Annotated[
+        bool, typer.Option(help="Don't verify Rapid7 server certificate")
+    ] = False,
+    delta: Annotated[
+        int,
+        typer.Option(
+            help="Fetch modified vulnerabilities since last X days in numbers"
+        ),
+    ] = 30,
+):
     pipeline = dlt.pipeline(
         pipeline_name="rest_api_rapid7",
         destination="duckdb",
@@ -184,5 +194,4 @@ def rapid7():
         progress="enlighten",
     )
 
-    load_info = pipeline.run(rapid7_source())
-    print(load_info)
+    pipeline.run(rapid7_source(insecure=insecure, vuln_delta=delta))

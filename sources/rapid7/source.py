@@ -1,8 +1,10 @@
-from dlt.sources.rest_api import rest_api_resources
-from dlt.sources.rest_api.typing import RESTAPIConfig
 from dlt.sources.helpers.rest_client.auth import HttpBasicAuth
+from dlt.sources.helpers.rest_client import RESTClient
+from .models.r7.asset import Asset
+from .models.r7.vulnerability import AssetVulnerability, Vulnerability
 import dlt
 import requests
+import datetime
 
 
 @dlt.source
@@ -10,39 +12,51 @@ def rapid7_source(
     username: str = dlt.secrets.value,
     password: str = dlt.secrets.value,
     host: str = dlt.secrets.value,
-    verify: bool = True,
+    insecure: bool = False,
+    vuln_delta: int = 30,
 ):
-    session = requests.Session()
-    session.verify = verify
-    config: RESTAPIConfig = {
-        "client": {
-            "base_url": host,
-            "auth": HttpBasicAuth(username, password),
-            "session": session,
-        },
-        "resource_defaults": {
-            "primary_key": "id",
-            "write_disposition": "merge",
-            "endpoint": {
-                "params": {
-                    "size": 500,
-                },
-            },
-        },
-        "resources": [
-            {
-                "name": "assets",
-                "endpoint": {
-                    "path": "/api/3/assets",
-                },
-            },
-            {
-                "name": "vulnerabilities",
-                "endpoint": {
-                    "path": "/api/3/assets/{resources.assets.id}/vulnerabilities"
-                },
-            },
-        ],
-    }
 
-    yield from rest_api_resources(config)
+    vulns_since = datetime.datetime.now() - datetime.timedelta(days=vuln_delta)
+    session = requests.Session()
+    session.verify = False if insecure else True
+
+    r7_client = RESTClient(
+        base_url=host,
+        auth=HttpBasicAuth(username, password),
+        session=session,
+    )
+
+    @dlt.resource(name="assets", columns=Asset, table_name="assets")
+    def assets():
+        for page in r7_client.paginate("/api/3/assets", params={"size": 500}):
+            for resource in page:
+                yield resource
+
+    @dlt.transformer(
+        data_from=assets,
+        columns=AssetVulnerability,
+        table_name="asset_vulnerabilities",
+        parallelized=True,
+    )
+    def asset_vulnerabilities(asset):
+        asset_id = asset["id"]
+        for vulnerability in r7_client.paginate(
+            f"/api/3/assets/{asset_id}/vulnerabilities", params={"size": 500}
+        ):
+            yield vulnerability
+
+    @dlt.resource(
+        name="vulnerabilities", columns=Vulnerability, table_name="vulnerabilities"
+    )
+    def vulnerabilities():
+        for page in r7_client.paginate(
+            "/api/3/vulnerabilities", params={"size": 500, "sort": "modified,DESC"}
+        ):
+            for resource in page:
+                vulnerability = Vulnerability(**resource)
+                if vulnerability.modified > vulns_since:
+                    yield resource
+                else:
+                    return
+
+    return assets, asset_vulnerabilities, vulnerabilities
