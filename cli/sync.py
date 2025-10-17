@@ -7,12 +7,13 @@ from sources.kubernetes.source import (
 )
 
 from sources.aws.source import aws_opengraph
+from sources.rapid7.source import rapid7_opengraph
 
 from destinations.opengraph.client import BloodHound
 from destinations.opengraph.destination import opengraph_file
 from sources.kubernetes.utils.lookup import LookupManager
 from sources.aws.utils.lookup import LookupManager as AWSLookupManager
-
+from sources.rapid7.utils.lookup import LookupManager as R7LookupManager
 from typing import Annotated
 from dataclasses import dataclass
 from pathlib import Path
@@ -103,6 +104,19 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
             cluster=cluster_name, lookup=lookup, bucket_url=str(input_path)
         )
     )
+
+
+# @sync.command()
+@convert.command()
+def rapid7(input_path: InputPath, output_path: OutputPath = Path("./graph")):
+    client = duckdb.connect("bloodhound_lookup.duckdb", read_only=True)
+    lookup = R7LookupManager(client)
+    pipeline = dlt.pipeline(
+        pipeline_name="rapid7_opengraph_convert",
+        destination=opengraph_file(output_path=str(output_path)),
+        progress="enlighten",
+    )
+    pipeline.run(rapid7_opengraph(lookup=lookup, bucket_url=str(input_path)))
 
 
 @convert.command()
