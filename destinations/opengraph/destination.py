@@ -23,9 +23,10 @@ import json
 DEST_PART = defaultdict(int)
 
 
-@dlt.destination(batch_size=100)
+@dlt.destination(batch_size=1000)
 def opengraph_file(items: TDataItems, table: TTableSchema, output_path="./output"):
-    DEST_PART[table["name"]] += 1
+    table_name = table["name"]
+    DEST_PART[table_name] += 1
     output_dir = Path(output_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     merged = GraphEntries(nodes=[], edges=[])
@@ -37,7 +38,7 @@ def opengraph_file(items: TDataItems, table: TTableSchema, output_path="./output
 
     aggregated = Graph(graph=merged)
 
-    file_name = f"{table['name']}-{DEST_PART[table["name"]]}.json"
+    file_name = f"{table_name}-{DEST_PART[table_name]}.json"
     file_path = output_dir / file_name
     with file_path.open("w", encoding="utf-8") as fh:
         json.dump(
