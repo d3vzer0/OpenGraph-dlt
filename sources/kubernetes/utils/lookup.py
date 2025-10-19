@@ -1,5 +1,6 @@
 from duckdb import DuckDBPyConnection
 from typing import Dict, Any
+from functools import lru_cache
 import json
 import os
 
@@ -28,6 +29,7 @@ class LookupManager:
         results = self.client.fetchall()
         return results
 
+    @lru_cache
     def allowed_system_resources(self, resource_type: str) -> list[tuple]:
         return self._find_resources(
             f"""SELECT 
@@ -40,6 +42,7 @@ class LookupManager:
             [resource_type],
         )
 
+    @lru_cache
     def allowed_namespaced_resources(
         self, resource_type: str, namespace: str
     ) -> list[tuple]:

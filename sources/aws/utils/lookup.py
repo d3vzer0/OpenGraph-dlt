@@ -1,7 +1,5 @@
 from duckdb import DuckDBPyConnection
-from typing import Dict, Any
-import json
-import os
+from functools import lru_cache
 
 
 class LookupManager:
@@ -22,6 +20,7 @@ class LookupManager:
         results = self.client.fetchall()
         return results
 
+    @lru_cache
     def group(self, group_name: str) -> str:
         return self._find_arn(
             f"""SELECT
@@ -32,6 +31,7 @@ class LookupManager:
             [group_name],
         )
 
+    @lru_cache
     def user(self, user_name: str) -> str:
         return self._find_arn(
             f"""SELECT
@@ -42,6 +42,7 @@ class LookupManager:
             [user_name],
         )
 
+    @lru_cache
     def role(self, role_name: str) -> str:
         return self._find_arn(
             f"""SELECT
@@ -52,6 +53,7 @@ class LookupManager:
             [role_name],
         )
 
+    @lru_cache
     def role_trusts(self, role_arn: str) -> list:
         return self._find_resources(
             f"""SELECT
@@ -65,6 +67,7 @@ class LookupManager:
             [role_arn],
         )
 
+    @lru_cache
     def allowed_resources(self, target: str) -> list[tuple]:
         return self._find_resources(
             f"""SELECT 

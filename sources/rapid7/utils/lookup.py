@@ -17,7 +17,7 @@ class LookupManager:
     @lru_cache
     def find_asset(self, hostname: str):
         return self._find_object_id(
-            f"""SELECT 
+            f"""SELECT
                 properties.objectid
             FROM {self.schema}.node_kinds
             WHERE properties.name = ?;""",
