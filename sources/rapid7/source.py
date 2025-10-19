@@ -77,9 +77,6 @@ def rapid7_source(
     )
     def vulnerabilities(vuln: dict):
         vuln_id = vuln["id"]
-        # if vuln_id in vulns_seen:
-        #     return
-        # # else:
         details = r7_client.get(f"/api/3/vulnerabilities/{vuln_id}")
         yield details.json()
 
