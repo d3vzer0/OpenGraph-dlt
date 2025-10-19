@@ -9,6 +9,13 @@ A lightweight CLI for collecting service-specific resources and turning it into 
 - Reusable OpenGraph destination – can either batch results into local (OpenGraph) JSON files or push them straight into BloodHound via its upload API;
 - Typer CLI – commands under cli/orchestrate the typical collect → lookup → convert workflow.
 
+| Service | Scope | State |
+|---|---|---|
+| Kubernetes | Collects all (custom) resources types with additional node enrichment for specific resources (see sources/kubernets/models/k8s/*) | 85% |
+| AWS | Primarily IAM, with generic nodes for common resource types discovered via AWS Resource Explorer | 50% |
+| Rapid7 | Collects assets + their vulnerabilties and vulnerability details. Sync vulnerabilities as nodes and uses the BloodHound source to match with existing hostnames to connect edges to computers | 90% |
+| BloodHound | Stores all nodes and kinds in a dedicated duckdb database as an efficient lookup for other collectors | 100% |
+
 ## Prerequisites
 1. Python 3.12+, access to a Kubernetes cluster and optionally BloodHound API tokens (if syncing directly)
 2. Option 1: Install dependencies manually
