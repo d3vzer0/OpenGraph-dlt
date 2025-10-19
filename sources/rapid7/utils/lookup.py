@@ -1,4 +1,5 @@
 from duckdb import DuckDBPyConnection
+from functools import lru_cache
 
 
 class LookupManager:
@@ -7,13 +8,14 @@ class LookupManager:
         self.directory = directory
         self.schema = "bloodhound_lookup.bloodhound_staging"
         self.client = client
-        self.queried_hosts = {}
 
     def _find_object_id(self, *args) -> str:
+        print("Executing")
         self.client.execute(*args)
         result = self.client.fetchone()
         return str(result[0]) if result else ""
 
+    @lru_cache
     def find_asset(self, hostname: str):
         return self._find_object_id(
             f"""SELECT 

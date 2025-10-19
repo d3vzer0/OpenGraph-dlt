@@ -37,8 +37,6 @@ def rapid7_source(
     # vulns_since = datetime.datetime.now() - datetime.timedelta(days=vuln_delta)
     # vulns_seen: set[str] = set()
 
-    vulns_seen = dlt.current.source_state().setdefault("vulns", {})
-
     r7_client = RESTClient(
         base_url=host,
         auth=HttpBasicAuth(username, password),
@@ -79,12 +77,11 @@ def rapid7_source(
     )
     def vulnerabilities(vuln: dict):
         vuln_id = vuln["id"]
-        if vuln_id in vulns_seen:
-            return
-        else:
-            details = r7_client.get(f"/api/3/vulnerabilities/{vuln_id}")
-            vulns_seen[vuln_id] = True
-            yield details.json()
+        # if vuln_id in vulns_seen:
+        #     return
+        # # else:
+        details = r7_client.get(f"/api/3/vulnerabilities/{vuln_id}")
+        yield details.json()
 
     # TODO: Decide if this will be more efficient compared to getting vulns per asset
     # @dlt.resource(
