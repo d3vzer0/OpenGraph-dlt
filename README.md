@@ -13,7 +13,7 @@ A lightweight CLI for collecting service-specific resources and turning it into 
 |---|---|---|
 | Kubernetes | Collects all (custom) resources types with additional node enrichment for specific resources (see sources/kubernets/models/k8s/*) | 85% |
 | AWS | Primarily IAM, with generic nodes for common resource types discovered via AWS Resource Explorer | 50% |
-| Rapid7 | Collects assets + their vulnerabilties and vulnerability details. Sync vulnerabilities as nodes and uses the BloodHound source to match with existing hostnames to connect edges to computers | 90% |
+| Rapid7 InsightVM | Collects assets + their vulnerabilties and vulnerability details. Sync vulnerabilities as nodes and uses the BloodHound source to match with existing hostnames to connect edges to computers | 90% |
 | BloodHound | Stores all nodes and kinds in a dedicated duckdb database as an efficient lookup for other collectors | 100% |
 
 ## Prerequisites
