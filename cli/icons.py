@@ -1,10 +1,7 @@
 import typer
-from sources.kubernetes.icons import (
-    KUBE_ICONS,
-)
-from sources.aws.icons import (
-    AWS_ICONS,
-)
+from sources.kubernetes.icons import KUBE_ICONS
+from sources.aws.icons import AWS_ICONS
+from sources.rapid7.icons import R7_ICONS
 from destinations.opengraph.client import BloodHound
 from pydantic import BaseModel
 from dataclasses import dataclass
@@ -62,3 +59,9 @@ def aws(ctx: typer.Context, color: str = "#EE7D0C"):
 def kubernetes(ctx: typer.Context, color: str = "#0077FF"):
     typer.echo("Syncing Kube icons")
     sync_icons(ctx.obj.session, KUBE_ICONS, color=color)
+
+
+@icons.command()
+def rapid7(ctx: typer.Context, color: str = "#EC960C"):
+    typer.echo("Syncing Rapid7 icons")
+    sync_icons(ctx.obj.session, R7_ICONS, color=color)
