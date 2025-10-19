@@ -10,7 +10,6 @@ class LookupManager:
         self.client = client
 
     def _find_object_id(self, *args) -> str:
-        print("Executing")
         self.client.execute(*args)
         result = self.client.fetchone()
         return str(result[0]) if result else ""

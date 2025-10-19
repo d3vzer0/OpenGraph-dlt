@@ -35,7 +35,6 @@ def rapid7_source(
         )
 
     # vulns_since = datetime.datetime.now() - datetime.timedelta(days=vuln_delta)
-    # vulns_seen: set[str] = set()
 
     r7_client = RESTClient(
         base_url=host,
