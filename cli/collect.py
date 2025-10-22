@@ -197,12 +197,6 @@ def rapid7(
     insecure: Annotated[
         bool, typer.Option(help="Don't verify Rapid7 server certificate")
     ] = False,
-    # delta: Annotated[
-    #     int,
-    #     typer.Option(
-    #         help="Fetch modified vulnerabilities since last X days in numbers"
-    #     ),
-    # ] = 30,
 ):
     dest = filesystem(
         bucket_url=str(output_path),
