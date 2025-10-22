@@ -158,7 +158,7 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
     pipeline = dlt.pipeline(
         pipeline_name="bloodhound_lookup",
         destination="duckdb",
-        dataset_name="bloodhound",
+        dataset_name="bloodhound_pg",
         progress="enlighten",
     )
 
@@ -168,7 +168,7 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
         pipeline,
         "sources/bloodhound/dbt",
     )
-    dbt.run_all()
+    dbt.run_all(run_params=("--fail-fast", "--select", "staging_pg"))
 
 
 @collect.command()
@@ -176,7 +176,7 @@ def bloodhound_api(
     limit: int = 500, nodes: Annotated[list[str], typer.Argument] = ["computers"]
 ):
     pipeline = dlt.pipeline(
-        pipeline_name="bloodhound_api_lookup",
+        pipeline_name="bloodhound_lookup",
         destination="duckdb",
         dataset_name="bloodhound_api",
         progress="enlighten",
@@ -186,6 +186,9 @@ def bloodhound_api(
         bloodhound_source(limit=limit).with_resources(*nodes),
         write_disposition="replace",
     )
+    venv = dlt.dbt.get_venv(pipeline)
+    dbt = dlt.dbt.package(pipeline, "sources/bloodhound/dbt", venv=venv)
+    dbt.run_all(run_params=("--fail-fast", "--select", "staging_api"))
 
 
 @collect.command()
