@@ -3,7 +3,13 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from ..entries import Edge, EdgePath, EdgeProperties, NodeProperties, Node
+from sources.aws.models.graph import (
+    Edge,
+    EdgePath,
+    EdgeProperties,
+    NodeProperties,
+    Node,
+)
 from sources.aws.utils.guid import NodeTypes, gen_guid
 from sources.aws.utils.lookup import LookupManager
 import fnmatch

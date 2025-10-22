@@ -2,9 +2,10 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from sources.aws.utils.guid import NodeTypes, gen_guid
-from ..entries import Node, NodeProperties, Edge, EdgePath
-from sources.kubernetes.models.k8s.cluster import Cluster
-from sources.kubernetes.models.k8s.identities import GroupNode
+from sources.aws.models.graph import Node, Edge
+from sources.kubernetes.models.cluster import Cluster
+from sources.kubernetes.models.identities import GroupNode
+from sources.shared.models.entries import EdgePath, NodeProperties
 
 
 AWS_EKS_ACCESS_POLICY_GROUPS = {
@@ -33,17 +34,8 @@ class EKSCluster(BaseModel):
     region: Optional[str] = Field(alias="region", default=None)
 
 
-class EKSClusterProperties(NodeProperties):
-    model_config = ConfigDict(extra="allow")
-    version: Optional[str] = None
-    status: Optional[str] = None
-    endpoint: Optional[str] = None
-    role_arn: Optional[str] = None
-    region: Optional[str] = None
-
-
-class EKSlusterNode(Node):
-    properties: EKSClusterProperties
+class EKSClusterNode(Node):
+    properties: NodeProperties
 
     @property
     def _managed_by(self):
@@ -57,9 +49,9 @@ class EKSlusterNode(Node):
         return [*self._managed_by]
 
     @classmethod
-    def from_input(cls, **kwargs) -> "EKSlusterNode":
+    def from_input(cls, **kwargs) -> "EKSClusterNode":
         model = EKSCluster(**kwargs)
-        props = EKSClusterProperties(
+        props = NodeProperties(
             name=model.name,
             displayname=model.name,
             aws_account_id=model.account_id,

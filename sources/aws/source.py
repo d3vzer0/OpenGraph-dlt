@@ -6,7 +6,7 @@ from .models.aws.role import Role, RoleNode
 from .models.aws.eks import (
     EKSCluster,
     EKSAccesssEntry,
-    EKSlusterNode,
+    EKSClusterNode,
     EKSAccessEntryEdges,
 )
 from .models.aws.user import User, UserNode
@@ -21,8 +21,14 @@ from .models.aws.policy import (
 )
 from .models.aws.ec2_instance import EC2Instance, EC2InstanceRole
 from .models.aws.resource import Resource
-from .models.entries import Edge, EdgePath, EdgeProperties, Node as GraphNode
-from .models.graph import GraphEntries, Graph
+from .models.graph import (
+    Edge,
+    EdgePath,
+    EdgeProperties,
+    Node as GraphNode,
+    GraphEntries,
+    Graph,
+)
 import boto3
 import dlt
 from typing import TypeVar
@@ -396,7 +402,7 @@ def aws_opengraph(
     @dlt.transformer(data_from=json_resource("eks"), columns=Graph)
     def eks_graph(eks_clusters: list):
         for eks_cluster in eks_clusters:
-            yield build_graph(EKSlusterNode, eks_cluster)
+            yield build_graph(EKSClusterNode, eks_cluster)
 
     @dlt.transformer(
         data_from=json_resource("eks_cluster_access_entries"),

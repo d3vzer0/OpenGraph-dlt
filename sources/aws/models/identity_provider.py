@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 from sources.aws.utils.guid import NodeTypes
-from ..entries import Node, NodeProperties
+from sources.aws.models.graph import Node, NodeProperties
 
 
 class IdentityProvider(BaseModel):
