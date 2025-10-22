@@ -1,7 +1,7 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from .cluster import Cluster
-from ..graph import Node, NodeProperties, Edge, EdgePath
+from .graph import Node, NodeProperties, Edge, EdgePath
 import json
 
 

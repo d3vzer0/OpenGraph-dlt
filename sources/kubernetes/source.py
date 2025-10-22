@@ -1,30 +1,29 @@
 from kubernetes import client, config
 from kubernetes.dynamic import DynamicClient
 from sources.kubernetes.utils.lookup import LookupManager
-from .models.k8s.pod import Pod, PodNode, Volume as PodVolume
-from .models.k8s.volume import Volume, VolumeNode
-from .models.k8s.namespace import Namespace, NamespaceNode
-from .models.k8s.daemonset import DaemonSet, DaemonSetNode
-from .models.k8s.replicaset import ReplicaSet, ReplicaSetNode
-from .models.k8s.statefulset import StatefulSet, StatefulSetNode
-from .models.k8s.deployment import Deployment, DeploymentNode
-from .models.k8s.resource_group import ResourceGroup, ResourceGroupNode
-from .models.k8s.generic import Generic, GenericNode
-from .models.k8s.node import Node as KubeNode, NodeOutput
-from .models.k8s.role import Role, RoleNode
-from .models.k8s.role_binding import RoleBinding, RoleBindingNode
-from .models.k8s.cluster_role import ClusterRole, ClusterRoleNode
-from .models.k8s.cluster_role_binding import ClusterRoleBinding, ClusterRoleBindingNode
-from .models.k8s.service_account import ServiceAccount, ServiceAccountNode
-from .models.k8s.resource import Resource, ResourceNode
+from .models.pod import Pod, PodNode, Volume as PodVolume
+from .models.volume import Volume, VolumeNode
+from .models.namespace import Namespace, NamespaceNode
+from .models.daemonset import DaemonSet, DaemonSetNode
+from .models.replicaset import ReplicaSet, ReplicaSetNode
+from .models.statefulset import StatefulSet, StatefulSetNode
+from .models.deployment import Deployment, DeploymentNode
+from .models.resource_group import ResourceGroup, ResourceGroupNode
+from .models.generic import Generic, GenericNode
+from .models.node import Node as KubeNode, NodeOutput
+from .models.role import Role, RoleNode
+from .models.role_binding import RoleBinding, RoleBindingNode
+from .models.cluster_role import ClusterRole, ClusterRoleNode
+from .models.cluster_role_binding import ClusterRoleBinding, ClusterRoleBindingNode
+from .models.service_account import ServiceAccount, ServiceAccountNode
+from .models.resource import Resource, ResourceNode
 from .models.graph import Node as GraphNode, Graph, GraphEntries
-from .models.k8s.identities import User, UserNode, Group, GroupNode
+from .models.identities import User, UserNode, Group, GroupNode
 from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
 
 from functools import wraps
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, readers
 
-import json
 
 import dlt
 from typing import Type, TypeVar

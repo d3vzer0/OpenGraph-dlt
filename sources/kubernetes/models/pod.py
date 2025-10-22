@@ -8,7 +8,7 @@ from pydantic import (
 )
 from datetime import datetime
 from pydantic_core import PydanticUseDefault
-from ..graph import Node, NodeProperties, Edge, EdgePath
+from .graph import Node, NodeProperties, Edge, EdgePath
 from typing import Optional, Any, TypeVar, Annotated
 from sources.kubernetes.utils.guid import get_guid, get_generic_guid, NodeTypes
 from .volume import Volume as HostVolume

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from ..graph import (
+from .graph import (
     Node,
     NodeProperties,
     Edge,

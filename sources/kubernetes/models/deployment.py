@@ -1,9 +1,10 @@
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
+from .graph import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
-from ..graph import Node, NodeProperties, Edge, EdgePath
 from .pod import Container
+import json
 
 
 class Metadata(BaseModel):
@@ -24,7 +25,7 @@ class HostPath(BaseModel):
 
 class Volume(BaseModel):
     name: str
-    hostPath: HostPath | None = None
+    host_path: HostPath | None = None
 
 
 class TemplateSpec(BaseModel):
@@ -41,36 +42,47 @@ class Spec(BaseModel):
     template: Template
 
 
-class DaemonSet(BaseModel):
-    kind: str | None = "DaemonSet"
+class Deployment(BaseModel):
+    kind: str | None = "Deployment"
     metadata: Metadata
-    creation_timestamp: datetime | None = None
     spec: Spec
 
     @field_validator("kind", mode="before")
     def set_default_if_none(cls, v):
-        return v if v is not None else "DaemonSet"
+        return v if v is not None else "Deployment"
+
+    @field_validator("metadata", "spec", mode="before")
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class ExtendedProperties(NodeProperties):
     model_config = ConfigDict(extra="allow")
+    namespace: str
 
 
-class DaemonSetNode(Node):
+class DeploymentNode(Node):
     properties: ExtendedProperties
+
+    # @property
+    # def _volume_edges(self):
+    #     print()
 
     @property
     def edges(self):
         return []
 
     @classmethod
-    def from_input(cls, **kwargs) -> "DaemonSetNode":
-        model = DaemonSet(**kwargs)
+    def from_input(cls, **kwargs) -> "DeploymentNode":
+        model = Deployment(**kwargs)
         properties = ExtendedProperties(
             name=model.metadata.name,
             displayname=model.metadata.name,
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        node = cls(kinds=["KubeDaemonSet"], properties=properties)
+        node = cls(kinds=["KubeDeployment"], properties=properties)
         return node

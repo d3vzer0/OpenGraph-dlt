@@ -1,5 +1,5 @@
 from typing import List, Literal
-from sources.kubernetes.models.k8s.cluster_role import (
+from sources.kubernetes.models.cluster_role import (
     ClusterRole,
     Verbs,
     Metadata,

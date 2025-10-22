@@ -1,5 +1,5 @@
 from pydantic import BaseModel, computed_field
-from ..graph import Node, NodeProperties
+from .graph import Node, NodeProperties
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
 from typing import Optional
 

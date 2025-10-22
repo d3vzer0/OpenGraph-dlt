@@ -1,8 +1,8 @@
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
-from ..graph import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
+from .graph import Node, NodeProperties, Edge, EdgePath
 from .pod import Container
 
 
@@ -41,21 +41,22 @@ class Spec(BaseModel):
     template: Template
 
 
-class StatefulSet(BaseModel):
-    kind: str | None = "StatefulSet"
+class DaemonSet(BaseModel):
+    kind: str | None = "DaemonSet"
     metadata: Metadata
+    creation_timestamp: datetime | None = None
     spec: Spec
 
     @field_validator("kind", mode="before")
     def set_default_if_none(cls, v):
-        return v if v is not None else "StatefulSet"
+        return v if v is not None else "DaemonSet"
 
 
 class ExtendedProperties(NodeProperties):
     model_config = ConfigDict(extra="allow")
 
 
-class StatefulSetNode(Node):
+class DaemonSetNode(Node):
     properties: ExtendedProperties
 
     @property
@@ -63,13 +64,13 @@ class StatefulSetNode(Node):
         return []
 
     @classmethod
-    def from_input(cls, **kwargs) -> "StatefulSetNode":
-        model = StatefulSet(**kwargs)
+    def from_input(cls, **kwargs) -> "DaemonSetNode":
+        model = DaemonSet(**kwargs)
         properties = ExtendedProperties(
             name=model.metadata.name,
             displayname=model.metadata.name,
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        node = cls(kinds=["KubeStatefulSet"], properties=properties)
+        node = cls(kinds=["KubeDaemonSet"], properties=properties)
         return node

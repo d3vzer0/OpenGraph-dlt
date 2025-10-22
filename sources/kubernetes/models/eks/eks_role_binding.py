@@ -1,5 +1,5 @@
 from typing import List, Literal
-from sources.kubernetes.models.k8s.role_binding import RoleBinding, Metadata, Subject
+from sources.kubernetes.models.role_binding import RoleBinding, Metadata, Subject
 
 
 class EKSVirtualAdminRoleBinding(RoleBinding):

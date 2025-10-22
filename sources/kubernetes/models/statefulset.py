@@ -1,10 +1,9 @@
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
-from ..graph import Node, NodeProperties, Edge, EdgePath
+from .graph import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
 from .pod import Container
-import json
 
 
 class Metadata(BaseModel):
@@ -25,7 +24,7 @@ class HostPath(BaseModel):
 
 class Volume(BaseModel):
     name: str
-    host_path: HostPath | None = None
+    hostPath: HostPath | None = None
 
 
 class TemplateSpec(BaseModel):
@@ -42,47 +41,35 @@ class Spec(BaseModel):
     template: Template
 
 
-class Deployment(BaseModel):
-    kind: str | None = "Deployment"
+class StatefulSet(BaseModel):
+    kind: str | None = "StatefulSet"
     metadata: Metadata
     spec: Spec
 
     @field_validator("kind", mode="before")
     def set_default_if_none(cls, v):
-        return v if v is not None else "Deployment"
-
-    @field_validator("metadata", "spec", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
+        return v if v is not None else "StatefulSet"
 
 
 class ExtendedProperties(NodeProperties):
     model_config = ConfigDict(extra="allow")
-    namespace: str
 
 
-class DeploymentNode(Node):
+class StatefulSetNode(Node):
     properties: ExtendedProperties
-
-    # @property
-    # def _volume_edges(self):
-    #     print()
 
     @property
     def edges(self):
         return []
 
     @classmethod
-    def from_input(cls, **kwargs) -> "DeploymentNode":
-        model = Deployment(**kwargs)
+    def from_input(cls, **kwargs) -> "StatefulSetNode":
+        model = StatefulSet(**kwargs)
         properties = ExtendedProperties(
             name=model.metadata.name,
             displayname=model.metadata.name,
             namespace=model.metadata.namespace,
             uid=model.metadata.uid,
         )
-        node = cls(kinds=["KubeDeployment"], properties=properties)
+        node = cls(kinds=["KubeStatefulSet"], properties=properties)
         return node

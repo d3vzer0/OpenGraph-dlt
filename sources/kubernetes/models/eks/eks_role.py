@@ -1,7 +1,7 @@
 from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
-from sources.kubernetes.models.k8s.role import Role, Metadata, Rule, Verbs
+from sources.kubernetes.models.role import Role, Metadata, Rule, Verbs
 
 
 class EKSVirtualAdminRole(Role):
