@@ -6,12 +6,16 @@ profile: 'default'
 
 model-paths: ["models"]
 target-path: "target"
+macro-paths: ["macros"]
 clean-targets:
   - "target"
   - "dbt_packages"
 
 models:
   bloodhound:
-    staging:
-      +materialized: view
-      +schema: staging
+    staging_pg:
+      +schema: main
+
+    staging_api:
+      +schema: main
+

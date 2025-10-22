@@ -1,7 +1,7 @@
 version: 2
 sources:
-  - name: bloodhound
-    schema: bloodhound 
+  - name: bloodhound_pg
+    schema: bloodhound_pg
     description: "BloodHound nodes loaded by DLT"
     tables:
       - name: node
@@ -31,4 +31,3 @@ sources:
             description: "Node ID"
           - name: name
             description: "Kind name"
-

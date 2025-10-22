@@ -1,8 +1,7 @@
 default:
-  target: dev
+  target: bloodhound_lookup
   outputs:
-    dev:
+    bloodhound:
       type: duckdb
       path: ./bloodhound_lookup.duckdb
-      schema: analytics
-      threads: 4
+      schema: main

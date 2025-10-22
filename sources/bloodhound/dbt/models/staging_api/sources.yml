@@ -1,0 +1,24 @@
+version: 2
+sources:
+  - name: bloodhound_api
+    schema: bloodhound_api 
+    description: "BloodHound nodes loaded by DLT via the BloodHound API"
+    tables:
+      - name: nodes
+        description: "Data from BloodHound"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: object_id
+            description: "Node ID"
+          - name: last_seen
+            description: "Last seen"
+          - name: kinds
+            description: "Node kinds"
+          - name: kind
+            description: "Node primary kind"
+          - name: label
+            description: "Node label"
+      

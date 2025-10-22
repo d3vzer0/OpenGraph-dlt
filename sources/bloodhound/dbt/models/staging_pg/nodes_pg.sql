@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 WITH kind_lookup AS (
-    SELECT id, "name" FROM {{ source('bloodhound', 'kind') }}
+    SELECT id, "name" FROM {{ source('bloodhound_pg', 'kind') }}
 )
 SELECT 
     n._dlt_load_id,
@@ -15,4 +15,4 @@ SELECT
         FROM kind_lookup k
         WHERE k.id = ANY(CAST(n.kind_ids AS BIGINT[]))
     ) as kind_names
-FROM {{ source('bloodhound', 'node') }} n
+FROM {{ source('bloodhound_pg', 'node') }} n
