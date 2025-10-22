@@ -1,12 +1,7 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from .graph import (
-    Node,
-    NodeProperties,
-    Edge,
-    EdgeProperties,
-    EdgePath,
-)
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.shared.models.entries import Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
 import json

@@ -1,11 +1,12 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
-from .graph import Node, NodeProperties, Edge, EdgePath
+from sources.kubernetes.utils.guid import get_generic_guid
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.kubernetes.models.cluster import Cluster
+from sources.shared.models.entries import Edge, EdgePath
 from typing import Optional, Any
 from enum import Enum
-from sources.kubernetes.utils.guid import get_guid, NodeTypes, get_generic_guid
 import fnmatch
-from .cluster import Cluster
 import json
 
 

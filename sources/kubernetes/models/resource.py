@@ -1,5 +1,6 @@
 from pydantic import BaseModel, computed_field, Field, field_validator
-from .graph import Node, NodeProperties, Edge, EdgePath
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.shared.models.entries import Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
 from typing import Optional
 import json

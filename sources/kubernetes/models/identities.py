@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, computed_field, field_validator
-from .graph import Node, NodeProperties, Edge, EdgePath
+from pydantic import BaseModel, computed_field
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.shared.models.entries import Edge, EdgePath
 
 
 class User(BaseModel):

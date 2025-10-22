@@ -1,9 +1,9 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from .graph import Node, NodeProperties, Edge, EdgePath
 from pydantic import Field
-from sources.kubernetes.utils.guid import get_guid
-from sources.kubernetes.utils.guid import NodeTypes
+from sources.kubernetes.utils.guid import get_guid, NodeTypes
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.shared.models.entries import Edge, EdgePath
 
 
 VERB_TO_PERMISSION = {

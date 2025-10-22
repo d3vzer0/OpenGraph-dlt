@@ -1,10 +1,5 @@
-from .graph import (
-    Node,
-    NodeProperties,
-    StaleReference,
-    EdgePath,
-    Edge,
-)
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.shared.models.entries import Edge, EdgePath
 
 
 class ExtendedProperties(NodeProperties):

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from .graph import NodeProperties, Edge, EdgePath
-from .graph import Node as GraphNode
+from sources.kubernetes.models.graph import NodeProperties, Node as GraphNode
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
+from sources.shared.models.entries import Edge, EdgePath
 import json
 
 
@@ -74,6 +74,4 @@ class NodeOutput(GraphNode):
             uid=node_out.metadata.uid,
             namespace=None,
         )
-        # resource_path = f"{properties.name}.{NodeTypes.KubeNode.value}.system.a0704eb1-8213-5055-b822-238ec31feeca"
-        # print(resource_path)
         return cls(kinds=["KubeNode"], properties=properties)

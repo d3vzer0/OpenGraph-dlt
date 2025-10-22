@@ -57,8 +57,6 @@ class Spec(BaseModel):
     node_name: str | None = None
     service_account_name: Optional[str] = "default"
     containers: list[Container]
-    # volumes: list[Volume] | None = None
-
     volumes: DefaultIfNone[list[Volume] | None] = Field(default=[])
 
 
@@ -137,11 +135,6 @@ class PodNode(Node):
 
     @property
     def _service_account_edge(self):
-        print(
-            self.properties.service_account_name,
-            self._cluster,
-            self.properties.namespace,
-        )
         target_id = get_guid(
             self.properties.service_account_name,
             NodeTypes.KubeServiceAccount,

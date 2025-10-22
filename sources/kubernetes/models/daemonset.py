@@ -1,7 +1,7 @@
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
-from .graph import Node, NodeProperties
-from .pod import Container
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.kubernetes.models.pod import Container
 
 
 class Metadata(BaseModel):

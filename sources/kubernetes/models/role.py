@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
-from .graph import Node, NodeProperties, Edge, EdgePath, EdgeProperties
+from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.shared.models.entries import Edge, EdgePath
 from typing import Optional, Any
 from enum import Enum
 import fnmatch

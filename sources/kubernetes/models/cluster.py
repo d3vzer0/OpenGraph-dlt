@@ -1,7 +1,6 @@
-from pydantic import BaseModel, model_validator, computed_field
-from .graph import Node, NodeProperties
+from pydantic import BaseModel, computed_field
+from sources.kubernetes.models.graph import Node, NodeProperties
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
-from typing_extensions import Self
 
 
 class Cluster(BaseModel):
