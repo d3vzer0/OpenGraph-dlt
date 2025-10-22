@@ -18,7 +18,7 @@ class LookupManager:
     def find_asset(self, hostname: str):
         return self._find_object_id(
             f"""SELECT
-                properties.objectid
+                object_id
             FROM {self.schema}.nodes_api
             WHERE properties.name = ?;""",
             [hostname],

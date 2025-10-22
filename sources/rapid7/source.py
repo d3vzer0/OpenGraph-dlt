@@ -22,7 +22,6 @@ def rapid7_source(
     password: str = dlt.secrets.value,
     host: str = dlt.secrets.value,
     insecure: bool = False,
-    # vuln_delta: int = 30,
 ):
 
     session = requests.Session()
@@ -32,8 +31,6 @@ def rapid7_source(
         typer.echo(
             "Warning: TLS verification is disabled. Make sure that this is expected."
         )
-
-    # vulns_since = datetime.datetime.now() - datetime.timedelta(days=vuln_delta)
 
     r7_client = RESTClient(
         base_url=host,
