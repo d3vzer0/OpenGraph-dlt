@@ -1,5 +1,5 @@
 # WIP: OpenGraph-dlt (Data Load Tool) collectors
-A lightweight CLI for collecting service-specific resources and turning it into OpenGraph/BloodHound datasets. The long–term goal is to plug in multiple collectors; Kubernetes is the first source and serves as the reference implementation for future integrations. The kubernetes collector makes use of an (embedded) DuckDB database, which may not be needed for your usecase :) 
+A lightweight CLI for collecting service-specific resources and turning it into OpenGraph/BloodHound datasets. The long–term goal is to plug in multiple collectors; Kubernetes was the first source and serves as the reference implementation for future integrations. The kubernetes collector makes use of an (embedded) DuckDB database, which may not be needed for your usecase :) 
 
 [<img src="https://github.com/user-attachments/assets/542d70b6-52ea-49ee-b700-447d55704982">](https://github.com/d3vzer0/OpenGraph-dlt) 
 
@@ -11,9 +11,9 @@ A lightweight CLI for collecting service-specific resources and turning it into 
 
 | Service | Scope | State |
 |---|---|---|
-| Kubernetes | Collects all (custom) resources types with additional node enrichment for specific resources (see sources/kubernets/models/k8s/*) | 85% |
-| AWS | Primarily IAM, with generic nodes for common resource types discovered via AWS Resource Explorer | 50% |
-| Rapid7 InsightVM | Collects assets + their vulnerabilties and vulnerability details. Sync vulnerabilities as nodes and uses the BloodHound source to match with existing hostnames to connect edges to computers | 90% |
+| Kubernetes | Collects all (custom) resources types with additional node enrichment for specific resources (see sources/kubernets/models/k8s/*) | 90% |
+| AWS | Primarily IAM, with generic nodes for common resource types discovered via AWS Resource Explorer | 60% |
+| Rapid7 InsightVM | Collects assets + their vulnerabilties and vulnerability details. Sync vulnerabilities as nodes and uses the BloodHound source to match with existing hostnames to connect edges to computers | 100% |
 | BloodHound | Stores all nodes and kinds in a dedicated duckdb database as an efficient lookup for other collectors | 100% |
 
 ## Prerequisites
