@@ -1,13 +1,9 @@
 import typer
 import dlt
-from sources.kubernetes.source import (
-    kubernetes_resources,
-)
-from sources.aws.source import (
-    aws_resources,
-)
-
+from sources.kubernetes.source import kubernetes_resources
+from sources.aws.source import aws_resources
 from sources.rapid7.source import rapid7_source
+from sources.bloodhound.source import bloodhound_source
 from dlt.sources.filesystem import readers
 from dlt.destinations import filesystem
 from typing import Annotated
@@ -173,6 +169,23 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
         "sources/bloodhound/dbt",
     )
     dbt.run_all()
+
+
+@collect.command()
+def bloodhound_api(
+    limit: int = 500, nodes: Annotated[list[str], typer.Argument] = ["computers"]
+):
+    pipeline = dlt.pipeline(
+        pipeline_name="bloodhound_api_lookup",
+        destination="duckdb",
+        dataset_name="bloodhound_api",
+        progress="enlighten",
+    )
+
+    pipeline.run(
+        bloodhound_source(limit=limit).with_resources(*nodes),
+        write_disposition="replace",
+    )
 
 
 @collect.command()
