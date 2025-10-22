@@ -18,7 +18,7 @@ def bloodhound_source(
         skip = 0
         while True:
             query = f"MATCH (n:{node_type}) RETURN n ORDER BY n.objectId SKIP {skip} LIMIT {limit}"
-            response = client.query(query=query)
+            response = client.query(query=query, include_properties=True)
             if response.status_code != 200:
                 break
 
@@ -39,4 +39,9 @@ def bloodhound_source(
         for computer in iterate_results("User"):
             yield computer
 
-    return (computers, users)
+    @dlt.resource(columns=BloodHoundNode, table_name="nodes", parallelized=True)
+    def base() -> Iterator[dict]:
+        for base_node in iterate_results("Base"):
+            yield base_node
+
+    return (computers, users, base)

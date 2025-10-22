@@ -7,5 +7,6 @@ SELECT
     n.kind,
     n.label,
     n.last_seen,
-    CAST(n.kinds AS VARCHAR[]) as kind_names
+    CAST(n.kinds AS VARCHAR[]) as kind_names,
+    CAST(n.properties AS MAP(VARCHAR, VARCHAR)) as properties
 FROM {{ source('bloodhound_api', 'nodes') }} n

@@ -62,10 +62,14 @@ class BloodHound:
         response = self.request(method="POST", path=path)
         return response
 
-    def query(self, query: str):
+    def query(self, query: str, include_properties: bool = False):
         path = "/api/v2/graphs/cypher"
         response = self.request(
-            method="POST", path=path, body=json.dumps({"query": query}).encode()
+            method="POST",
+            path=path,
+            body=json.dumps(
+                {"query": query, "include_properties": include_properties}
+            ).encode(),
         )
         return response
 
