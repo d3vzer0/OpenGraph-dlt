@@ -3,14 +3,8 @@ from sources.shared.models.graph import MetaData, Graph as CommonGraph
 from abc import ABC
 from datetime import datetime
 from typing import Optional
-from sources.aws.utils.guid import NodeTypes, gen_guid
-from sources.aws.utils.lookup import LookupManager
-from sources.shared.models.entries import (
-    Node as BaseNode,
-    Edge,
-    EdgePath,
-    EdgeProperties,
-)
+from sources.aws.utils.guid import gen_guid
+from sources.shared.models.entries import Node as BaseNode, Edge
 
 
 class NodeProperties(BaseModel):

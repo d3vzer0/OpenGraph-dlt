@@ -1,8 +1,6 @@
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
-from sources.kubernetes.utils.guid import get_guid
-from sources.kubernetes.utils.guid import NodeTypes
-from .graph import Node, NodeProperties, Edge, EdgePath
+from .graph import Node, NodeProperties
 from .pod import Container
 
 

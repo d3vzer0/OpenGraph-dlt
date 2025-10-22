@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
-
 from sources.aws.utils.guid import NodeTypes
 from sources.aws.models.graph import Node, NodeProperties
 

@@ -5,12 +5,7 @@ from datetime import datetime
 from typing import Optional
 from sources.kubernetes.utils.guid import get_guid, NodeTypes, get_generic_guid
 from sources.kubernetes.utils.lookup import LookupManager
-from sources.shared.models.entries import (
-    Node as BaseNode,
-    Edge,
-    EdgePath,
-    EdgeProperties,
-)
+from sources.shared.models.entries import Node as BaseNode, Edge
 
 
 class NodeProperties(BaseModel):

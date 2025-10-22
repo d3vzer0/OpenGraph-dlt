@@ -1,16 +1,6 @@
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    BeforeValidator,
-    computed_field,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
-from .graph import Node, NodeProperties, Edge, EdgePath
-from sources.kubernetes.utils.guid import get_guid
-from sources.kubernetes.utils.guid import NodeTypes
-from typing import Optional
+from .graph import Node, NodeProperties
 import json
 
 
@@ -50,7 +40,6 @@ class GenericNode(Node):
     @classmethod
     def from_input(cls, **kwargs) -> "GenericNode":
         model = Generic(**kwargs)
-        # print(model)
         properties = ExtendedProperties(
             name=model.metadata.name,
             displayname=model.metadata.name,
