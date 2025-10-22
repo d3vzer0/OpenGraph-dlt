@@ -1,6 +1,7 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, readers
 from destinations.opengraph.client import BloodHound
 from .models.node import BloodHoundNode
+from typing import Iterator
 import json
 
 import dlt
@@ -41,7 +42,7 @@ def bloodhound_source(
 ):
     client: BloodHound = BloodHound(token_key, token_id, host)
 
-    def iterate_results(node_type: str):
+    def iterate_results(node_type: str) -> Iterator[dict]:
         skip = 0
         while True:
             query = f"MATCH (n:{node_type}) RETURN n ORDER BY n.objectId SKIP {skip} LIMIT {limit}"
@@ -57,12 +58,12 @@ def bloodhound_source(
             skip += len(nodes)
 
     @dlt.resource(columns=BloodHoundNode, table_name="nodes", parallelized=True)
-    def computers():
+    def computers() -> Iterator[dict]:
         for computer in iterate_results("Computer"):
             yield computer
 
     @dlt.resource(columns=BloodHoundNode, table_name="nodes", parallelized=True)
-    def users():
+    def users() -> Iterator[dict]:
         for computer in iterate_results("User"):
             yield computer
 
