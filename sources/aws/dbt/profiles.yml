@@ -1,8 +1,7 @@
 default:
-  target: dev
+  target: aws
   outputs:
-    dev:
+    aws:
       type: duckdb
       path: ./aws_lookup.duckdb
-      schema: analytics
-      threads: 4
+      schema: main

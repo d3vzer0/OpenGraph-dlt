@@ -6,6 +6,6 @@ select
     r.namespace,
     rd.singular_name,
     rd.name as definition
-from {{ source('k8s_raw', 'resources') }} r
-left join {{ source('k8s_raw', 'resource_definitions') }} rd
+from {{ source('kubernetes', 'resources') }} r
+left join {{ source('kubernetes', 'resource_definitions') }} rd
     on r.kind = rd.kind

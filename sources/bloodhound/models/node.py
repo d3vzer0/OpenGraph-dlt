@@ -6,6 +6,7 @@ class Properties(BaseModel):
     certname: str | None = None
     description: str | None = None
     displayname: str | None = None
+    name: str | None = None
     distinguishedname: str | None = None
     dnshostname: str | None = None
     domain: str | None = None

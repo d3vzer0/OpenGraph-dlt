@@ -1,6 +1,6 @@
 version: 2
 sources:
-  - name: k8s_raw
+  - name: kubernetes
     schema: kubernetes 
     description: "Raw Kubernetes resources loaded by DLT"
     tables:

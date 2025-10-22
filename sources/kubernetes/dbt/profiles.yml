@@ -1,8 +1,7 @@
 default:
-  target: dev
+  target: kubernetes
   outputs:
-    dev:
+    kubernetes:
       type: duckdb
       path: ./k8s_lookup.duckdb
-      schema: analytics
-      threads: 4
+      schema: main

@@ -1,6 +1,6 @@
 version: 2
 sources:
-  - name: aws_raw
+  - name: aws
     schema: aws 
     description: "Raw AWS resources loaded by DLT"
     tables:

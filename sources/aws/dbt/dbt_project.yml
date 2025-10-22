@@ -1,4 +1,4 @@
-name: 'aws_project'
+name: 'aws'
 version: '1.0.0'
 config-version: 2
 
@@ -6,6 +6,7 @@ profile: 'default'
 
 model-paths: ["models"]
 target-path: "target"
+marcro-paths: ["macros"]
 clean-targets:
   - "target"
   - "dbt_packages"
@@ -13,8 +14,4 @@ clean-targets:
 models:
   aws_project:
     staging:
-      +materialized: view
-      +schema: staging
-    # marts:
-    #   +materialized: view
-    #   +schema: marts
+      +schema: main
