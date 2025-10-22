@@ -17,8 +17,7 @@ from .models.k8s.cluster_role import ClusterRole, ClusterRoleNode
 from .models.k8s.cluster_role_binding import ClusterRoleBinding, ClusterRoleBindingNode
 from .models.k8s.service_account import ServiceAccount, ServiceAccountNode
 from .models.k8s.resource import Resource, ResourceNode
-from .models.graph import GraphEntries, Graph
-from .models.entries import Node as GraphNode
+from .models.graph import Node as GraphNode, Graph, GraphEntries
 from .models.k8s.identities import User, UserNode, Group, GroupNode
 from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
 

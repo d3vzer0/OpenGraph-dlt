@@ -1,4 +1,4 @@
-from ..entries import (
+from ..graph import (
     Node,
     NodeProperties,
     StaleReference,

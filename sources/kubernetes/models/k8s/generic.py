@@ -7,7 +7,7 @@ from pydantic import (
     field_validator,
 )
 from datetime import datetime
-from ..entries import Node, NodeProperties, Edge, EdgePath
+from ..graph import Node, NodeProperties, Edge, EdgePath
 from sources.kubernetes.utils.guid import get_guid
 from sources.kubernetes.utils.guid import NodeTypes
 from typing import Optional

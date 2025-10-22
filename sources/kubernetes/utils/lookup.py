@@ -9,7 +9,7 @@ class LookupManager:
 
     def __init__(self, client: DuckDBPyConnection, directory: str = "./output"):
         self.directory = directory
-        self.schema = "k8s_lookup.kubernetes_staging"
+        self.schema = "k8s_lookup.main"
         self.client = client
 
     def _load_json(self, filename: str) -> Dict[str, Any]:

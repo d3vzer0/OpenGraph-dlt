@@ -1,6 +1,6 @@
 from pydantic import BaseModel, computed_field, ConfigDict
 from sources.kubernetes.utils.guid import get_guid, NodeTypes
-from ..entries import Node, NodeProperties, Edge, EdgePath
+from ..graph import Node, NodeProperties, Edge, EdgePath
 
 
 class Volume(BaseModel):

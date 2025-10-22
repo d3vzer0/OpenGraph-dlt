@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
-from ..entries import Node, NodeProperties, Edge, EdgePath
+from ..graph import Node, NodeProperties, Edge, EdgePath
 from typing import Optional, Any
 from enum import Enum
 from sources.kubernetes.utils.guid import get_guid, NodeTypes, get_generic_guid

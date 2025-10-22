@@ -1,35 +1,56 @@
-from .entries import Node, Edge
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
+from sources.shared.models.graph import MetaData, Graph as CommonGraph
+from abc import ABC
+from datetime import datetime
+from typing import Optional
+from sources.kubernetes.utils.guid import get_guid, NodeTypes, get_generic_guid
+from sources.kubernetes.utils.lookup import LookupManager
+from sources.shared.models.entries import (
+    Node as BaseNode,
+    Edge,
+    EdgePath,
+    EdgeProperties,
+)
 
-from .k8s.pod import PodNode
-from .k8s.role import RoleNode
-from .k8s.cluster_role import ClusterRoleNode
-from .k8s.resource import ResourceNode
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Union
+
+class NodeProperties(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: str
+    displayname: str
+    namespace: str | None
+    last_seen: datetime = Field(default_factory=datetime.now)
+    uid: str | None
+
+
+class Node(BaseNode, ABC):
+    properties: NodeProperties
+
+    _lookup: LookupManager = PrivateAttr()
+    _cluster: str = PrivateAttr()
+    _scope: Optional[str] = PrivateAttr(default=None)
+
+    @computed_field
+    @property
+    def id(self) -> str:
+        scope = (
+            "__global__" if not self.properties.namespace else self.properties.namespace
+        )
+        if self.kinds[0] in NodeTypes:
+            dyn_uid = get_guid(
+                self.properties.name, NodeTypes[self.kinds[0]], self._cluster, scope
+            )
+        else:
+            dyn_uid = get_generic_guid(
+                self.properties.name, self.kinds[0], self._cluster, scope
+            )
+        return dyn_uid
 
 
 class GraphEntries(BaseModel):
-    nodes: list[Union[Node, PodNode, RoleNode, ClusterRoleNode, ResourceNode]] = []
-    edges: list[Edge] = []
+    nodes: list[Node] = []
+    edges: list[Edge] = Field(default_factory=list)
 
 
-class CollectorProperties(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    collection_methods: list[str] = ["Custom Method"]
-    windows_server_version: str = "n/a"
-
-
-class MetaDataCollector(BaseModel):
-    name: str = "opengraph-dlt-k8s"
-    version: str = "0.0.3"
-    properties: CollectorProperties = Field(default_factory=CollectorProperties)
-
-
-class MetaData(BaseModel):
-    ingest_version: str = "v1"
-    collector: MetaDataCollector = Field(default_factory=MetaDataCollector)
-
-
-class Graph(BaseModel):
+class Graph(CommonGraph):
     graph: GraphEntries
     metadata: MetaData = Field(default_factory=MetaData)
