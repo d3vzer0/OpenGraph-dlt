@@ -2,35 +2,7 @@ from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, r
 from destinations.opengraph.client import BloodHound
 from .models.node import BloodHoundNode
 from typing import Iterator
-import json
-
 import dlt
-from typing import Type, TypeVar, Iterable, Dict, Any
-
-
-def iterate_computers(
-    client: BloodHound, *, limit: int = 500
-) -> Iterable[Dict[str, Any]]:
-    skip = 0
-    while True:
-        query = (
-            "MATCH (n:Computer) "
-            "RETURN n "
-            "ORDER BY n.objectId "
-            f"SKIP {skip} "
-            f"LIMIT {limit}"
-        )
-        response = client.query(query)
-        response.raise_for_status()
-        payload = response.json()
-        rows = payload.get("data", [])
-        if not rows:
-            break
-        for row in rows:
-            yield row
-        if len(rows) < limit:
-            break
-        skip += limit
 
 
 @dlt.source()
