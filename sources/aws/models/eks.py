@@ -51,17 +51,18 @@ class EKSClusterNode(Node):
     @classmethod
     def from_input(cls, **kwargs) -> "EKSClusterNode":
         model = EKSCluster(**kwargs)
+        extra_properties = {
+            "aws_account_id": model.account_id,
+            "arn": model.arn,
+            "version": model.version,
+            "status": model.status,
+            "endpoint": model.endpoint,
+            "role_arn": model.role_arn,
+            "aws_region": model.region,
+            "created_at": model.created_at,
+        }
         props = NodeProperties(
-            name=model.name,
-            displayname=model.name,
-            aws_account_id=model.account_id,
-            arn=model.arn,
-            version=model.version,
-            status=model.status,
-            endpoint=model.endpoint,
-            role_arn=model.role_arn,
-            aws_region=model.region,
-            created_at=model.created_at,
+            name=model.name, displayname=model.name, **extra_properties
         )
         node = cls(kinds=[NodeTypes.AWSEKSCluster.value], properties=props)
         node.attach_context(model.account_id, scope=model.region)

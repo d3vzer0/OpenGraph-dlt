@@ -1,16 +1,16 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
-from .models.aws.group import Group, GroupNode
-from .models.aws.membership import UserGroupMembership, MembershipEdges
+from .models.group import Group, GroupNode
+from .models.membership import UserGroupMembership, MembershipEdges
 from sources.aws.utils.lookup import LookupManager
-from .models.aws.role import Role, RoleNode
-from .models.aws.eks import (
+from .models.role import Role, RoleNode
+from .models.eks import (
     EKSCluster,
     EKSAccesssEntry,
     EKSClusterNode,
     EKSAccessEntryEdges,
 )
-from .models.aws.user import User, UserNode
-from .models.aws.policy import (
+from .models.user import User, UserNode
+from .models.policy import (
     Policy,
     PolicyNode,
     PolicyStatementOutput,
@@ -19,12 +19,9 @@ from .models.aws.policy import (
     InlinePolicyNode,
     PolicyAttachmentEdges,
 )
-from .models.aws.ec2_instance import EC2Instance, EC2InstanceRole
-from .models.aws.resource import Resource
+from .models.ec2_instance import EC2Instance, EC2InstanceRole
+from .models.resource import Resource
 from .models.graph import (
-    Edge,
-    EdgePath,
-    EdgeProperties,
     Node as GraphNode,
     GraphEntries,
     Graph,

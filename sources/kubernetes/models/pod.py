@@ -11,7 +11,7 @@ from pydantic_core import PydanticUseDefault
 from .graph import Node, NodeProperties, Edge
 from sources.shared.models.entries import EdgePath
 from typing import Optional, Any, TypeVar, Annotated
-from sources.kubernetes.utils.guid import get_guid, get_generic_guid, NodeTypes
+from sources.kubernetes.utils.guid import get_guid, NodeTypes
 from .volume import Volume as HostVolume
 import json
 
@@ -152,7 +152,7 @@ class PodNode(Node):
         start_path = EdgePath(value=self.id, match_by="id")
         if self._pod.metadata.owner_references:
             for owner in self._pod.metadata.owner_references:
-                end_path_id = get_generic_guid(
+                end_path_id = get_guid(
                     owner.name,
                     f"Kube{owner.kind}",
                     cluster=self._cluster,

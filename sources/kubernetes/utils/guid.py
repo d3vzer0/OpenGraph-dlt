@@ -25,16 +25,14 @@ class NodeTypes(str, Enum):
 
 
 def get_guid(
-    name: str, resource_type: NodeTypes, cluster: str, namespace: str = "__global__"
+    name: str,
+    resource_type: NodeTypes | str,
+    cluster: str,
+    namespace: str = "__global__",
 ) -> str:
+    type_value = (
+        resource_type.value if isinstance(resource_type, NodeTypes) else resource_type
+    )
     uuid_namespace = uuid.NAMESPACE_DNS
-    resource_path = f"{name}.{resource_type.value}.{namespace}.{cluster}"
-    return str(uuid.uuid5(uuid_namespace, resource_path))
-
-
-def get_generic_guid(
-    name: str, resource_type: str, cluster: str, namespace: str = "__global__"
-) -> str:
-    uuid_namespace = uuid.NAMESPACE_DNS
-    resource_path = f"{name}.{resource_type}.{namespace}.{cluster}"
+    resource_path = f"{name}.{type_value}.{namespace}.{cluster}"
     return str(uuid.uuid5(uuid_namespace, resource_path))

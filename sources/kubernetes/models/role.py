@@ -1,11 +1,11 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from sources.kubernetes.models.graph import Node, NodeProperties
-from sources.shared.models.entries import Edge, EdgePath
+from sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 from typing import Optional, Any
 from enum import Enum
 import fnmatch
-from sources.kubernetes.utils.guid import get_guid, get_generic_guid, NodeTypes
+from sources.kubernetes.utils.guid import get_guid, NodeTypes
 import json
 
 
@@ -143,9 +143,7 @@ class RoleNode(Node):
                     kind="KubeHasPermissions",
                     start=start_path,
                     end=EdgePath(
-                        value=get_generic_guid(
-                            name, f"Kube{kind}", self._cluster, namespace
-                        ),
+                        value=get_guid(name, f"Kube{kind}", self._cluster, namespace),
                         match_by="id",
                     ),
                     properties=EdgeProperties(verbs=matched_verbs),

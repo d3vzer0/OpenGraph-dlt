@@ -3,7 +3,7 @@ from sources.shared.models.graph import MetaData, Graph as CommonGraph
 from abc import ABC
 from datetime import datetime
 from typing import Optional
-from sources.kubernetes.utils.guid import get_guid, NodeTypes, get_generic_guid
+from sources.kubernetes.utils.guid import get_guid, NodeTypes
 from sources.kubernetes.utils.lookup import LookupManager
 from sources.shared.models.entries import Node as BaseNode, Edge
 
@@ -35,7 +35,7 @@ class Node(BaseNode, ABC):
                 self.properties.name, NodeTypes[self.kinds[0]], self._cluster, scope
             )
         else:
-            dyn_uid = get_generic_guid(
+            dyn_uid = get_guid(
                 self.properties.name, self.kinds[0], self._cluster, scope
             )
         return dyn_uid
