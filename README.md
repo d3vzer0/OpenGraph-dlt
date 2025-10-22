@@ -39,6 +39,44 @@ Configure the dlt config.toml with the apropriate values. Each source collector 
 workers=10 # The amount of parallel workers for collection
 ```
 
+### 1. Configure required secrets
+#### 1.1 Kubernetes
+Kubernetes authentication is handled via the system's kubeconfig.
+
+#### 1.2 AWS
+AWS authentication is handled via the system's AWS CLI session
+
+#### 1.3 Rapid7
+Apply the following configuration to <project_root>/.dlt/secrets.toml
+```bash
+[sources.source.rapid7_source]
+username = "your_user_here"
+password = "your_password_here"
+host = "https://ip_here:3780"
+```
+
+Or set the source config as environment variables via
+```bash
+SOURCES__SOURCE__RAPID7_SOURCE__PASSWORD=...
+SOURCES__SOURCE__RAPID7_SOURCE__USERNAME=...
+SOURCES__SOURCE__RAPID7_SOURCE__HOST=....
+```
+#### 1.4 BloodHound (API-based sync)
+Apply the following configuration to  <project_root>/.dlt/secrets.toml
+```bash
+[sources.source.bloodhound_source]
+token_key = "your_api_token_here"
+token_id = "your_token_id_here"
+host = "your_bh_url_here, ex. http://localhost:8080"
+```
+
+Or set the source config as environment variables via
+```bash
+SOURCES__SOURCE__BLOODHOUND_SOURCE__TOKEN_KEY=...
+SOURCES__SOURCE__BLOODHOUND_SOURCE__TOKEN_ID=...
+SOURCES__SOURCE__BLOODHOUND_SOURCE__HOST=....
+```
+
 ### 1. Collecting resources
 The `collect` CLI pulls raw objects from the source and stores them as Parquet/JSONL on the local filesystem. The service-specific collector additionally generates a DuckDB lookup used during graph conversion.
 
