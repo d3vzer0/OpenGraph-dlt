@@ -14,10 +14,11 @@ A lightweight CLI for collecting service-specific resources and turning it into 
 | Kubernetes | Collects all (custom) resources types with additional node enrichment for specific resources (see sources/kubernets/models/k8s/*) | 90% |
 | AWS | Primarily IAM, with generic nodes for common resource types discovered via AWS Resource Explorer | 60% |
 | Rapid7 InsightVM | Collects assets + their vulnerabilties and vulnerability details. Sync vulnerabilities as nodes and uses the BloodHound source to match with existing hostnames to connect edges to computers | 100% |
-| BloodHound | Stores all nodes and kinds in a dedicated duckdb database as an efficient lookup for other collectors | 100% |
+| BloodHound| Stores all nodes and kinds in a dedicated duckdb database as an efficient lookup for other collectors, can be synced via a direct PG connection or using Cypher queries via the API| 100% |
+
 
 ## Prerequisites
-1. Python 3.12+, access to a Kubernetes cluster and optionally BloodHound API tokens (if syncing directly)
+1. Python 3.12+
 2. Option 1: Install dependencies manually
 ```bash
 # Create a virtual environment
@@ -31,36 +32,33 @@ pip install
 
 ## Getting started
 ### 0. Configure config.toml
-Configure the dlt config.toml with the apropriate values. Create a config file in <project_root>/.dlt/config.toml with the following contents:
+Configure the dlt config.toml with the apropriate values. Each source collector has it's own requirements, these will be displayed by DLT when running a collector. Create a config file in <project_root>/.dlt/config.toml with at least the following contents:
 
 ```
 [extract]
 workers=10 # The amount of parallel workers for collection
-
-[sources.source.kubernetes_resources.cluster]
-cluster = "colima" # The name of your kubernetes cluster/name for this collector
 ```
 
 ### 1. Collecting resources
-The `collect` CLI pulls raw objects from a kubernetes cluster and stores them as Parquet/JSONL on the local filesystem. The kubernetes collector additionally generates a DuckDB lookup used during graph conversion.
+The `collect` CLI pulls raw objects from the source and stores them as Parquet/JSONL on the local filesystem. The service-specific collector additionally generates a DuckDB lookup used during graph conversion.
 
 ```console
-$ collect kubernetes [OPTIONS] OUTPUT_PATH
+$ collect <service> [OPTIONS] OUTPUT_PATH
 ```
 **Arguments**:
-* `OUTPUT_PATH`: Where the kubernetes resources will be saved in parquet/jsonl format [required]
+* `OUTPUT_PATH`: Where the <service> resources will be saved in parquet/jsonl format [required]
 
-This will run the kubernetes collector and writes one file per resource under ./output/kubernetes/<resource>/. Additionally a lookup database is generated, containing key fields (kind, name, namespace) from the raw files.
+This will run the <service> collector and writes one file per resource under ./output/<service>/<resource>/. Additionally a lookup database is generated, containing key fields from the raw files.
 
 ## 2. Convert to OpenGraph
 Once the raw dataset exists, convert it into OpenGraph with the sync or convert CLI:
 
 ```console
-$ convert kubernetes [OPTIONS] INPUT_PATH OUTPUT_PATH
+$ convert <service> [OPTIONS] INPUT_PATH OUTPUT_PATH
 ```
 **Arguments**:
-* `INPUT_PATH`: Where the kubernetes resources were saved by the collect command (parquet/jsonl) [required]
-* `OUTPUT_PATH`: Where the kubernetes graph will be stored in OpenGraph format [required]
+* `INPUT_PATH`: Where the <service> resources were saved by the collect command (parquet/jsonl) [required]
+* `OUTPUT_PATH`: Where the <service> graph will be stored in OpenGraph format [required]
 This will read the staged dataset from the specified path, generate the OpenGraph format and save the file(s), depending on the batch size, to OUTPUT_PATH/kubernetes-<batch-hash>.json
 
 
@@ -68,9 +66,11 @@ This will read the staged dataset from the specified path, generate the OpenGrap
 ```
 destinations/opengraph/        # OpenGraph destination + BloodHound client
 sources/kubernetes/            # Kubernetes resources, transformers, models
+sources/rapid7/                # InsightVM resources, transformers, models
+sources/aws/                   # AWS resources, transformers, models
+sources/bloodhound/            # BloodHound resources to generate lookup(s)
 cli/                           # Typer apps for collection and conversion
 ```
 
 ## Configuration Notes
 Python's dlt configuration (destination paths, batch sizes, secrets) can live in .dlt/config.toml or environment variables.
-Adjust kube_config/cluster arguments in collect.py and sync.py if you target different clusters.
