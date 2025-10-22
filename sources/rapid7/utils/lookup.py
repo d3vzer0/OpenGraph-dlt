@@ -6,7 +6,7 @@ class LookupManager:
 
     def __init__(self, client: DuckDBPyConnection, directory: str = "./output"):
         self.directory = directory
-        self.schema = "bloodhound_lookup.bloodhound_staging"
+        self.schema = "bloodhound_lookup.main"
         self.client = client
 
     def _find_object_id(self, *args) -> str:
@@ -19,7 +19,7 @@ class LookupManager:
         return self._find_object_id(
             f"""SELECT
                 properties.objectid
-            FROM {self.schema}.node_kinds
+            FROM {self.schema}.nodes_api
             WHERE properties.name = ?;""",
             [hostname],
         )

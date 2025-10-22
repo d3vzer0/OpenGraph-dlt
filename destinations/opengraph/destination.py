@@ -42,7 +42,7 @@ def opengraph_file(items: TDataItems, table: TTableSchema, output_path="./output
     file_path = output_dir / file_name
     with file_path.open("w", encoding="utf-8") as fh:
         json.dump(
-            aggregated.model_dump(mode="json", exclude_none=True, exclude_unset=True),
+            aggregated.model_dump(mode="json", exclude_none=True),
             fh,
             indent=2,
         )

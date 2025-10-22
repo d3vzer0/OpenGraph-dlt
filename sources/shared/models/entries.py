@@ -1,8 +1,14 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
-from sources.rapid7.utils.guid import NodeTypes, gen_guid
+from typing import Optional, Any
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    computed_field,
+    field_validator,
+)
 
 
 class NodeProperties(BaseModel):
@@ -16,30 +22,20 @@ class Node(BaseModel, ABC):
     model_config = ConfigDict(extra="allow")
     kinds: list[str]
     properties: NodeProperties
-
     _scope: Optional[str] = PrivateAttr(default=None)
 
     @computed_field
     @property
-    def id(self) -> str:
-        return gen_guid(
-            self.properties.name,
-            self.kinds[0],
-        )
+    @abstractmethod
+    def id(self) -> str: ...  # noqa: E704
 
     @classmethod
     @abstractmethod
-    def from_input(cls, **kwargs) -> "Node": ...
+    def from_input(cls, **kwargs) -> "Node": ...  # noqa: E704
 
     @property
     @abstractmethod
-    def edges(self) -> list["Edge"]: ...
-
-    def attach_context(
-        self, account_id: Optional[str], scope: Optional[str] = None
-    ) -> None:
-        self._account_id = account_id
-        self._scope = scope
+    def edges(self) -> list["Edge"]: ...  # noqa: E704
 
 
 class EdgePath(BaseModel):

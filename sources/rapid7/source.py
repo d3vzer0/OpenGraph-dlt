@@ -1,13 +1,12 @@
 from dlt.sources.helpers.rest_client.auth import HttpBasicAuth
 from dlt.sources.helpers.rest_client import RESTClient
-from .models.r7.asset import Asset
-from .models.r7.vulnerability import (
+from .models.asset import Asset
+from .models.vulnerability import (
     AssetVulnerability,
     AssetVulnerabilityNode,
     Vulnerability,
     VulnerabilityNode,
 )
-from .models.entries import Edge, EdgePath, EdgeProperties, Node as GraphNode
 from .models.graph import GraphEntries, Graph
 from sources.rapid7.utils.lookup import LookupManager
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
@@ -132,7 +131,7 @@ def rapid7_opengraph(
     @dlt.transformer(data_from=json_resource("vulnerabilities"), columns=Graph)
     def vulnerability_graph(vulnerabilities: list):
         for vulnerability in vulnerabilities:
-            yield build_graph(VulnerabilityNode, vulnerability)
+            return build_graph(VulnerabilityNode, vulnerability)
 
     @dlt.transformer(data_from=json_resource("asset_vulnerabilities"), columns=Graph)
     def asset_vulnerabilities_graph(vulnerabilities: list):
