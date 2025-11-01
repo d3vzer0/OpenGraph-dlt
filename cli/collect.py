@@ -4,6 +4,7 @@ from sources.kubernetes.source import kubernetes_resources
 from sources.aws.source import aws_resources
 from sources.rapid7.source import rapid7_source
 from sources.bloodhound.source import bloodhound_source
+from sources.resource_files.source import resource_files
 from dlt.sources.filesystem import readers
 from dlt.destinations import filesystem
 from typing import Annotated
@@ -25,15 +26,20 @@ OutputPath = Annotated[
 
 
 @collect.command()
-def aws_bootstrap():
+def aws_lookup(input_path: Path = Path("./output/aws")):
     lookup = dlt.pipeline(
-        pipeline_name="aws_lookup",
+        pipeline_name="lookup",
         destination="duckdb",
         dataset_name="aws",
         progress="enlighten",
     )
+    lookup.run(
+        resource_files(
+            input_path,
+            resource_names=["resources", "users", "groups", "roles"],
+        )
+    )
 
-    lookup.run(aws_resources().with_resources("resources", "users", "groups", "roles"))
     dbt = dlt.dbt.package(
         lookup,
         "sources/aws/dbt",
@@ -48,15 +54,14 @@ def aws(output_path: OutputPath):
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="aws_stage",
+        pipeline_name="lookup",
         destination=dest,
         dataset_name="aws",
         progress="enlighten",
     )
 
     pipeline.run(
-        aws_resources(),
-        write_disposition="replace",
+        aws_resources(), write_disposition="replace", loader_file_format="parquet"
     )
 
 
@@ -71,7 +76,7 @@ def kubernetes(output_path: OutputPath):
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="k8s_stage",
+        pipeline_name="lookup",
         destination=dest,
         dataset_name="kubernetes",
         progress="enlighten",
@@ -86,7 +91,7 @@ def kubernetes(output_path: OutputPath):
     )
 
     lookup = dlt.pipeline(
-        pipeline_name="k8s_lookup",
+        pipeline_name="lookup",
         destination="duckdb",
         dataset_name="kubernetes",
         progress="enlighten",
@@ -94,7 +99,7 @@ def kubernetes(output_path: OutputPath):
 
     resource_files = (
         (
-            readers(bucket_url="./output", file_glob="**/*.jsonl.gz")
+            readers(bucket_url="./output/kubernetes", file_glob="**/*.jsonl.gz")
             .read_jsonl()
             .with_name("resources")
         )
@@ -156,7 +161,7 @@ def kubernetes(output_path: OutputPath):
 def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
 
     pipeline = dlt.pipeline(
-        pipeline_name="bloodhound_lookup",
+        pipeline_name="lookup",
         destination="duckdb",
         dataset_name="bloodhound_pg",
         progress="enlighten",
@@ -176,7 +181,7 @@ def bloodhound_api(
     limit: int = 500, nodes: Annotated[list[str], typer.Argument] = ["computers"]
 ):
     pipeline = dlt.pipeline(
-        pipeline_name="bloodhound_lookup",
+        pipeline_name="lookup",
         destination="duckdb",
         dataset_name="bloodhound_api",
         progress="enlighten",
@@ -203,7 +208,7 @@ def rapid7(
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="rapid7_stage",
+        pipeline_name="lookup",
         destination=dest,
         dataset_name="rapid7",
         progress="enlighten",
