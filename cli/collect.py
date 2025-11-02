@@ -27,9 +27,10 @@ OutputPath = Annotated[
 
 @collect.command()
 def aws_lookup(input_path: Path = Path("./output/aws")):
+    duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     lookup = dlt.pipeline(
-        pipeline_name="lookup",
-        destination="duckdb",
+        pipeline_name="duckdb_lookup",
+        destination=duckdb_dest,
         dataset_name="aws",
         progress="enlighten",
     )
@@ -70,7 +71,7 @@ def aws(
     )
 
     if lookup:
-        aws_lookup(output_path)
+        aws_lookup(Path(f"{output_path}/aws"))
 
 
 @collect.command()
@@ -98,16 +99,19 @@ def kubernetes(output_path: OutputPath):
         write_disposition="replace",
     )
 
+    duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     lookup = dlt.pipeline(
-        pipeline_name="lookup",
-        destination="duckdb",
+        pipeline_name="k8s_lookup",
+        destination=duckdb_dest,
         dataset_name="kubernetes",
         progress="enlighten",
     )
 
     resource_files = (
         (
-            readers(bucket_url="./output/kubernetes", file_glob="**/*.jsonl.gz")
+            readers(
+                bucket_url=f"{str(output_path)}/kubernetes", file_glob="**/*.jsonl.gz"
+            )
             .read_jsonl()
             .with_name("resources")
         )
@@ -132,7 +136,7 @@ def kubernetes(output_path: OutputPath):
 
     resource_definition_files = (
         readers(
-            bucket_url=str(output_path),
+            bucket_url=f"{str(output_path)}/kubernetes",
             file_glob="**/resource_definitions/**/*.jsonl.gz",
         )
         .read_jsonl()
@@ -169,9 +173,10 @@ def kubernetes(output_path: OutputPath):
 @collect.command()
 def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
 
+    duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     pipeline = dlt.pipeline(
-        pipeline_name="lookup",
-        destination="duckdb",
+        pipeline_name="bloodhound_lookup",
+        destination=duckdb_dest,
         dataset_name="bloodhound_pg",
         progress="enlighten",
     )
@@ -189,9 +194,10 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
 def bloodhound_api(
     limit: int = 500, nodes: Annotated[list[str], typer.Argument] = ["computers"]
 ):
+    duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     pipeline = dlt.pipeline(
-        pipeline_name="lookup",
-        destination="duckdb",
+        pipeline_name="bloodhound_lookup",
+        destination=duckdb_dest,
         dataset_name="bloodhound_api",
         progress="enlighten",
     )
@@ -217,7 +223,7 @@ def rapid7(
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="lookup",
+        pipeline_name="rapid7_lookup",
         destination=dest,
         dataset_name="rapid7",
         progress="enlighten",
