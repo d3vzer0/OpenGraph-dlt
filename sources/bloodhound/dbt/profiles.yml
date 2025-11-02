@@ -3,5 +3,4 @@ default:
   outputs:
     bloodhound:
       type: duckdb
-      path: ./bloodhound_lookup.duckdb
-      schema: main
+      path: ./lookup.duckdb

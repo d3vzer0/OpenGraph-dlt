@@ -4,4 +4,3 @@ default:
     kubernetes:
       type: duckdb
       path: ./lookup.duckdb
-      # schema: main
