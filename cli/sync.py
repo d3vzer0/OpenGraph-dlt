@@ -8,12 +8,11 @@ from sources.kubernetes.source import (
 
 from sources.aws.source import aws_opengraph
 from sources.rapid7.source import rapid7_opengraph
-
 from destinations.opengraph.client import BloodHound
 from destinations.opengraph.destination import opengraph_file
-from sources.kubernetes.utils.lookup import LookupManager
-from sources.aws.utils.lookup import LookupManager as AWSLookupManager
-from sources.rapid7.utils.lookup import LookupManager as R7LookupManager
+from sources.kubernetes.lookup import KubernetesLookup
+from sources.aws.lookup import AWSLookup
+from sources.bloodhound.lookup import BloodHoundLookup
 from typing import Annotated
 from dataclasses import dataclass
 from pathlib import Path
@@ -76,7 +75,7 @@ class ConvertOptions:
 @convert.command()
 def aws(input_path: InputPath, output_path: OutputPath = Path("./graph")):
     client = duckdb.connect("lookup.duckdb", read_only=True)
-    lookup = AWSLookupManager(client)
+    lookup = AWSLookup(client)
 
     pipeline = dlt.pipeline(
         pipeline_name="aws_opengraph_convert",
@@ -92,8 +91,8 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
     contexts, active = config.list_kube_config_contexts()
     cluster_name = active["context"]["cluster"]
 
-    client = duckdb.connect("k8s_lookup.duckdb", read_only=True)
-    lookup = LookupManager(client)
+    client = duckdb.connect("lookup.duckdb", read_only=True)
+    lookup = KubernetesLookup(client)
     pipeline = dlt.pipeline(
         pipeline_name="k8s_opengraph_convert",
         destination=opengraph_file(output_path=str(output_path)),
@@ -110,7 +109,7 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
 @convert.command()
 def rapid7(input_path: InputPath, output_path: OutputPath = Path("./graph")):
     client = duckdb.connect("bloodhound_lookup.duckdb", read_only=True)
-    lookup = R7LookupManager(client)
+    lookup = BloodHoundLookup(client)
     pipeline = dlt.pipeline(
         pipeline_name="rapid7_opengraph_convert",
         destination=opengraph_file(output_path=str(output_path)),
@@ -124,8 +123,8 @@ def eks(output_path: OutputPath = Path("./graph")):
     contexts, active = config.list_kube_config_contexts()
     cluster_name = active["context"]["cluster"]
 
-    client = duckdb.connect("k8s_lookup.duckdb", read_only=True)
-    lookup = LookupManager(client)
+    client = duckdb.connect("lookup.duckdb", read_only=True)
+    lookup = KubernetesLookup(client)
 
     pipeline = dlt.pipeline(
         pipeline_name="k8s_opengraph_eks_convert",
