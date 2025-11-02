@@ -1,8 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from pydantic import Field
-from sources.kubernetes.utils.guid import get_guid, NodeTypes
-from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
 from sources.shared.models.entries import Edge, EdgePath
 
 
@@ -54,7 +53,7 @@ class DynamicNode(Node):
     @property
     def _namespace_edge(self):
         # target_id = self._lookup.namespaces(self.properties.namespace)
-        target_id = get_guid(
+        target_id = gen_guid(
             self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")

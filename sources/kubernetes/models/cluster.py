@@ -1,6 +1,5 @@
 from pydantic import BaseModel, computed_field
-from sources.kubernetes.models.graph import Node, NodeProperties
-from sources.kubernetes.utils.guid import get_guid, NodeTypes
+from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
 
 
 class Cluster(BaseModel):
@@ -10,7 +9,7 @@ class Cluster(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return get_guid(self.name, NodeTypes.KubeCluster, self.name)
+        return gen_guid(self.name, NodeTypes.KubeCluster, self.name)
 
 
 class ClusterNode(Node):

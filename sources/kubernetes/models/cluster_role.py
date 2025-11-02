@@ -1,7 +1,6 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
-from sources.kubernetes.utils.guid import get_guid
-from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.kubernetes.models.graph import Node, NodeProperties, gen_guid
 from sources.kubernetes.models.cluster import Cluster
 from sources.shared.models.entries import Edge, EdgePath
 from typing import Optional, Any
@@ -143,7 +142,7 @@ class ClusterRoleNode(Node):
                     kind="KubeHasPermissions",
                     start=start_path,
                     end=EdgePath(
-                        value=get_guid(name, f"Kube{kind}", self._cluster),
+                        value=gen_guid(name, f"Kube{kind}", self._cluster),
                         match_by="id",
                     ),
                     properties={"verbs": matched_verbs},

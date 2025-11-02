@@ -1,7 +1,11 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from sources.kubernetes.models.graph import NodeProperties, Node as GraphNode
-from sources.kubernetes.utils.guid import get_guid, NodeTypes
+from sources.kubernetes.models.graph import (
+    NodeProperties,
+    Node as GraphNode,
+    NodeTypes,
+    gen_guid,
+)
 from sources.shared.models.entries import Edge, EdgePath
 import json
 
@@ -34,7 +38,7 @@ class NodeOutput(GraphNode):
     @property
     def _authenticated_group_edge(self):
         # target_id = self._lookup.groups("system:authenticated")
-        target_id = get_guid("system:authenticated", NodeTypes.KubeGroup, self._cluster)
+        target_id = gen_guid("system:authenticated", NodeTypes.KubeGroup, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
@@ -43,7 +47,7 @@ class NodeOutput(GraphNode):
     @property
     def _nodes_group_edge(self):
         # target_id = self._lookup.groups("system:nodes")
-        target_id = get_guid("system:nodes", NodeTypes.KubeGroup, self._cluster)
+        target_id = gen_guid("system:nodes", NodeTypes.KubeGroup, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
@@ -51,7 +55,7 @@ class NodeOutput(GraphNode):
 
     @property
     def _cluster_edge(self):
-        target_id = get_guid(self._cluster, NodeTypes.KubeCluster, self._cluster)
+        target_id = gen_guid(self._cluster, NodeTypes.KubeCluster, self._cluster)
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)

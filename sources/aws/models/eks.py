@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from sources.aws.utils.guid import NodeTypes, gen_guid
-from sources.aws.models.graph import Node, Edge
+from sources.aws.models.graph import Node, Edge, gen_guid
 from sources.kubernetes.models.cluster import Cluster
 from sources.kubernetes.models.identities import GroupNode
 from sources.shared.models.entries import EdgePath, NodeProperties

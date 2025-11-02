@@ -1,8 +1,7 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
 from sources.shared.models.entries import Edge, EdgePath, EdgeProperties
-from sources.kubernetes.utils.guid import get_guid, NodeTypes
 import json
 
 
@@ -68,22 +67,22 @@ class RoleBindingNode(Node):
     properties: ExtendedProperties
 
     def _get_target_user(self, target_name: str) -> "EdgePath":
-        target_id = get_guid(target_name, NodeTypes.KubeUser, self._cluster)
+        target_id = gen_guid(target_name, NodeTypes.KubeUser, self._cluster)
         return EdgePath(value=target_id, match_by="id")
 
     def _get_target_group(self, target_name: str) -> "EdgePath":
-        target_id = get_guid(target_name, NodeTypes.KubeGroup, self._cluster)
+        target_id = gen_guid(target_name, NodeTypes.KubeGroup, self._cluster)
         return EdgePath(value=target_id, match_by="id")
 
     def _service_account_path(self, target: str, namespace):
-        target_id = get_guid(
+        target_id = gen_guid(
             target, NodeTypes.KubeServiceAccount, self._cluster, namespace
         )
         return EdgePath(value=target_id, match_by="id")
 
     @property
     def _namespace_edge(self):
-        target_id = get_guid(
+        target_id = gen_guid(
             self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
@@ -93,7 +92,7 @@ class RoleBindingNode(Node):
 
     @property
     def _role_path(self):
-        role_id = get_guid(
+        role_id = gen_guid(
             self.properties.role_ref,
             NodeTypes.KubeScopedRole,
             self._cluster,

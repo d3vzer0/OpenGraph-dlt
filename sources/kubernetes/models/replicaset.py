@@ -1,8 +1,7 @@
 from pydantic import BaseModel, field_validator, ConfigDict, PrivateAttr
 from datetime import datetime
-from sources.kubernetes.models.graph import Node, NodeProperties
+from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
 from sources.shared.models.entries import Edge, EdgePath
-from sources.kubernetes.utils.guid import get_guid, NodeTypes
 from sources.kubernetes.models.pod import Container
 import json
 
@@ -59,7 +58,7 @@ class ReplicaSetNode(Node):
         start_path = EdgePath(value=self.id, match_by="id")
         if self._replicaset.metadata.owner_references:
             for owner in self._replicaset.metadata.owner_references:
-                end_path_id = get_guid(
+                end_path_id = gen_guid(
                     owner.name,
                     f"Kube{owner.kind}",
                     cluster=self._cluster,

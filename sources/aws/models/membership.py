@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from sources.aws.utils.lookup import LookupManager
-from sources.aws.utils.guid import gen_guid, NodeTypes
 from sources.shared.models.entries import EdgePath, Edge
+from sources.aws.models.graph import NodeTypes, gen_guid
 
 
 class UserGroupMembership(BaseModel):

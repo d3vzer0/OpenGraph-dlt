@@ -8,11 +8,16 @@ from pydantic import (
 )
 from datetime import datetime
 from pydantic_core import PydanticUseDefault
-from .graph import Node, NodeProperties, Edge
+from sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    Edge,
+    NodeTypes,
+    gen_guid,
+)
 from sources.shared.models.entries import EdgePath
 from typing import Optional, Any, TypeVar, Annotated
-from sources.kubernetes.utils.guid import get_guid, NodeTypes
-from .volume import Volume as HostVolume
+from sources.kubernetes.models.volume import Volume as HostVolume
 import json
 
 
@@ -112,7 +117,7 @@ class PodNode(Node):
 
     @property
     def _namespace_edge(self):
-        target_id = get_guid(
+        target_id = gen_guid(
             self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
@@ -123,7 +128,7 @@ class PodNode(Node):
     @property
     def _node_edge(self):
         if self.properties.node_name:
-            target_id = get_guid(
+            target_id = gen_guid(
                 self.properties.node_name, NodeTypes.KubeNode, self._cluster
             )
             start_path = EdgePath(value=self.id, match_by="id")
@@ -135,7 +140,7 @@ class PodNode(Node):
 
     @property
     def _service_account_edge(self):
-        target_id = get_guid(
+        target_id = gen_guid(
             self.properties.service_account_name,
             NodeTypes.KubeServiceAccount,
             self._cluster,
@@ -152,7 +157,7 @@ class PodNode(Node):
         start_path = EdgePath(value=self.id, match_by="id")
         if self._pod.metadata.owner_references:
             for owner in self._pod.metadata.owner_references:
-                end_path_id = get_guid(
+                end_path_id = gen_guid(
                     owner.name,
                     f"Kube{owner.kind}",
                     cluster=self._cluster,
@@ -171,7 +176,7 @@ class PodNode(Node):
                 volume_object = HostVolume(
                     node_name=self.properties.node_name, path=volume.host_path.path
                 )
-                end_path_id = get_guid(
+                end_path_id = gen_guid(
                     volume_object.name, NodeTypes.KubeVolume, self._cluster
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
