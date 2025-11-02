@@ -287,6 +287,10 @@ def kubernetes_opengraph(
     @dlt.transformer(data_from=json_resource("cust_volumes"), columns=Graph)
     def volumes_graph(volumes: list):
         for volume in volumes:
+            node_name = volume.get("node_name")
+            path = volume.get("path")
+            if not node_name or not path:
+                continue
             yield build_graph(VolumeNode, volume)
 
     @dlt.transformer(data_from=json_resource("namespaces"), columns=Graph)

@@ -173,8 +173,11 @@ class PodNode(Node):
         start_path = EdgePath(value=self.id, match_by="id")
         for volume in self._pod.spec.volumes:
             if volume.host_path:
+                node_name = self.properties.node_name
+                if not node_name:
+                    continue
                 volume_object = HostVolume(
-                    node_name=self.properties.node_name, path=volume.host_path.path
+                    node_name=node_name, path=volume.host_path.path
                 )
                 end_path_id = gen_guid(
                     volume_object.name, NodeTypes.KubeVolume, self._cluster
