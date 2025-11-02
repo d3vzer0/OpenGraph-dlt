@@ -1,6 +1,5 @@
 from pydantic import BaseModel, ConfigDict, computed_field, Field
-from sources.aws.utils.guid import NodeTypes, gen_node_type
-from sources.aws.models.graph import Node, NodeProperties
+from sources.aws.models.graph import Node, NodeProperties, NodeTypes, gen_node_type
 from datetime import datetime
 from enum import Enum
 
