@@ -2,7 +2,13 @@ from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, r
 from destinations.opengraph.client import BloodHound
 from .models.node import BloodHoundNode
 from typing import Iterator
+from FlagEmbedding import BGEM3FlagModel
+import torch
+import pyarrow as pa
+import numpy as np
 import dlt
+import duckdb
+import os
 
 
 @dlt.source()
@@ -45,3 +51,61 @@ def bloodhound_source(
             yield base_node
 
     return (computers, users, base)
+
+
+@dlt.source()
+def bloodhound_embeddings(
+    lookup_path: str = "lookup.duckdb",
+    db_batch_size: int = 10000,
+    model_batch_size: int = 128,
+    embedding_model: str = "BAAI/bge-m3",
+):
+    conn = duckdb.connect(lookup_path)
+    # conn.execute("LOAD vss;")
+    # conn.execute(
+    #     "SET GLOBAL hnsw_enable_experimental_persistence = true;",
+    # )
+    device = "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+
+    os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "true"
+    model = BGEM3FlagModel(embedding_model, use_fp16=True, device=device)
+
+    @dlt.resource(
+        name="embeddings",
+        table_name="embeddings",
+        write_disposition="merge",
+        primary_key="object_id",
+        columns={
+            "object_id": {"data_type": "text"},
+            "embedding": {"data_type": "json"},
+        },
+    )
+    def embeddings():
+        reader = conn.execute(
+            """
+            SELECT
+                n._dlt_id,
+                n.object_id,
+                n.kind || ' ' || n.label || ' ' || CAST(n.properties AS VARCHAR) as embedding_text
+            FROM bloodhound_api.nodes_api AS n
+            LEFT JOIN bloodhound_api.embeddings AS e
+                ON e.object_id = n.object_id
+            WHERE e.object_id IS NULL
+            """
+        ).fetch_record_batch(db_batch_size)
+
+        for batch in reader:
+            vectors = model.encode(
+                batch["embedding_text"].to_pylist(), batch_size=model_batch_size
+            )["dense_vecs"].astype(np.float32)
+
+            for idx, vec in enumerate(vectors):
+                yield {
+                    "object_id": batch["object_id"][idx].as_py(),
+                    "embedding": vec.tolist(),
+                }
+        conn.close()
+
+    return embeddings

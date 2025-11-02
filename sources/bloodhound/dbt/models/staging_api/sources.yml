@@ -22,3 +22,14 @@ sources:
           - name: label
             description: "Node label"
       
+      - name: embeddings
+        description: "Embedding from BloodHound"
+        columns:
+          - name: object_id
+            description: "Node ID"
+          - name: embedding
+            description: "Embedding"
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"

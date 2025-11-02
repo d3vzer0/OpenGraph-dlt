@@ -3,7 +3,7 @@ import dlt
 from sources.kubernetes.source import kubernetes_resources
 from sources.aws.source import aws_resources
 from sources.rapid7.source import rapid7_source
-from sources.bloodhound.source import bloodhound_source
+from sources.bloodhound.source import bloodhound_source, bloodhound_embeddings
 from sources.resource_files.source import resource_files
 from dlt.sources.filesystem import readers
 from dlt.destinations import filesystem
@@ -191,6 +191,37 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
 
 
 @collect.command()
+def bloodhound_vector(
+    input_path: Path = Path("lookup.duckdb"),
+    bsize: Annotated[
+        int, typer.Option(help="Batch size for fetching DB entries")
+    ] = 10000,
+    msize: Annotated[
+        int,
+        typer.Option(help="Batch size for model inferenc when generating embeddings"),
+    ] = 128,
+):
+    duckdb_dest = dlt.destinations.duckdb(
+        "lookup.duckdb",
+    )
+    pipeline = dlt.pipeline(
+        pipeline_name="bloodhound_embeddings",
+        destination=duckdb_dest,
+        dataset_name="bloodhound_api",
+        progress="enlighten",
+    )
+
+    pipeline.run(
+        bloodhound_embeddings(
+            lookup_path=str(input_path), db_batch_size=bsize, model_batch_size=msize
+        ),
+        write_disposition="merge",
+    )
+    # dbt = dlt.dbt.package(pipeline, "sources/bloodhound/dbt")
+    # dbt.run_all(run_params=("--fail-fast", "--select", "embeddings_api"))
+
+
+@collect.command()
 def bloodhound_api(
     limit: int = 500, nodes: Annotated[list[str], typer.Argument] = ["computers"]
 ):
@@ -206,8 +237,7 @@ def bloodhound_api(
         bloodhound_source(limit=limit).with_resources(*nodes),
         write_disposition="replace",
     )
-    venv = dlt.dbt.get_venv(pipeline)
-    dbt = dlt.dbt.package(pipeline, "sources/bloodhound/dbt", venv=venv)
+    dbt = dlt.dbt.package(pipeline, "sources/bloodhound/dbt")
     dbt.run_all(run_params=("--fail-fast", "--select", "staging_api"))
 
 
