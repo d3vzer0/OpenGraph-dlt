@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from sources.aws.models.graph import NodeProperties, Node, NodeTypes, gen_guid
 from sources.shared.models.entries import Edge, EdgePath, EdgeProperties
-from sources.aws.utils.lookup import LookupManager
+from sources.aws.lookup import LookupManager
 import fnmatch
 
 

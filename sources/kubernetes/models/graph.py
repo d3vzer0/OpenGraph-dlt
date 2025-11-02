@@ -4,12 +4,11 @@ from abc import ABC
 from enum import Enum
 from datetime import datetime
 from typing import Optional
-from sources.kubernetes.utils.lookup import LookupManager
+from sources.kubernetes.lookup import LookupManager
 from sources.shared.models.entries import Node as BaseNode, Edge
 import uuid
 
 
-# from sources.kubernetes.utils.guid import NodeTypes
 class NodeTypes(str, Enum):
     KubeCluster = "KubeCluster"
     KubeNamespace = "KubeNamespace"

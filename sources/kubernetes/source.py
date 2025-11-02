@@ -1,6 +1,6 @@
 from kubernetes import client, config
 from kubernetes.dynamic import DynamicClient
-from sources.kubernetes.utils.lookup import LookupManager
+from sources.kubernetes.lookup import KubernetesLookup
 from .models.pod import Pod, PodNode, Volume as PodVolume
 from .models.volume import Volume, VolumeNode
 from .models.namespace import Namespace, NamespaceNode
@@ -256,7 +256,7 @@ def kubernetes_resources(
 def kubernetes_opengraph(
     *,
     cluster: str,
-    lookup: LookupManager,
+    lookup: KubernetesLookup,
     bucket_url: str = dlt.config.value,
 ):
 
@@ -389,7 +389,7 @@ def kubernetes_opengraph(
 def kubernetes_eks_opengraph(
     *,
     cluster: str,
-    lookup: LookupManager,
+    lookup: KubernetesLookup,
 ):
 
     def build_graph(model_cls: Type[T], resource: dict) -> Graph:

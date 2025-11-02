@@ -8,7 +8,7 @@ from .models.vulnerability import (
     VulnerabilityNode,
 )
 from .models.graph import GraphEntries, Graph
-from sources.rapid7.utils.lookup import LookupManager
+from sources.bloodhound.lookup import BloodHoundLookup
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
 import dlt
 import requests
@@ -96,7 +96,7 @@ def rapid7_source(
 @dlt.source(name="aws_opengraph")
 def rapid7_opengraph(
     *,
-    lookup: LookupManager,
+    lookup: BloodHoundLookup,
     bucket_url: str = dlt.config.value,
 ):
 

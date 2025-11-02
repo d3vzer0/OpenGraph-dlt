@@ -5,7 +5,7 @@ from functools import lru_cache
 
 class AWSLookup(LookupManager):
 
-    def __init__(self, client: DuckDBPyConnection, schema: str = "aws")
+    def __init__(self, client: DuckDBPyConnection, schema: str = "aws"):
         super().__init__(client, schema)
         self.schema = schema
         self.client = client

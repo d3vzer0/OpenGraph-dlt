@@ -108,7 +108,7 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
 # @sync.command()
 @convert.command()
 def rapid7(input_path: InputPath, output_path: OutputPath = Path("./graph")):
-    client = duckdb.connect("bloodhound_lookup.duckdb", read_only=True)
+    client = duckdb.connect("lookup.duckdb", read_only=True)
     lookup = BloodHoundLookup(client)
     pipeline = dlt.pipeline(
         pipeline_name="rapid7_opengraph_convert",

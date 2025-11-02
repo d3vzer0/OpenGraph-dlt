@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from sources.aws.utils.lookup import LookupManager
+from sources.aws.lookup import LookupManager
 from sources.shared.models.entries import EdgePath, Edge
 from sources.aws.models.graph import NodeTypes, gen_guid
 

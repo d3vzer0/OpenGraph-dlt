@@ -1,7 +1,7 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
 from .models.group import Group, GroupNode
 from .models.membership import UserGroupMembership, MembershipEdges
-from sources.aws.utils.lookup import LookupManager
+from sources.aws.lookup import AWSLookup
 from .models.role import Role, RoleNode
 from .models.eks import (
     EKSCluster,
@@ -323,7 +323,7 @@ def aws_resources(
 @dlt.source(name="aws_opengraph")
 def aws_opengraph(
     *,
-    lookup: LookupManager,
+    lookup: AWSLookup,
     bucket_url: str = dlt.config.value,
 ):
 
