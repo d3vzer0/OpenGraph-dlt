@@ -1,23 +1,17 @@
 from duckdb import DuckDBPyConnection
 from typing import Dict, Any
 from functools import lru_cache
+from sources.shared.lookup import LookupManager
 import json
 import os
 
 
-class LookupManager:
+class KubernetesLookup(LookupManager):
 
     def __init__(self, client: DuckDBPyConnection, directory: str = "./output"):
         self.directory = directory
         self.schema = "k8s_lookup.main"
         self.client = client
-
-    def _load_json(self, filename: str) -> Dict[str, Any]:
-        filepath = os.path.join(self.directory, filename)
-        if not os.path.exists(filepath):
-            return {}
-        with open(filepath, "r") as f:
-            return json.load(f)
 
     def _find_uid(self, *args) -> str:
         self.client.execute(*args)
@@ -30,8 +24,8 @@ class LookupManager:
         return results
 
     @lru_cache
-    def allowed_system_resources(self, resource_type: str) -> list[tuple]:
-        return self._find_resources(
+    def allowed_system_resources(self, resource_type: str):
+        return self._find_all_objects(
             f"""SELECT 
                 name,
                 kind,
@@ -46,7 +40,7 @@ class LookupManager:
     def allowed_namespaced_resources(
         self, resource_type: str, namespace: str
     ) -> list[tuple]:
-        results = self._find_resources(
+        results = self._find_all_objects(
             f"""SELECT 
                 name,
                 kind,
