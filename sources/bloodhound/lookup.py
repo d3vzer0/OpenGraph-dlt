@@ -5,7 +5,7 @@ from functools import lru_cache
 
 class BloodHoundLookup(LookupManager):
 
-    def __init__(self, client: DuckDBPyConnection, schema: str = "bloodhound"):
+    def __init__(self, client: DuckDBPyConnection, schema: str = "bloodhound_api"):
         super().__init__(client, schema)
         self.schema = schema
         self.client = client
