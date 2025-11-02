@@ -132,7 +132,8 @@ def kubernetes(output_path: OutputPath):
 
     resource_definition_files = (
         readers(
-            bucket_url="./output", file_glob="**/resource_definitions/**/*.jsonl.gz"
+            bucket_url=str(output_path),
+            file_glob="**/resource_definitions/**/*.jsonl.gz",
         )
         .read_jsonl()
         .with_name("resource_definitions")

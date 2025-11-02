@@ -111,11 +111,15 @@ def kubernetes_resources(
     def volumes(pod: dict):
         volumes = pod["spec"]["volumes"]
         if volumes:
-            node_name = pod["spec"]["node_name"]
+            node_name = pod["spec"].get("node_name")
+            if not node_name:
+                return
             for volume in volumes:
-                if not volume["host_path"]:
+                host_path = volume.get("host_path")
+                if not host_path:
                     continue
-                yield {"node_name": node_name, "path": volume["host_path"]["path"]}
+                path = host_path.get("path")
+                yield {"node_name": node_name, "path": path}
 
     @dlt.resource(columns=Role, table_name="roles", parallelized=True)
     def roles():

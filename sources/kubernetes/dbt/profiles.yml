@@ -3,5 +3,5 @@ default:
   outputs:
     kubernetes:
       type: duckdb
-      path: ./k8s_lookup.duckdb
-      schema: main
+      path: ./lookup.duckdb
+      # schema: main
