@@ -13,4 +13,4 @@ clean-targets:
 models:
   aws_project:
     staging:
-      +schema: main
+      +enabled: true
