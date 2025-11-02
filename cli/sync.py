@@ -75,7 +75,7 @@ class ConvertOptions:
 
 @convert.command()
 def aws(input_path: InputPath, output_path: OutputPath = Path("./graph")):
-    client = duckdb.connect("aws_lookup.duckdb", read_only=True)
+    client = duckdb.connect("lookup.duckdb", read_only=True)
     lookup = AWSLookupManager(client)
 
     pipeline = dlt.pipeline(
