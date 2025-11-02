@@ -6,7 +6,6 @@ profile: 'default'
 
 model-paths: ["models"]
 target-path: "target"
-marcro-paths: ["macros"]
 clean-targets:
   - "target"
   - "dbt_packages"

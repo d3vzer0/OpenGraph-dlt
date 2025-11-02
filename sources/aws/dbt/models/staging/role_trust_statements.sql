@@ -10,5 +10,5 @@ SELECT
     json_extract_string(stmt.value, '$.Action') as action,
     CAST(json_extract(stmt.value, '$.Condition') AS MAP(VARCHAR, MAP(VARCHAR, VARCHAR))) as condition,
     CAST(json_extract(stmt.value, '$.Principal') AS MAP(VARCHAR, VARCHAR)) as principal
-FROM {{ source('aws_raw', 'roles') }} r,
+FROM {{ source('aws', 'roles') }} r,
      json_each(r.assume_role_policy_document, '$.Statement') AS stmt

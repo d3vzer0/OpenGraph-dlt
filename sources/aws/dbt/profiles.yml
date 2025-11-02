@@ -3,5 +3,5 @@ default:
   outputs:
     aws:
       type: duckdb
-      path: ./aws_lookup.duckdb
+      path: ./lookup.duckdb
       schema: main

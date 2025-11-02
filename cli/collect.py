@@ -48,7 +48,12 @@ def aws_lookup(input_path: Path = Path("./output/aws")):
 
 
 @collect.command()
-def aws(output_path: OutputPath):
+def aws(
+    output_path: OutputPath,
+    lookup: Annotated[
+        bool, typer.Option(help="Generate lookup database afterwards")
+    ] = True,
+):
     dest = filesystem(
         bucket_url=str(output_path),
     )
@@ -63,6 +68,9 @@ def aws(output_path: OutputPath):
     pipeline.run(
         aws_resources(), write_disposition="replace", loader_file_format="parquet"
     )
+
+    if lookup:
+        aws_lookup(output_path)
 
 
 @collect.command()
