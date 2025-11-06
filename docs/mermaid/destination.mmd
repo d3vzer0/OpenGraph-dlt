@@ -5,41 +5,54 @@ config:
   look: neo
 ---
 flowchart BT
-    subgraph loader["Loading"]
-        %% direction TB
-        SourceFS["@dlt.source<br/>FileSystem"]
-        FSRes["@dlt.resource<br/>filtered_parquet"]
+ subgraph loader["Loading"]
+        SourceFS["@dlt.source<br>FileSystem"]
+        FSRes["@dlt.resource<br>filtered_parquet"]
+    
         SourceFS -- return --> FSRes
-    end
-
-    subgraph sources["Resources"]
+  end
+ subgraph sources["Resources"]
         loader
         Kube["@dlt.source<br/>KubernetesGraph"]
-        KubeRes["@dlt.transformer<br/>Role"]
+        AWS["@dlt.source<br/>AWSGraph"]
+
+        KubeRes["@dlt.transformer<br/>RoleBinding"]
+        AWSRes["@dlt.transformer<br/>Role"]
+
         Kube -- returns --> KubeRes
         FSRes -- yield result --> Kube
-    end
 
-    subgraph parsing["Parsing"]
+        AWS -- returns --> AWSRes
+        FSRes -- yield result --> AWS
+
+        
+
+  end
+ subgraph parsing["Parsing"]
         sources
+        RoleBindingNode["RoleBindingNode Model"]
         RoleNode["RoleNode Model"]
-        KubeRes -- "yield result" --> RoleNode
-    end
 
-    subgraph destination["Finalize"]
+        KubeRes -- yield result --> RoleBindingNode
+        AWSRes -- yield result --> RoleNode
+
+  end
+ subgraph destination["Finalize"]
         parsing
-        Choice{"destination"}
-        FileOut["@dlt.destination<br/>opengraph_file"]
-        ApiOut["@dlt.destination<br/>opengraph_api"]
-
+        FileOut["@dlt.destination<br>opengraph_file"]
+        ApiOut["@dlt.destination<br>opengraph_api"]
         File["{resource-name}-{batch_no}.json"]
         API["https://localhost:8080/api"]
+        Choice{"destination"}
 
+        RoleBindingNode --> Choice
         RoleNode --> Choice
-        Choice -->|file| FileOut
-        Choice -->|api| ApiOut
+        Choice -- file --> FileOut
+        Choice -- api --> ApiOut
+        FileOut -- write --> File
+        ApiOut -- post --> API
 
-        FileOut -- "write" --> File
-        ApiOut -- "post" --> API
-
-    end
+        end
+    
+    
+    
