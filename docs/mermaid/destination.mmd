@@ -1,0 +1,45 @@
+---
+config:
+  theme: mc
+  layout: dagre
+  look: neo
+---
+flowchart BT
+    subgraph loader["Loading"]
+        %% direction TB
+        SourceFS["@dlt.source<br/>FileSystem"]
+        FSRes["@dlt.resource<br/>filtered_parquet"]
+        SourceFS -- return --> FSRes
+    end
+
+    subgraph sources["Resources"]
+        loader
+        Kube["@dlt.source<br/>KubernetesGraph"]
+        KubeRes["@dlt.transformer<br/>Role"]
+        Kube -- returns --> KubeRes
+        FSRes -- yield result --> Kube
+    end
+
+    subgraph parsing["Parsing"]
+        sources
+        RoleNode["RoleNode Model"]
+        KubeRes -- "yield result" --> RoleNode
+    end
+
+    subgraph destination["Finalize"]
+        parsing
+        Choice{"destination"}
+        FileOut["@dlt.destination<br/>opengraph_file"]
+        ApiOut["@dlt.destination<br/>opengraph_api"]
+
+        File["{resource-name}-{batch_no}.json"]
+        API["https://localhost:8080/api"]
+
+        RoleNode --> Choice
+        Choice -->|file| FileOut
+        Choice -->|api| ApiOut
+
+        FileOut -- "write" --> File
+        ApiOut -- "post" --> API
+
+    end
