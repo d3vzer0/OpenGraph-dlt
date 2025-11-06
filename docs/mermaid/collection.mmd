@@ -1,0 +1,48 @@
+---
+config:
+  theme: mc
+  layout: dagre
+  look: neo
+---
+flowchart BT
+    subgraph sources["Source definition"]
+        %% direction TB
+        Kube["@dlt.source<br/>Kubernetes API"]
+        Aws["@dlt.source<br/>AWS API"]
+    end
+
+    subgraph resources["Resource definition"]
+        sources
+        KubeRes["@dlt.resource<br/>role_bindings"]
+        KubeTransf["@dlt.transformer<br/>extract_groups"]
+        AwsRes["@dlt.resource<br/>roles"]
+        
+        Kube -- return --> KubeRes
+        KubeRes -- yield result --> KubeTransf
+        Aws -- return --> AwsRes
+
+    end
+
+    subgraph parsing["Parsing"]
+        resources
+        KubeParse1["RoleBinding Model"]
+        KubeParse2["Group Model"]
+        AwsParse["Role Model"]
+
+        %% KubeParse1 & KubeParse2 & AwsParse
+
+        KubeRes -- yield result --> KubeParse1
+        KubeTransf -- yield result --> KubeParse2
+        AwsRes -- yield result--> AwsParse
+    end
+
+    subgraph finalize["Finalize"]
+        parsing
+        FS["FileSystem Destination"]
+        File["Parquet/Json"]
+
+        KubeParse1 -- "yield RoleBinding" --> FS
+        KubeParse2 -- "yield Group" --> FS
+        AwsParse -- "yield Role" --> FS
+        FS -- write --> File
+    end
