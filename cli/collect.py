@@ -181,7 +181,7 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
         progress="enlighten",
     )
 
-    source = sql_database().with_resources("node", "kind")
+    source = sql_database().with_resources("node", "kind", "edge")
     pipeline.run(source, write_disposition="replace")
     dbt = dlt.dbt.package(
         pipeline,
@@ -215,7 +215,7 @@ def bloodhound_vector(
         bloodhound_embeddings(
             lookup_path=str(input_path), db_batch_size=bsize, model_batch_size=msize
         ),
-        write_disposition="merge",
+        write_disposition="replace",
     )
     # dbt = dlt.dbt.package(pipeline, "sources/bloodhound/dbt")
     # dbt.run_all(run_params=("--fail-fast", "--select", "embeddings_api"))

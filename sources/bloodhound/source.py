@@ -61,10 +61,6 @@ def bloodhound_embeddings(
     embedding_model: str = "BAAI/bge-m3",
 ):
     conn = duckdb.connect(lookup_path)
-    # conn.execute("LOAD vss;")
-    # conn.execute(
-    #     "SET GLOBAL hnsw_enable_experimental_persistence = true;",
-    # )
     device = "cpu"
     if torch.backends.mps.is_available():
         device = "mps"
@@ -88,7 +84,7 @@ def bloodhound_embeddings(
             SELECT
                 n._dlt_id,
                 n.object_id,
-                n.kind || ' ' || n.label || ' ' || CAST(n.properties AS VARCHAR) as embedding_text
+                'kind=' || n.kind || ', label=' || n.label || ', properties=' || CAST(n.properties AS VARCHAR) as embedding_text
             FROM bloodhound_api.nodes_api AS n
             LEFT JOIN bloodhound_api.embeddings AS e
                 ON e.object_id = n.object_id

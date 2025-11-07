@@ -22,7 +22,12 @@ from .models.identities import User, UserNode, Group, GroupNode
 from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
 
 from functools import wraps
-from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, readers
+from dlt.sources.filesystem import (
+    filesystem as filesystemsource,
+    read_jsonl,
+    readers,
+    read_parquet,
+)
 
 
 import dlt
@@ -50,9 +55,7 @@ RESOURCE_TYPES = {
 
 
 @dlt.source()
-def kubernetes_resources(
-    kube_config: None | str = None, cluster: str = dlt.config.value
-):
+def kubernetes_resources(kube_config: None | str = None):
 
     config.load_kube_config(kube_config)
     api_client = client.ApiClient()
@@ -260,7 +263,8 @@ def kubernetes_opengraph(
     bucket_url: str = dlt.config.value,
 ):
 
-    def json_resource(subdir: str):
+    # TODO: Replace with new filtered fs loader
+    def raw_resource(subdir: str):
         files = filesystemsource(
             bucket_url=bucket_url,
             file_glob=f"{subdir}/**/*.jsonl.gz",
@@ -279,12 +283,12 @@ def kubernetes_opengraph(
         )
         return Graph(graph=entries)
 
-    @dlt.transformer(data_from=json_resource("pods"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("pods"), columns=Graph)
     def pods_graph(pods: list):
         for pod in pods:
             yield build_graph(PodNode, pod)
 
-    @dlt.transformer(data_from=json_resource("cust_volumes"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("cust_volumes"), columns=Graph)
     def volumes_graph(volumes: list):
         for volume in volumes:
             node_name = volume.get("node_name")
@@ -293,77 +297,77 @@ def kubernetes_opengraph(
                 continue
             yield build_graph(VolumeNode, volume)
 
-    @dlt.transformer(data_from=json_resource("namespaces"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("namespaces"), columns=Graph)
     def namespaces_graph(namespaces):
         for namespace in namespaces:
             yield build_graph(NamespaceNode, namespace)
 
-    @dlt.transformer(data_from=json_resource("unmapped"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("unmapped"), columns=Graph)
     def unmapped_graph(resources):
         for resource in resources:
             yield build_graph(GenericNode, resource)
 
-    @dlt.transformer(data_from=json_resource("nodes"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("nodes"), columns=Graph)
     def nodes_graph(nodes):
         for node in nodes:
             yield build_graph(NodeOutput, node)
 
-    @dlt.transformer(data_from=json_resource("deployments"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("deployments"), columns=Graph)
     def deployments_graph(deployments):
         for deployment in deployments:
             yield build_graph(DeploymentNode, deployment)
 
-    @dlt.transformer(data_from=json_resource("replicasets"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("replicasets"), columns=Graph)
     def replicasets_graph(replicasets):
         for replicaset in replicasets:
             yield build_graph(ReplicaSetNode, replicaset)
 
-    @dlt.transformer(data_from=json_resource("service_accounts"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("service_accounts"), columns=Graph)
     def service_accounts_graph(service_accounts):
         for service_account in service_accounts:
             yield build_graph(ServiceAccountNode, service_account)
 
-    @dlt.transformer(data_from=json_resource("roles"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("roles"), columns=Graph)
     def roles_graph(roles):
         for role in roles:
             yield build_graph(RoleNode, role)
 
-    @dlt.transformer(data_from=json_resource("role_bindings"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("role_bindings"), columns=Graph)
     def role_bindings_graph(role_bindings):
         for role_binding in role_bindings:
             yield build_graph(RoleBindingNode, role_binding)
 
-    @dlt.transformer(data_from=json_resource("cluster_roles"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("cluster_roles"), columns=Graph)
     def cluster_roles_graph(roles):
         for role in roles:
             yield build_graph(ClusterRoleNode, role)
 
-    @dlt.transformer(data_from=json_resource("cluster_role_bindings"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("cluster_role_bindings"), columns=Graph)
     def cluster_role_bindings_graph(cluster_role_bindings):
         for cluster_role_binding in cluster_role_bindings:
             yield build_graph(ClusterRoleBindingNode, cluster_role_binding)
 
-    @dlt.transformer(data_from=json_resource("resource_definitions"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("resource_definitions"), columns=Graph)
     def resource_definitions_graph(resource_definitions):
         for resource_definition in resource_definitions:
             yield build_graph(ResourceNode, resource_definition)
 
-    @dlt.transformer(data_from=json_resource("cust_users"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("cust_users"), columns=Graph)
     def users_graph(users):
         for user in users:
             yield build_graph(UserNode, user)
 
-    @dlt.transformer(data_from=json_resource("cust_groups"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("cust_groups"), columns=Graph)
     def groups_graph(groups):
         for group in groups:
             yield build_graph(GroupNode, group)
 
-    @dlt.transformer(data_from=json_resource("statefulsets"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("statefulsets"), columns=Graph)
     def statefulsets_graph(statefulsets):
         for statefulset in statefulsets:
             yield build_graph(StatefulSetNode, statefulset)
 
-    @dlt.transformer(data_from=json_resource("daemonsets"), columns=Graph)
+    @dlt.transformer(data_from=raw_resource("daemonsets"), columns=Graph)
     def daemonsets_graph(daemonsets):
         for daemonset in daemonsets:
             yield build_graph(DaemonSetNode, daemonset)

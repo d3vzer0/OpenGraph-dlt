@@ -3,7 +3,7 @@ from .entries import Node, Edge
 
 
 class GraphEntries(BaseModel):
-    nodes: list[Node] = []
+    nodes: list[Node] = Field(default_factory=list)
     edges: list[Edge] = Field(default_factory=list)
 
 

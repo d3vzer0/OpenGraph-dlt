@@ -22,4 +22,5 @@ class BloodHoundNode(BaseModel):
     kinds: list[str]
     objectId: str
     lastSeen: str
-    properties: Properties
+    properties: dict
+    # properties: Properties
