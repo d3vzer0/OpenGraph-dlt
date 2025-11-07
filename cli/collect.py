@@ -75,30 +75,7 @@ def aws(
 
 
 @collect.command()
-def kubernetes(output_path: OutputPath):
-
-    contexts, active = config.list_kube_config_contexts()
-    cluster_name = active["context"]["cluster"]
-
-    dest = filesystem(
-        bucket_url=str(output_path),
-    )
-
-    pipeline = dlt.pipeline(
-        pipeline_name="kube_collection",
-        destination=dest,
-        dataset_name="kubernetes",
-        progress="enlighten",
-    )
-
-    pipeline.run(
-        kubernetes_resources(
-            kube_config="~/.kube/config",
-            cluster=cluster_name,
-        ),
-        write_disposition="replace",
-        loader_file_format="parquet",
-    )
+def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
 
     duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     lookup = dlt.pipeline(
@@ -110,9 +87,7 @@ def kubernetes(output_path: OutputPath):
 
     resource_files = (
         (
-            readers(
-                bucket_url=f"{str(output_path)}/kubernetes", file_glob="**/*.jsonl.gz"
-            )
+            readers(bucket_url=f"{str(input_path)}/", file_glob="**/*.parquet")
             .read_parquet()
             .with_name("resources")
         )
@@ -137,8 +112,8 @@ def kubernetes(output_path: OutputPath):
 
     resource_definition_files = (
         readers(
-            bucket_url=f"{str(output_path)}/kubernetes",
-            file_glob="**/resource_definitions/**/*.jsonl.gz",
+            bucket_url=f"{str(input_path)}/",
+            file_glob="**/resource_definitions/**/*.parquet",
         )
         .read_parquet()
         .with_name("resource_definitions")
@@ -169,6 +144,35 @@ def kubernetes(output_path: OutputPath):
         "sources/kubernetes/dbt",
     )
     dbt.run_all()
+
+
+@collect.command()
+def kubernetes(output_path: OutputPath):
+
+    contexts, active = config.list_kube_config_contexts()
+    cluster_name = active["context"]["cluster"]
+
+    dest = filesystem(
+        bucket_url=str(output_path),
+    )
+
+    pipeline = dlt.pipeline(
+        pipeline_name="kube_collection",
+        destination=dest,
+        dataset_name="kubernetes",
+        progress="enlighten",
+    )
+
+    pipeline.run(
+        kubernetes_resources(
+            kube_config="~/.kube/config",
+            cluster=cluster_name,
+        ),
+        write_disposition="replace",
+        loader_file_format="parquet",
+    )
+
+    kubernetes_lookup(output_path)
 
 
 @collect.command()
