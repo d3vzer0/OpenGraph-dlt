@@ -55,7 +55,7 @@ RESOURCE_TYPES = {
 
 
 @dlt.source()
-def kubernetes_resources(kube_config: None | str = None):
+def kubernetes_resources(kube_config: None | str = None, cluster: str | None = None):
 
     config.load_kube_config(kube_config)
     api_client = client.ApiClient()
@@ -108,20 +108,20 @@ def kubernetes_resources(kube_config: None | str = None):
         v1 = client.CoreV1Api()
         pods = v1.list_pod_for_all_namespaces()
         for pod in pods.items:
-            yield Pod(**pod.to_dict())
+            yield pod.to_dict()
 
     @dlt.transformer(data_from=pods, columns=Volume, table_name="cust_volumes")
-    def volumes(pod: Pod):
-        volumes = pod.spec.volumes
+    def volumes(pod: dict):
+        volumes = pod["spec"]["volumes"]
         if volumes:
-            node_name = pod.spec.node_name
+            node_name = pod["spec"].get("node_name")
             if not node_name:
                 return
             for volume in volumes:
-                host_path = volume.host_path
+                host_path = volume.get("host_path")
                 if not host_path:
                     continue
-                path = host_path.path
+                path = host_path.get("path")
                 yield {"node_name": node_name, "path": path}
 
     @dlt.resource(columns=Role, table_name="roles", parallelized=True)
@@ -136,18 +136,18 @@ def kubernetes_resources(kube_config: None | str = None):
         v1 = client.RbacAuthorizationV1Api()
         rolebs = v1.list_role_binding_for_all_namespaces()
         for roleb in rolebs.items:
-            yield RoleBinding(**roleb.to_dict())
+            yield roleb.to_dict()
 
     @dlt.transformer(data_from=role_bindings, table_name="cust_users", columns=User)
-    def users_role(role_binding: RoleBinding):
-        for subject in role_binding.subjects:
-            if subject.kind == "User":
+    def users_role(role_binding):
+        for subject in role_binding["subjects"]:
+            if subject["kind"] == "User":
                 yield subject
 
     @dlt.transformer(data_from=role_bindings, table_name="cust_groups", columns=Group)
-    def groups_role(role_binding: RoleBinding):
-        for subject in role_binding.subjects:
-            if subject.kind == "Group":
+    def groups_role(role_binding):
+        for subject in role_binding["subjects"]:
+            if subject["kind"] == "Group":
                 yield subject
 
     @dlt.resource(columns=ClusterRole, table_name="cluster_roles", parallelized=True)
@@ -166,22 +166,22 @@ def kubernetes_resources(kube_config: None | str = None):
         v1 = client.RbacAuthorizationV1Api()
         rolebs = v1.list_cluster_role_binding()
         for roleb in rolebs.items:
-            yield ClusterRoleBinding(**roleb.to_dict())
+            yield roleb.to_dict()
 
     @dlt.transformer(
         data_from=cluster_role_bindings, table_name="cust_users", columns=User
     )
-    def users_cluster_role(role_binding: ClusterRoleBinding):
-        for subject in role_binding.subjects:
-            if subject.kind == "User":
+    def users_cluster_role(role_binding):
+        for subject in role_binding["subjects"]:
+            if subject["kind"] == "User":
                 yield subject
 
     @dlt.transformer(
         data_from=cluster_role_bindings, table_name="cust_groups", columns=Group
     )
-    def groups_cluster_role(role_binding: ClusterRoleBinding):
-        for subject in role_binding.subjects:
-            if subject.kind == "Group":
+    def groups_cluster_role(role_binding):
+        for subject in role_binding["subjects"]:
+            if subject["kind"] == "Group":
                 yield subject
 
     @dlt.resource(
@@ -202,16 +202,16 @@ def kubernetes_resources(kube_config: None | str = None):
         discovered_resources = dyn_client.resources.search()
         for resource in discovered_resources:
             if not resource.kind.endswith("List"):
-                yield Resource(**resource.to_dict())
+                yield resource.to_dict()
 
     @dlt.transformer(
         data_from=resource_definitions,
         table_name="cust_api_groups",
         columns=ResourceGroup,
     )
-    def api_groups(item: Resource):
-        if item.group:
-            yield {"name": item.group, "api_version": item.api_version}
+    def api_groups(item):
+        if item["group"]:
+            yield {"name": item["group"], "api_version": item["api_version"]}
 
     @dlt.transformer(
         data_from=resource_definitions,
@@ -219,13 +219,13 @@ def kubernetes_resources(kube_config: None | str = None):
         columns=Generic,
         parallelized=True,
     )
-    def unmapped_resources(resource: Resource):
+    def unmapped_resources(resource: dict):
         resource_filter = (
-            not resource.kind in RESOURCE_TYPES and "list" in resource.verbs
+            not resource["kind"] in RESOURCE_TYPES and "list" in resource["verbs"]
         )
         if resource_filter:
             resource_client = dyn_client.resources.get(
-                api_version=resource.api_version, kind=resource.kind
+                api_version=resource["api_version"], kind=resource["kind"]
             )
             items = resource_client.get()
             for item in items.items:
