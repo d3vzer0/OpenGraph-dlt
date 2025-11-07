@@ -113,7 +113,7 @@ def kubernetes(output_path: OutputPath):
             readers(
                 bucket_url=f"{str(output_path)}/kubernetes", file_glob="**/*.jsonl.gz"
             )
-            .read_jsonl()
+            .read_parquet()
             .with_name("resources")
         )
         .add_filter(lambda item: item.get("metadata"))
@@ -140,7 +140,7 @@ def kubernetes(output_path: OutputPath):
             bucket_url=f"{str(output_path)}/kubernetes",
             file_glob="**/resource_definitions/**/*.jsonl.gz",
         )
-        .read_jsonl()
+        .read_parquet()
         .with_name("resource_definitions")
         .add_map(
             lambda item: {
