@@ -260,4 +260,7 @@ def rapid7(
         progress="enlighten",
     )
 
-    pipeline.run(rapid7_source(insecure=insecure))
+    pipeline.run(
+        rapid7_source(insecure=insecure),
+        loader_file_format="parquet",
+    )
