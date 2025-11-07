@@ -60,7 +60,7 @@ def aws(
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="lookup",
+        pipeline_name="aws_collector",
         destination=dest,
         dataset_name="aws",
         progress="enlighten",
@@ -85,7 +85,7 @@ def kubernetes(output_path: OutputPath):
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="lookup",
+        pipeline_name="kube_collection",
         destination=dest,
         dataset_name="kubernetes",
         progress="enlighten",
@@ -97,6 +97,7 @@ def kubernetes(output_path: OutputPath):
             cluster=cluster_name,
         ),
         write_disposition="replace",
+        loader_file_format="parquet",
     )
 
     duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
@@ -253,7 +254,7 @@ def rapid7(
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="rapid7_lookup",
+        pipeline_name="rapid7_collector",
         destination=dest,
         dataset_name="rapid7",
         progress="enlighten",
