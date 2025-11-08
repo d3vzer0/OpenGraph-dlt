@@ -104,7 +104,7 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
             yield deployment.to_dict()
 
     @dlt.resource(columns=Pod, table_name="pods", parallelized=True)
-    def pods(incremental=dlt.sources.incremental("metadata.resource_version")):
+    def pods():
         v1 = client.CoreV1Api()
         pods = v1.list_pod_for_all_namespaces()
         for pod in pods.items:
