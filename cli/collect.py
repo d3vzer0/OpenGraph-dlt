@@ -7,9 +7,10 @@ from sources.bloodhound.source import bloodhound_source, bloodhound_embeddings
 from sources.resource_files.source import resource_files
 from dlt.sources.filesystem import readers
 from dlt.destinations import filesystem
+from destinations.parquet.destination import parquet
 from typing import Annotated
 from pathlib import Path
-
+import json
 from kubernetes import config
 
 from dlt.sources.sql_database import sql_database
@@ -87,9 +88,15 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
 
     resource_files = (
         (
-            readers(bucket_url=f"{str(input_path)}/", file_glob="**/*.parquet")
+            readers(bucket_url=f"{str(input_path)}", file_glob="**/*.parquet")
             .read_parquet()
             .with_name("resources")
+        )
+        .add_map(
+            lambda row: row
+            | {
+                "metadata": json.loads(row["metadata"]) if "metadata" in row else None,
+            }
         )
         .add_filter(lambda item: item.get("metadata"))
         .add_map(
@@ -112,7 +119,7 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
 
     resource_definition_files = (
         readers(
-            bucket_url=f"{str(input_path)}/",
+            bucket_url=f"{str(input_path)}",
             file_glob="**/resource_definitions/**/*.parquet",
         )
         .read_parquet()
@@ -146,9 +153,9 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
     dbt.run_all()
 
 
+# TODO: type_adapter_callback
 @collect.command()
 def kubernetes(output_path: OutputPath):
-
     contexts, active = config.list_kube_config_contexts()
     cluster_name = active["context"]["cluster"]
 
@@ -157,7 +164,7 @@ def kubernetes(output_path: OutputPath):
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="kube_collection",
+        pipeline_name="kube_collection_3",
         destination=dest,
         dataset_name="kubernetes",
         progress="enlighten",
@@ -172,7 +179,7 @@ def kubernetes(output_path: OutputPath):
         loader_file_format="parquet",
     )
 
-    kubernetes_lookup(output_path)
+    kubernetes_lookup(Path(f"{output_path}/kubernetes"))
 
 
 @collect.command()
