@@ -7,7 +7,6 @@ from sources.bloodhound.source import bloodhound_source, bloodhound_embeddings
 from sources.resource_files.source import resource_files
 from dlt.sources.filesystem import readers
 from dlt.destinations import filesystem
-from destinations.parquet.destination import parquet
 from typing import Annotated
 from pathlib import Path
 import json
