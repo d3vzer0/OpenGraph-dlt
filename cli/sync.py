@@ -9,7 +9,7 @@ from sources.kubernetes.source import (
 from sources.aws.source import aws_opengraph
 from sources.rapid7.source import rapid7_opengraph
 from destinations.opengraph.client import BloodHound
-from destinations.opengraph.destination import opengraph_file
+from destinations.opengraph.destination import bloodhound
 from sources.kubernetes.lookup import KubernetesLookup
 from sources.aws.lookup import AWSLookup
 from sources.bloodhound.lookup import BloodHoundLookup
@@ -20,14 +20,6 @@ from pathlib import Path
 from kubernetes import config
 
 sync = typer.Typer(pretty_exceptions_enable=False)
-convert = typer.Typer(pretty_exceptions_enable=False)
-
-OutputPath = Annotated[
-    Path,
-    typer.Argument(
-        exists=True, file_okay=True, dir_okay=True, readable=True, resolve_path=True
-    ),
-]
 
 InputPath = Annotated[
     Path,
@@ -37,65 +29,29 @@ InputPath = Annotated[
 ]
 
 
-@dataclass
-class SyncOptions:
-    bhe_uri: Annotated[str, typer.Option(envvar="BHE_URI")]
-    token_id: Annotated[str, typer.Option(envvar="BHE_API_ID")]
-    token_key = Annotated[str, typer.Option(envvar="BHE_API_KEY")]
-
-
-#  bhe_uri: Annotated[str, typer.Option(envvar="BHE_URI")],
-#     token_id: Annotated[str, typer.Option(envvar="BHE_API_ID")],
-#     token_key: Annotated[str, typer.Option(envvar="BHE_API_KEY")],
-
-
-@dataclass
-class ConvertOptions:
-    output: Path
-
-
-# @convert.callback()
-# def convert_callback(
-#     ctx: typer.Context,
-#     output: Annotated[
-#         Path,
-#         typer.Option(
-#             exists=True,
-#             file_okay=False,
-#             dir_okay=True,
-#             writable=False,
-#             readable=True,
-#             resolve_path=True,
-#         ),
-#     ],
-# ):
-#     ctx.obj = ConvertOptions(output=output)
-
-
-@convert.command()
-def aws(input_path: InputPath, output_path: OutputPath = Path("./graph")):
+@sync.command()
+def aws(ctx: typer.Context, input_path: InputPath):
     client = duckdb.connect("lookup.duckdb", read_only=True)
     lookup = AWSLookup(client)
 
     pipeline = dlt.pipeline(
-        pipeline_name="aws_opengraph_convert",
-        destination=opengraph_file(output_path=str(output_path)),
+        pipeline_name="aws_opengraph_sync",
+        destination=bloodhound(),
         progress="enlighten",
     )
     pipeline.run(aws_opengraph(lookup=lookup, bucket_url=str(input_path)))
 
 
-# @sync.command()
-@convert.command()
-def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph")):
+@sync.command()
+def kubernetes(input_path: InputPath):
     contexts, active = config.list_kube_config_contexts()
     cluster_name = active["context"]["cluster"]
 
     client = duckdb.connect("lookup.duckdb", read_only=True)
     lookup = KubernetesLookup(client)
     pipeline = dlt.pipeline(
-        pipeline_name="k8s_opengraph_convert",
-        destination=opengraph_file(output_path=str(output_path)),
+        pipeline_name="k8s_opengraph_synct",
+        destination=bloodhound(),
         progress="enlighten",
     )
     pipeline.run(
@@ -105,21 +61,20 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
     )
 
 
-# @sync.command()
-@convert.command()
-def rapid7(input_path: InputPath, output_path: OutputPath = Path("./graph")):
+@sync.command()
+def rapid7(input_path: InputPath):
     client = duckdb.connect("lookup.duckdb", read_only=True)
     lookup = BloodHoundLookup(client)
     pipeline = dlt.pipeline(
-        pipeline_name="rapid7_opengraph_convert",
-        destination=opengraph_file(output_path=str(output_path)),
+        pipeline_name="rapid7_opengraph_sync",
+        destination=bloodhound(),
         progress="enlighten",
     )
     pipeline.run(rapid7_opengraph(lookup=lookup, bucket_url=str(input_path)))
 
 
-@convert.command()
-def eks(output_path: OutputPath = Path("./graph")):
+@sync.command()
+def eks():
     contexts, active = config.list_kube_config_contexts()
     cluster_name = active["context"]["cluster"]
 
@@ -127,8 +82,8 @@ def eks(output_path: OutputPath = Path("./graph")):
     lookup = KubernetesLookup(client)
 
     pipeline = dlt.pipeline(
-        pipeline_name="k8s_opengraph_eks_convert",
-        destination=opengraph_file(output_path=str(output_path)),
+        pipeline_name="k8s_opengraph_eks_sync",
+        destination=bloodhound(),
         progress="enlighten",
     )
 

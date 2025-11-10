@@ -9,16 +9,26 @@ from pathlib import Path
 import json
 
 
-# @dlt.destination(batch_size=1000)
-# def bloodhound(
-#     items: TDataItems,
-#     table: TTableSchema,
-#     api_url: str = dlt.config.value,
-#     token_key: str = dlt.secrets.value,
-#     token_id: str = dlt.secrets.value,
-# ):
-#     client = BloodHound(token_key, token_id, api_url)
-#     # print(items)
+@dlt.destination(batch_size=1000)
+def bloodhound(
+    items: TDataItems,
+    table: TTableSchema,
+    api_url: str = dlt.config.value,
+    token_key: str = dlt.secrets.value,
+    token_id: str = dlt.secrets.value,
+):
+    client = BloodHound(token_key, token_id, api_url)
+    merged = GraphEntries(nodes=[], edges=[])
+    for raw_item in items:
+        graph = Graph.model_validate(raw_item)
+        merged.nodes.extend(graph.graph.nodes)
+        merged.edges.extend(graph.graph.edges)
+
+    aggregated = Graph(graph=merged)
+    upload_job = client.start_upload_job()
+    client.upload_graph(id=upload_job, body=aggregated.model_dump_json())
+    client.stop_upload_job(id=upload_job)
+
 
 DEST_PART = defaultdict(int)
 

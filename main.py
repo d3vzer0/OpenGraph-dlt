@@ -1,6 +1,7 @@
 import typer
 
-from cli.sync import sync, convert
+from cli.sync import sync
+from cli.convert import convert
 from cli.icons import icons
 from cli.collect import collect
 
