@@ -1,24 +1,12 @@
-import typer
-import dlt
-from opengraph_dlt.sources.kubernetes.source import kubernetes_resources
-from opengraph_dlt.sources.aws.source import aws_resources
-from opengraph_dlt.sources.rapid7.source import rapid7_source
-from opengraph_dlt.sources.bloodhound.source import bloodhound_source, bloodhound_embeddings
 from opengraph_dlt.sources.resource_files.source import resource_files
-from dlt.sources.filesystem import readers, read_parquet
+from dlt.sources.filesystem import readers
 from dlt.destinations import filesystem
 from typing import Annotated
 from pathlib import Path
-import json
-from kubernetes import config
-
-from dlt.common.libs.pydantic import pydantic_to_table_schema_columns
-from opengraph_dlt.sources.kubernetes.models.pod import Pod
-
-# import dlt
-from dlt.destinations.adapters import bigquery_adapter
 from dlt.sources.sql_database import sql_database
-from typing import List, Annotated
+import typer
+import dlt
+import json
 
 collect = typer.Typer()
 
@@ -60,6 +48,8 @@ def aws(
         bool, typer.Option(help="Generate lookup database afterwards")
     ] = True,
 ):
+    from opengraph_dlt.sources.aws.source import aws_resources
+
     dest = filesystem(
         bucket_url=str(output_path),
     )
@@ -92,7 +82,7 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
         progress="enlighten",
     )
 
-    resource_files = (
+    local_resource_files = (
         (
             readers(bucket_url=f"{str(input_path)}", file_glob="**/*.parquet")
             .read_parquet()
@@ -114,7 +104,7 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
         )
     )
     lookup.run(
-        resource_files,
+        local_resource_files,
         columns={
             "kind": {"data_type": "text"},
             "name": {"data_type": "text"},
@@ -162,6 +152,9 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
 # TODO: type_adapter_callback
 @collect.command()
 def kubernetes(output_path: OutputPath):
+    from opengraph_dlt.sources.kubernetes.source import kubernetes_resources
+    from kubernetes import config
+
     contexts, active = config.list_kube_config_contexts()
     cluster_name = active["context"]["cluster"]
 
@@ -207,41 +200,45 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
     dbt.run_all(run_params=("--fail-fast", "--select", "staging_pg"))
 
 
-@collect.command()
-def bloodhound_vector(
-    input_path: Path = Path("lookup.duckdb"),
-    bsize: Annotated[
-        int, typer.Option(help="Batch size for fetching DB entries")
-    ] = 10000,
-    msize: Annotated[
-        int,
-        typer.Option(help="Batch size for model inferenc when generating embeddings"),
-    ] = 128,
-):
-    duckdb_dest = dlt.destinations.duckdb(
-        "lookup.duckdb",
-    )
-    pipeline = dlt.pipeline(
-        pipeline_name="bloodhound_embeddings",
-        destination=duckdb_dest,
-        dataset_name="bloodhound_api",
-        progress="enlighten",
-    )
+# @collect.command()
+# def bloodhound_vector(
+#     input_path: Path = Path("lookup.duckdb"),
+#     bsize: Annotated[
+#         int, typer.Option(help="Batch size for fetching DB entries")
+#     ] = 10000,
+#     msize: Annotated[
+#         int,
+#         typer.Option(help="Batch size for model inferenc when generating embeddings"),
+#     ] = 128,
+# ):
+#     duckdb_dest = dlt.destinations.duckdb(
+#         "lookup.duckdb",
+#     )
+#     pipeline = dlt.pipeline(
+#         pipeline_name="bloodhound_embeddings",
+#         destination=duckdb_dest,
+#         dataset_name="bloodhound_api",
+#         progress="enlighten",
+#     )
 
-    pipeline.run(
-        bloodhound_embeddings(
-            lookup_path=str(input_path), db_batch_size=bsize, model_batch_size=msize
-        ),
-        write_disposition="replace",
-    )
-    # dbt = dlt.dbt.package(pipeline, "sources/bloodhound/dbt")
-    # dbt.run_all(run_params=("--fail-fast", "--select", "embeddings_api"))
+#     pipeline.run(
+#         bloodhound_embeddings(
+#             lookup_path=str(input_path), db_batch_size=bsize, model_batch_size=msize
+#         ),
+#         write_disposition="replace",
+#     )
+#     # dbt = dlt.dbt.package(pipeline, "sources/bloodhound/dbt")
+#     # dbt.run_all(run_params=("--fail-fast", "--select", "embeddings_api"))
 
 
 @collect.command()
 def bloodhound_api(
     limit: int = 500, nodes: Annotated[list[str], typer.Argument] = ["computers"]
 ):
+    from opengraph_dlt.sources.bloodhound.source import (
+        bloodhound_source,
+    )
+
     duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     pipeline = dlt.pipeline(
         pipeline_name="bloodhound_lookup",
@@ -265,6 +262,8 @@ def rapid7(
         bool, typer.Option(help="Don't verify Rapid7 server certificate")
     ] = False,
 ):
+    from opengraph_dlt.sources.rapid7.source import rapid7_source
+
     dest = filesystem(
         bucket_url=str(output_path),
     )

@@ -2,7 +2,8 @@ from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, r
 from opengraph_dlt.destinations.opengraph.client import BloodHound
 from .models.node import BloodHoundNode
 from typing import Iterator
-from FlagEmbedding import BGEM3FlagModel
+
+# from FlagEmbedding import BGEM3FlagModel
 import torch
 import pyarrow as pa
 import numpy as np

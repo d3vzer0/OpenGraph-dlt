@@ -14,7 +14,6 @@ from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
 from opengraph_dlt.sources.aws.lookup import AWSLookup
 from opengraph_dlt.sources.bloodhound.lookup import BloodHoundLookup
 from typing import Annotated
-from dataclasses import dataclass
 from pathlib import Path
 
 from kubernetes import config
