@@ -1,5 +1,5 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl, readers
-from destinations.opengraph.client import BloodHound
+from opengraph_dlt.destinations.opengraph.client import BloodHound
 from .models.node import BloodHoundNode
 from typing import Iterator
 from FlagEmbedding import BGEM3FlagModel

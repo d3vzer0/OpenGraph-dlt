@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
-from sources.aws.models.graph import Node, NodeProperties, NodeTypes
+from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes
 
 
 class Group(BaseModel):

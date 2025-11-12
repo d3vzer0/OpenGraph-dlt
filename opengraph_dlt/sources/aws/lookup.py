@@ -1,5 +1,5 @@
 from duckdb import DuckDBPyConnection
-from sources.shared.lookup import LookupManager
+from opengraph_dlt.sources.shared.lookup import LookupManager
 from functools import lru_cache
 
 

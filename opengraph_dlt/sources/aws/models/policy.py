@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from sources.aws.models.graph import NodeProperties, Node, NodeTypes, gen_guid
-from sources.shared.models.entries import Edge, EdgePath, EdgeProperties
-from sources.aws.lookup import LookupManager
+from opengraph_dlt.sources.aws.models.graph import NodeProperties, Node, NodeTypes, gen_guid
+from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
+from opengraph_dlt.sources.aws.lookup import LookupManager
 import fnmatch
 
 

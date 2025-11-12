@@ -1,8 +1,8 @@
 import typer
-from sources.kubernetes.icons import KUBE_ICONS
-from sources.aws.icons import AWS_ICONS
-from sources.rapid7.icons import R7_ICONS
-from destinations.opengraph.client import BloodHound
+from opengraph_dlt.sources.kubernetes.icons import KUBE_ICONS
+from opengraph_dlt.sources.aws.icons import AWS_ICONS
+from opengraph_dlt.sources.rapid7.icons import R7_ICONS
+from opengraph_dlt.destinations.opengraph.client import BloodHound
 from pydantic import BaseModel
 from dataclasses import dataclass
 from typing_extensions import Annotated

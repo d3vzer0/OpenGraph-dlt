@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from sources.aws.utils.guid import NodeTypes
-from sources.aws.models.graph import Node, NodeProperties
+from opengraph_dlt.sources.aws.utils.guid import NodeTypes
+from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties
 
 
 class IdentityProvider(BaseModel):

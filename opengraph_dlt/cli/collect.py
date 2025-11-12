@@ -1,10 +1,10 @@
 import typer
 import dlt
-from sources.kubernetes.source import kubernetes_resources
-from sources.aws.source import aws_resources
-from sources.rapid7.source import rapid7_source
-from sources.bloodhound.source import bloodhound_source, bloodhound_embeddings
-from sources.resource_files.source import resource_files
+from opengraph_dlt.sources.kubernetes.source import kubernetes_resources
+from opengraph_dlt.sources.aws.source import aws_resources
+from opengraph_dlt.sources.rapid7.source import rapid7_source
+from opengraph_dlt.sources.bloodhound.source import bloodhound_source, bloodhound_embeddings
+from opengraph_dlt.sources.resource_files.source import resource_files
 from dlt.sources.filesystem import readers, read_parquet
 from dlt.destinations import filesystem
 from typing import Annotated
@@ -13,7 +13,7 @@ import json
 from kubernetes import config
 
 from dlt.common.libs.pydantic import pydantic_to_table_schema_columns
-from sources.kubernetes.models.pod import Pod
+from opengraph_dlt.sources.kubernetes.models.pod import Pod
 
 # import dlt
 from dlt.destinations.adapters import bigquery_adapter

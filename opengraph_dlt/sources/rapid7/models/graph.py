@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
-from sources.shared.models.graph import MetaData, Graph as CommonGraph
+from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonGraph
 from abc import ABC
 from typing import Optional
-from sources.shared.models.entries import (
+from opengraph_dlt.sources.shared.models.entries import (
     Node as BaseNode,
     Edge,
 )

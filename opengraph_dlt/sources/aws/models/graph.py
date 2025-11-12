@@ -1,10 +1,10 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
-from sources.shared.models.graph import MetaData, Graph as CommonGraph
+from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonGraph
 from abc import ABC
 from datetime import datetime
 from typing import Optional
 from enum import Enum
-from sources.shared.models.entries import Node as BaseNode, Edge
+from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
 import uuid
 
 

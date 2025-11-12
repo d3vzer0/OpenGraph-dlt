@@ -1,5 +1,5 @@
 from pydantic import BaseModel, computed_field
-from sources.kubernetes.models.graph import (
+from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
     NodeProperties,
     NodeTypes,

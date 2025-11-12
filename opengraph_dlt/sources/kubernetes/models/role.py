@@ -1,12 +1,12 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
-from sources.kubernetes.models.graph import (
+from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
 )
-from sources.shared.models.entries import Edge, EdgePath, EdgeProperties
+from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 from typing import Optional, Any
 from enum import Enum
 import fnmatch

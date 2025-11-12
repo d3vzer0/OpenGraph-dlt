@@ -1,5 +1,5 @@
 from typing import List, Literal
-from sources.kubernetes.models.cluster_role import (
+from opengraph_dlt.sources.kubernetes.models.cluster_role import (
     ClusterRole,
     Verbs,
     Metadata,

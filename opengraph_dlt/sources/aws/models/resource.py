@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, computed_field, Field
-from sources.aws.models.graph import Node, NodeProperties, NodeTypes, gen_node_type
+from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, gen_node_type
 from datetime import datetime
 from enum import Enum
 

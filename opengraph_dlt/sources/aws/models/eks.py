@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from sources.aws.models.graph import Node, Edge, gen_guid
-from sources.kubernetes.models.cluster import Cluster
-from sources.kubernetes.models.identities import GroupNode
-from sources.shared.models.entries import EdgePath, NodeProperties
+from opengraph_dlt.sources.aws.models.graph import Node, Edge, gen_guid
+from opengraph_dlt.sources.kubernetes.models.cluster import Cluster
+from opengraph_dlt.sources.kubernetes.models.identities import GroupNode
+from opengraph_dlt.sources.shared.models.entries import EdgePath, NodeProperties
 
 
 AWS_EKS_ACCESS_POLICY_GROUPS = {

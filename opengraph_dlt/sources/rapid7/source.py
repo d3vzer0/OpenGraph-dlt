@@ -8,7 +8,7 @@ from .models.vulnerability import (
     VulnerabilityNode,
 )
 from .models.graph import GraphEntries, Graph
-from sources.bloodhound.lookup import BloodHoundLookup
+from opengraph_dlt.sources.bloodhound.lookup import BloodHoundLookup
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
 import dlt
 import requests

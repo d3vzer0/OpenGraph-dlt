@@ -2,7 +2,7 @@ import dlt
 from typing import Iterator, Optional
 from dlt.common.typing import TDataItems
 from dlt.common.schema import TTableSchema
-from destinations.opengraph.models.graph import Graph, GraphEntries, MetaData
+from opengraph_dlt.destinations.opengraph.models.graph import Graph, GraphEntries, MetaData
 from .client import BloodHound
 from collections import defaultdict
 from pathlib import Path

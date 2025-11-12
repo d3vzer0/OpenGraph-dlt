@@ -1,13 +1,13 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from pydantic import Field
-from sources.kubernetes.models.graph import (
+from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
 )
-from sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 
 
 VERB_TO_PERMISSION = {

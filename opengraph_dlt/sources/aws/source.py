@@ -1,7 +1,7 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
 from .models.group import Group, GroupNode
 from .models.membership import UserGroupMembership, MembershipEdges
-from sources.aws.lookup import AWSLookup
+from opengraph_dlt.sources.aws.lookup import AWSLookup
 from .models.role import Role, RoleNode
 from .models.eks import (
     EKSCluster,

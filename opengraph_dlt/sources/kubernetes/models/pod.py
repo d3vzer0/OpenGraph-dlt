@@ -8,16 +8,16 @@ from pydantic import (
 )
 from datetime import datetime
 from pydantic_core import PydanticUseDefault
-from sources.kubernetes.models.graph import (
+from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
     NodeProperties,
     Edge,
     NodeTypes,
     KubernetesCollector,
 )
-from sources.shared.models.entries import EdgePath
+from opengraph_dlt.sources.shared.models.entries import EdgePath
 from typing import Optional, Any, TypeVar, Annotated
-from sources.kubernetes.models.volume import Volume as HostVolume
+from opengraph_dlt.sources.kubernetes.models.volume import Volume as HostVolume
 
 
 def default_if_none(value: Any) -> Any:

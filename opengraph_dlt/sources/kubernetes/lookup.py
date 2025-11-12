@@ -1,6 +1,6 @@
 from duckdb import DuckDBPyConnection
 from functools import lru_cache
-from sources.shared.lookup import LookupManager
+from opengraph_dlt.sources.shared.lookup import LookupManager
 
 
 class KubernetesLookup(LookupManager):

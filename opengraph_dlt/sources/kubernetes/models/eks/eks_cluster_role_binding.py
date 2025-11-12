@@ -1,6 +1,6 @@
 from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
-from sources.kubernetes.models.cluster_role_binding import (
+from opengraph_dlt.sources.kubernetes.models.cluster_role_binding import (
     ClusterRoleBinding,
     Metadata,
     Subject,

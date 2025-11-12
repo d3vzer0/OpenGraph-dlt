@@ -1,18 +1,18 @@
 import typer
 import dlt
 import duckdb
-from sources.kubernetes.source import (
+from opengraph_dlt.sources.kubernetes.source import (
     kubernetes_opengraph,
     kubernetes_eks_opengraph,
 )
 
-from sources.aws.source import aws_opengraph
-from sources.rapid7.source import rapid7_opengraph
-from destinations.opengraph.client import BloodHound
-from destinations.opengraph.destination import bloodhound
-from sources.kubernetes.lookup import KubernetesLookup
-from sources.aws.lookup import AWSLookup
-from sources.bloodhound.lookup import BloodHoundLookup
+from opengraph_dlt.sources.aws.source import aws_opengraph
+from opengraph_dlt.sources.rapid7.source import rapid7_opengraph
+from opengraph_dlt.destinations.opengraph.client import BloodHound
+from opengraph_dlt.destinations.opengraph.destination import bloodhound
+from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
+from opengraph_dlt.sources.aws.lookup import AWSLookup
+from opengraph_dlt.sources.bloodhound.lookup import BloodHoundLookup
 from typing import Annotated
 from dataclasses import dataclass
 from pathlib import Path

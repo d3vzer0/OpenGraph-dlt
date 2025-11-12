@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
-from sources.kubernetes.models.graph import Node, NodeProperties
+from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
 import json
 
 

@@ -1,11 +1,11 @@
 from pydantic import BaseModel, computed_field
-from sources.kubernetes.models.graph import (
+from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
 )
-from sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 
 
 class User(BaseModel):

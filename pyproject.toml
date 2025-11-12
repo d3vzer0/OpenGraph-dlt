@@ -27,11 +27,14 @@ dependencies = [
 ]
 
 [project.scripts]
-opengraph = "main:app"
+opengraph = "opengraph_dlt.main:app"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]  # or "hatchling", "flit_core", etc.
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["opengraph_dlt*"]
 
 [dependency-groups]
 dev = [

@@ -1,6 +1,6 @@
 from kubernetes import client, config
 from kubernetes.dynamic import DynamicClient
-from sources.kubernetes.lookup import KubernetesLookup
+from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
 from .models.pod import Pod, PodNode, Volume as PodVolume
 from .models.volume import Volume, VolumeNode
 from .models.namespace import Namespace, NamespaceNode

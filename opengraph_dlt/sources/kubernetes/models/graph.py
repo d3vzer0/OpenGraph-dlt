@@ -1,14 +1,14 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
-from sources.shared.models.graph import MetaData, Graph as CommonGraph
+from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonGraph
 from abc import ABC
 from enum import Enum
 from datetime import datetime
 from typing import Optional, ClassVar
-from sources.kubernetes.lookup import LookupManager
-from sources.shared.models.entries import Node as BaseNode, Edge
-from sources.shared.guid import Collector
+from opengraph_dlt.sources.kubernetes.lookup import LookupManager
+from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
+from opengraph_dlt.sources.shared.guid import Collector
 
-# from sources.shared.models.examples import NodeExample
+# from opengraph_dlt.sources.shared.models.examples import NodeExample
 import importlib
 import uuid
 

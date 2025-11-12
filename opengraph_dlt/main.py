@@ -1,9 +1,9 @@
 import typer
 
-from cli.sync import sync
-from cli.convert import convert
-from cli.icons import icons
-from cli.collect import collect
+from opengraph_dlt.cli.sync import sync
+from opengraph_dlt.cli.convert import convert
+from opengraph_dlt.cli.icons import icons
+from opengraph_dlt.cli.collect import collect
 
 app = typer.Typer(pretty_exceptions_enable=False)
 app.add_typer(sync, name="sync")

@@ -1,5 +1,5 @@
-from sources.kubernetes.models.graph import Node, NodeProperties
-from sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
+from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 
 
 class ExtendedProperties(NodeProperties):
