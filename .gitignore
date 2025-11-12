@@ -1,5 +1,8 @@
 # Custom
 *.duckdb
+ui_catalog.db
+
+notebooks
 
 output
 graph
