@@ -1,5 +1,10 @@
 from pydantic import BaseModel, computed_field, ConfigDict
-from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
+from sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    NodeTypes,
+    KubernetesCollector,
+)
 from sources.shared.models.entries import Edge, EdgePath
 
 
@@ -16,7 +21,7 @@ class Volume(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return gen_guid(self.name, NodeTypes.KubeVolume, "")
+        return KubernetesCollector.guid(self.name, NodeTypes.KubeVolume, "")
 
 
 class ExtendedProperties(NodeProperties):
@@ -30,7 +35,7 @@ class VolumeNode(Node):
     @property
     def _node_edge(self):
         start_path = EdgePath(value=self.id, match_by="id")
-        end_path_id = gen_guid(
+        end_path_id = KubernetesCollector.guid(
             self.properties.node_name, NodeTypes.KubeNode, self._cluster
         )
         end_path = EdgePath(value=end_path_id, match_by="id")

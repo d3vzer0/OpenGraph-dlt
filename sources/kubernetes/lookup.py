@@ -1,9 +1,6 @@
 from duckdb import DuckDBPyConnection
-from typing import Dict, Any
 from functools import lru_cache
 from sources.shared.lookup import LookupManager
-import json
-import os
 
 
 class KubernetesLookup(LookupManager):

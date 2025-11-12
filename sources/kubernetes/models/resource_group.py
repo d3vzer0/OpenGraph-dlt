@@ -1,5 +1,10 @@
 from pydantic import BaseModel, computed_field
-from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
+from sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    NodeTypes,
+    KubernetesCollector,
+)
 from typing import Optional
 
 
@@ -15,7 +20,7 @@ class ResourceGroup(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return gen_guid(self.name, NodeTypes.KubeResourceGroup, "")
+        return KubernetesCollector.guid(self.name, NodeTypes.KubeResourceGroup, "")
 
 
 class ResourceGroupNode(Node):

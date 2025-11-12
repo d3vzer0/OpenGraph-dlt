@@ -4,10 +4,9 @@ from sources.kubernetes.models.graph import (
     NodeProperties,
     Node as GraphNode,
     NodeTypes,
-    gen_guid,
+    KubernetesCollector,
 )
 from sources.shared.models.entries import Edge, EdgePath
-import json
 
 
 class Metadata(BaseModel):
@@ -25,20 +24,14 @@ class Node(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "Node"
 
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
 
 class NodeOutput(GraphNode):
 
     @property
     def _authenticated_group_edge(self):
-        # target_id = self._lookup.groups("system:authenticated")
-        target_id = gen_guid("system:authenticated", NodeTypes.KubeGroup, self._cluster)
+        target_id = KubernetesCollector.guid(
+            "system:authenticated", NodeTypes.KubeGroup, self._cluster
+        )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
@@ -46,8 +39,9 @@ class NodeOutput(GraphNode):
 
     @property
     def _nodes_group_edge(self):
-        # target_id = self._lookup.groups("system:nodes")
-        target_id = gen_guid("system:nodes", NodeTypes.KubeGroup, self._cluster)
+        target_id = KubernetesCollector.guid(
+            "system:nodes", NodeTypes.KubeGroup, self._cluster
+        )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
@@ -55,7 +49,9 @@ class NodeOutput(GraphNode):
 
     @property
     def _cluster_edge(self):
-        target_id = gen_guid(self._cluster, NodeTypes.KubeCluster, self._cluster)
+        target_id = KubernetesCollector.guid(
+            self._cluster, NodeTypes.KubeCluster, self._cluster
+        )
         start_path = EdgePath(value=self.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)

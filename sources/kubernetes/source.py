@@ -20,6 +20,7 @@ from .models.resource import Resource, ResourceNode
 from .models.graph import Node as GraphNode, Graph, GraphEntries
 from .models.identities import User, UserNode, Group, GroupNode
 from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
+import pandas as pd
 
 from functools import wraps
 from dlt.sources.filesystem import (
@@ -263,16 +264,15 @@ def kubernetes_opengraph(
     bucket_url: str = dlt.config.value,
 ):
 
-    # TODO: Replace with new filtered fs loader
     def raw_resource(subdir: str):
         files = filesystemsource(
             bucket_url=bucket_url,
             file_glob=f"{subdir}/**/*.jsonl.gz",
         )
-        reader = (files | read_parquet()).with_name(f"{subdir}_fs")
+        reader = (files | read_jsonl()).with_name(f"{subdir}_fs")
         return reader
 
-    def build_graph(model_cls: Type[T], resource: dict) -> Graph:
+    def build_graph(model_cls, resource: dict) -> Graph:
         node = model_cls.from_input(**resource)
         node._cluster = cluster
         node._lookup = lookup
@@ -282,6 +282,11 @@ def kubernetes_opengraph(
             edges=[edge for edge in node.edges if edge],
         )
         return Graph(graph=entries)
+
+    @dlt.transformer(data_from=raw_resource("nodes"), columns=Graph)
+    def nodes_graph(nodes):
+        for node in nodes:
+            yield build_graph(NodeOutput, node)
 
     @dlt.transformer(data_from=raw_resource("pods"), columns=Graph)
     def pods_graph(pods: list):
@@ -306,11 +311,6 @@ def kubernetes_opengraph(
     def unmapped_graph(resources):
         for resource in resources:
             yield build_graph(GenericNode, resource)
-
-    @dlt.transformer(data_from=raw_resource("nodes"), columns=Graph)
-    def nodes_graph(nodes):
-        for node in nodes:
-            yield build_graph(NodeOutput, node)
 
     @dlt.transformer(data_from=raw_resource("deployments"), columns=Graph)
     def deployments_graph(deployments):
@@ -400,7 +400,7 @@ def kubernetes_eks_opengraph(
     lookup: KubernetesLookup,
 ):
 
-    def build_graph(model_cls: Type[T], resource: dict) -> Graph:
+    def build_graph(model_cls, resource: dict) -> Graph:
         node = model_cls.from_input(**resource)
         node._cluster = cluster
         node._lookup = lookup

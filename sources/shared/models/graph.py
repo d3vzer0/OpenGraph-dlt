@@ -10,7 +10,6 @@ class GraphEntries(BaseModel):
 class CollectorProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
     collection_methods: list[str] = ["dlt"]
-    windows_server_version: str = "n/a"
 
 
 class MetaDataCollector(BaseModel):

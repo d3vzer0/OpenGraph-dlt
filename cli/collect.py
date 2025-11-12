@@ -182,11 +182,9 @@ def kubernetes(output_path: OutputPath):
             cluster=cluster_name,
         ),
         write_disposition="replace",
-        # loader_file_format="parquet",
-        # table_format="delta",
     )
 
-    # kubernetes_lookup(Path(f"{output_path}/kubernetes"))
+    kubernetes_lookup(Path(f"{output_path}/kubernetes"))
 
 
 @collect.command()

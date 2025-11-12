@@ -1,5 +1,10 @@
 from pydantic import BaseModel, computed_field, Field, field_validator
-from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
+from sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    NodeTypes,
+    KubernetesCollector,
+)
 from sources.shared.models.entries import Edge, EdgePath
 from typing import Optional
 import json
@@ -29,7 +34,7 @@ class Resource(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return gen_guid(self.name, NodeTypes.KubeResource, "")
+        return KubernetesCollector.guid(self.name, NodeTypes.KubeResource, "")
 
     @field_validator("group", mode="after")
     @classmethod
@@ -57,7 +62,7 @@ class ResourceNode(Node):
     @property
     def _resource_group_edge(self):
         if self.properties.api_group_name:
-            target_id = gen_guid(
+            target_id = KubernetesCollector.guid(
                 self.properties.api_group_name,
                 NodeTypes.KubeResourceGroup,
                 self._cluster,
@@ -96,7 +101,7 @@ class ResourceNode(Node):
 #     @property
 #     def _resource_group_edge(self):
 #         if self.properties.api_group_name:
-#             target_id = gen_guid(
+#             target_id = KubernetesCollector.guid(
 #                 self.properties.api_group_name,
 #                 NodeTypes.KubeResourceGroup,
 #                 self._cluster,

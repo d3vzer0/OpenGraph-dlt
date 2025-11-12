@@ -13,12 +13,11 @@ from sources.kubernetes.models.graph import (
     NodeProperties,
     Edge,
     NodeTypes,
-    gen_guid,
+    KubernetesCollector,
 )
 from sources.shared.models.entries import EdgePath
 from typing import Optional, Any, TypeVar, Annotated
 from sources.kubernetes.models.volume import Volume as HostVolume
-import json
 
 
 def default_if_none(value: Any) -> Any:
@@ -96,13 +95,6 @@ class Pod(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "Pod"
 
-    @field_validator("metadata", "spec", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
 
 class ExtendedProperties(NodeProperties):
     model_config = ConfigDict(extra="allow")
@@ -116,8 +108,8 @@ class PodNode(Node):
     _pod: Pod = PrivateAttr()
 
     @property
-    def _namespace_edge(self):
-        target_id = gen_guid(
+    def _namespace_edge(self) -> "Edge":
+        target_id = KubernetesCollector.guid(
             self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
         )
         start_path = EdgePath(value=self.id, match_by="id")
@@ -126,9 +118,9 @@ class PodNode(Node):
         return edge
 
     @property
-    def _node_edge(self):
+    def _node_edge(self) -> "Edge | None":
         if self.properties.node_name:
-            target_id = gen_guid(
+            target_id = KubernetesCollector.guid(
                 self.properties.node_name, NodeTypes.KubeNode, self._cluster
             )
             start_path = EdgePath(value=self.id, match_by="id")
@@ -139,8 +131,8 @@ class PodNode(Node):
             return None
 
     @property
-    def _service_account_edge(self):
-        target_id = gen_guid(
+    def _service_account_edge(self) -> "Edge":
+        target_id = KubernetesCollector.guid(
             self.properties.service_account_name,
             NodeTypes.KubeServiceAccount,
             self._cluster,
@@ -152,12 +144,12 @@ class PodNode(Node):
         return edge
 
     @property
-    def _owned_by(self):
+    def _owned_by(self) -> "list[Edge]":
         edges = []
         start_path = EdgePath(value=self.id, match_by="id")
         if self._pod.metadata.owner_references:
             for owner in self._pod.metadata.owner_references:
-                end_path_id = gen_guid(
+                end_path_id = KubernetesCollector.guid(
                     owner.name,
                     f"Kube{owner.kind}",
                     cluster=self._cluster,
@@ -168,7 +160,7 @@ class PodNode(Node):
         return edges
 
     @property
-    def _volume_edges(self):
+    def _volume_edges(self) -> "list[Edge]":
         edges = []
         start_path = EdgePath(value=self.id, match_by="id")
         for volume in self._pod.spec.volumes:
@@ -179,7 +171,7 @@ class PodNode(Node):
                 volume_object = HostVolume(
                     node_name=node_name, path=volume.host_path.path
                 )
-                end_path_id = gen_guid(
+                end_path_id = KubernetesCollector.guid(
                     volume_object.name, NodeTypes.KubeVolume, self._cluster
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
@@ -194,7 +186,7 @@ class PodNode(Node):
         return edges
 
     @property
-    def edges(self):
+    def edges(self) -> "list[Edge]":
         return [
             self._node_edge,
             self._namespace_edge,

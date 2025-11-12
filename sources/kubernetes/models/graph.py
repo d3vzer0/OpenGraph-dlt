@@ -3,9 +3,13 @@ from sources.shared.models.graph import MetaData, Graph as CommonGraph
 from abc import ABC
 from enum import Enum
 from datetime import datetime
-from typing import Optional
+from typing import Optional, ClassVar
 from sources.kubernetes.lookup import LookupManager
 from sources.shared.models.entries import Node as BaseNode, Edge
+from sources.shared.guid import Collector
+
+# from sources.shared.models.examples import NodeExample
+import importlib
 import uuid
 
 
@@ -30,18 +34,37 @@ class NodeTypes(str, Enum):
     KubeVolume = "KubeVolume"
 
 
-def gen_guid(
-    name: str,
-    resource_type: NodeTypes | str,
-    cluster: str,
-    namespace: str = "__global__",
-) -> str:
-    type_value = (
-        resource_type.value if isinstance(resource_type, NodeTypes) else resource_type
-    )
-    uuid_namespace = uuid.NAMESPACE_DNS
-    resource_path = f"{name}.{type_value}.{namespace}.{cluster}"
-    return str(uuid.uuid5(uuid_namespace, resource_path))
+class KubernetesCollector(Collector):
+
+    @staticmethod
+    def guid(
+        name: str,
+        resource_type: NodeTypes | str,
+        cluster: str,
+        namespace: str = "__global__",
+    ):
+        type_value = (
+            resource_type.value
+            if isinstance(resource_type, NodeTypes)
+            else resource_type
+        )
+        uuid_namespace = uuid.NAMESPACE_DNS
+        resource_path = f"{name}.{type_value}.{namespace}.{cluster}"
+        return str(uuid.uuid5(uuid_namespace, resource_path))
+
+
+# def KubernetesCollector.guid(
+#     name: str,
+#     resource_type: NodeTypes | str,
+#     cluster: str,
+#     namespace: str = "__global__",
+# ) -> str:
+#     type_value = (
+#         resource_type.value if isinstance(resource_type, NodeTypes) else resource_type
+#     )
+#     uuid_namespace = uuid.NAMESPACE_DNS
+#     resource_path = f"{name}.{type_value}.{namespace}.{cluster}"
+#     return str(uuid.uuid5(uuid_namespace, resource_path))
 
 
 class NodeProperties(BaseModel):
@@ -55,7 +78,6 @@ class NodeProperties(BaseModel):
 
 class Node(BaseNode, ABC):
     properties: NodeProperties
-
     _lookup: LookupManager = PrivateAttr()
     _cluster: str = PrivateAttr()
     _scope: Optional[str] = PrivateAttr(default=None)
@@ -66,14 +88,12 @@ class Node(BaseNode, ABC):
         scope = (
             "__global__" if not self.properties.namespace else self.properties.namespace
         )
-        if self.kinds[0] in NodeTypes:
-            dyn_uid = gen_guid(
-                self.properties.name, NodeTypes[self.kinds[0]], self._cluster, scope
-            )
-        else:
-            dyn_uid = gen_guid(
-                self.properties.name, self.kinds[0], self._cluster, scope
-            )
+
+        kind = self.kinds[0]
+        resource_type = NodeTypes[kind] if kind in NodeTypes else kind
+        dyn_uid = KubernetesCollector.guid(
+            self.properties.name, resource_type, self._cluster, scope
+        )
         return dyn_uid
 
 

@@ -1,5 +1,10 @@
 from pydantic import BaseModel, computed_field
-from sources.kubernetes.models.graph import Node, NodeProperties, NodeTypes, gen_guid
+from sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    NodeTypes,
+    KubernetesCollector,
+)
 
 
 class Cluster(BaseModel):
@@ -9,7 +14,7 @@ class Cluster(BaseModel):
     @computed_field
     @property
     def uid(self) -> str:
-        return gen_guid(self.name, NodeTypes.KubeCluster, self.name)
+        return KubernetesCollector.guid(self.name, NodeTypes.KubeCluster, self.name)
 
 
 class ClusterNode(Node):
