@@ -61,19 +61,16 @@ def aws(
         progress="enlighten",
     )
 
-    pipeline.run(
-        aws_resources(),
-        write_disposition="replace",
-        # loader_file_format="parquet"
-    )
+    pipeline.run(aws_resources(), write_disposition="replace")
 
     if lookup:
         aws_lookup(Path(f"{output_path}/aws"))
 
 
 @collect.command()
-def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
+def kubernetes_lookup(input_path: Path):
 
+    print(input_path)
     duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     lookup = dlt.pipeline(
         pipeline_name="k8s_lookup",
@@ -84,15 +81,9 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
 
     local_resource_files = (
         (
-            readers(bucket_url=f"{str(input_path)}", file_glob="**/*.parquet")
-            .read_parquet()
+            readers(bucket_url=f"{str(input_path)}", file_glob="**/*.jsonl.gz")
+            .read_jsonl()
             .with_name("resources")
-        )
-        .add_map(
-            lambda row: row
-            | {
-                "metadata": json.loads(row["metadata"]) if "metadata" in row else None,
-            }
         )
         .add_filter(lambda item: item.get("metadata"))
         .add_map(
@@ -116,9 +107,9 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
     resource_definition_files = (
         readers(
             bucket_url=f"{str(input_path)}",
-            file_glob="**/resource_definitions/**/*.parquet",
+            file_glob="**/resource_definitions/**/*.jsonl.gz",
         )
-        .read_parquet()
+        .read_jsonl()
         .with_name("resource_definitions")
         .add_map(
             lambda item: {
@@ -144,7 +135,7 @@ def kubernetes_lookup(input_path: Path = Path("./output/kubernetes")):
 
     dbt = dlt.dbt.package(
         lookup,
-        "sources/kubernetes/dbt",
+        "opengraph_dlt/sources/kubernetes/dbt",
     )
     dbt.run_all()
 
@@ -177,7 +168,7 @@ def kubernetes(output_path: OutputPath):
         write_disposition="replace",
     )
 
-    kubernetes_lookup(Path(f"{output_path}/kubernetes"))
+    # kubernetes_lookup(Path(f"{output_path}/kubernetes"))
 
 
 @collect.command()
@@ -195,7 +186,7 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
     pipeline.run(source, write_disposition="replace")
     dbt = dlt.dbt.package(
         pipeline,
-        "sources/bloodhound/dbt",
+        "opengraph_dlt/sources/bloodhound/dbt",
     )
     dbt.run_all(run_params=("--fail-fast", "--select", "staging_pg"))
 

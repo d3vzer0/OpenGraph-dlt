@@ -80,6 +80,7 @@ def rapid7(input_path: InputPath, output_path: OutputPath = Path("./graph")):
 @convert.command()
 def eks(output_path: OutputPath = Path("./graph")):
     from opengraph_dlt.sources.kubernetes.source import kubernetes_eks_opengraph
+    from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
 
     contexts, active = config.list_kube_config_contexts()
     cluster_name = active["context"]["cluster"]
