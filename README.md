@@ -17,7 +17,12 @@ A lightweight CLI for collecting service-specific resources and turning it into 
 | BloodHound| Stores all nodes and kinds in a dedicated duckdb database as an efficient lookup for other collectors, can be synced via a direct PG connection or using Cypher queries via the API| 100% |
 
 
-## Prerequisites
+## Installation
+```bash
+pipx install git+https://github.com/d3vzer0/OpenGraph-dlt.git
+```
+
+## Dev prerequisites
 1. Python 3.12+
 2. Option 1: Install dependencies manually
 ```bash

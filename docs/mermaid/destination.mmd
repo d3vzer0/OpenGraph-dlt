@@ -7,7 +7,7 @@ config:
 flowchart BT
  subgraph loader["Loading"]
         SourceFS["@dlt.source<br>FileSystem"]
-        FSRes["@dlt.resource<br>filtered_parquet"]
+        FSRes["@dlt.resource<br>filtered_files"]
     
         SourceFS -- return --> FSRes
   end

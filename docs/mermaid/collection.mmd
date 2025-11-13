@@ -39,7 +39,7 @@ flowchart BT
     subgraph finalize["Finalize"]
         parsing
         FS["FileSystem Destination"]
-        File["Parquet/Json"]
+        File["Parquet/Jsonl"]
 
         KubeParse1 -- "yield RoleBinding" --> FS
         KubeParse2 -- "yield Group" --> FS

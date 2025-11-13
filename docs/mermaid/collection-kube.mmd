@@ -20,7 +20,7 @@ flowchart TB
  subgraph finalize["Finalize"]
         parsing
         FS["FileSystem Destination"]
-        File["Parquet/Json"]
+        File["Parquet/Jsonl"]
   end
     Kube -- return --> KubeRes
     KubeRes -- yield result --> KubeTransf & KubeParse1
