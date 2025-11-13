@@ -4,7 +4,7 @@ from abc import ABC
 from enum import Enum
 from datetime import datetime
 from typing import Optional, ClassVar
-from opengraph_dlt.sources.kubernetes.lookup import LookupManager
+from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
 from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
 from opengraph_dlt.sources.shared.guid import Collector
 
@@ -78,7 +78,7 @@ class NodeProperties(BaseModel):
 
 class Node(BaseNode, ABC):
     properties: NodeProperties
-    _lookup: LookupManager = PrivateAttr()
+    _lookup: KubernetesLookup = PrivateAttr()
     _cluster: str = PrivateAttr()
     _scope: Optional[str] = PrivateAttr(default=None)
 

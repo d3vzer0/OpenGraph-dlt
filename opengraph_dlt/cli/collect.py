@@ -166,6 +166,7 @@ def kubernetes(output_path: OutputPath):
             cluster=cluster_name,
         ),
         write_disposition="replace",
+        loader_file_format="jsonl",
     )
 
     # kubernetes_lookup(Path(f"{output_path}/kubernetes"))

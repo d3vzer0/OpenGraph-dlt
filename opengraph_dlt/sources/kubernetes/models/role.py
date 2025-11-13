@@ -94,7 +94,7 @@ class Role(BaseModel):
 
 
 class ExtendedProperties(NodeProperties):
-    # namespace: str
+    namespace: str
     rules: list[Rule] = Field(exclude=True)
 
     @field_validator("rules")
@@ -132,29 +132,25 @@ class RoleNode(Node):
         start_path = EdgePath(value=self.id, match_by="id")
         matched_verbs = self._matching_verbs(rule.verbs)
         namespace = self.properties.namespace
-
-        all_allowed_resources = []
+        targets = []
         for resource in rule.resources:
             allowed_resources = self._lookup.allowed_namespaced_resources(
                 resource, namespace
             )
-            all_allowed_resources.extend(allowed_resources)
-
-        targets = []
-        for name, kind, r_namespace, singular, rd in all_allowed_resources:
-            targets.append(
-                Edge(
-                    kind="KubeHasPermissions",
-                    start=start_path,
-                    end=EdgePath(
-                        value=KubernetesCollector.guid(
-                            name, f"Kube{kind}", self._cluster, namespace
+            for name, kind, r_namespace, singular, rd in allowed_resources:
+                targets.append(
+                    Edge(
+                        kind="KubeHasPermissions",
+                        start=start_path,
+                        end=EdgePath(
+                            value=KubernetesCollector.guid(
+                                name, f"Kube{kind}", self._cluster, namespace
+                            ),
+                            match_by="id",
                         ),
-                        match_by="id",
-                    ),
-                    properties=EdgeProperties(verbs=matched_verbs),
+                        properties=EdgeProperties(verbs=matched_verbs),
+                    )
                 )
-            )
 
         return targets
 
