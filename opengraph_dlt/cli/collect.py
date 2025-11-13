@@ -154,7 +154,7 @@ def kubernetes(output_path: OutputPath):
     )
 
     pipeline = dlt.pipeline(
-        pipeline_name="kube_collection_3",
+        pipeline_name="kube_collection",
         destination=dest,
         dataset_name="kubernetes",
         progress="enlighten",

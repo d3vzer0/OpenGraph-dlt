@@ -19,6 +19,7 @@ from .models.service_account import ServiceAccount, ServiceAccountNode
 from .models.resource import Resource, ResourceNode
 from .models.graph import Node as GraphNode, Graph, GraphEntries
 from .models.identities import User, UserNode, Group, GroupNode
+from .models.cluster import Cluster, ClusterNode
 from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
 import pandas as pd
 
@@ -61,6 +62,13 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
     config.load_kube_config(kube_config)
     api_client = client.ApiClient()
     dyn_client = DynamicClient(api_client)
+
+    @dlt.resource(
+        columns=Cluster,
+        table_name="clusters",
+    )
+    def clusters():
+        yield {"name": cluster}
 
     @dlt.resource(columns=KubeNode, table_name="nodes", parallelized=True)
     def nodes():
@@ -253,6 +261,7 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
         groups_cluster_role,
         users_role,
         groups_role,
+        clusters,
     )
 
 
@@ -372,6 +381,11 @@ def kubernetes_opengraph(
         for daemonset in daemonsets:
             yield build_graph(DaemonSetNode, daemonset)
 
+    @dlt.transformer(data_from=raw_resource("clusters"), columns=Graph)
+    def clusters_graph(clusters):
+        for cluster_node in clusters:
+            yield build_graph(ClusterNode, cluster_node)
+
     return (
         pods_graph,
         namespaces_graph,
@@ -390,6 +404,7 @@ def kubernetes_opengraph(
         groups_graph,
         unmapped_graph,
         volumes_graph,
+        clusters_graph,
     )
 
 
