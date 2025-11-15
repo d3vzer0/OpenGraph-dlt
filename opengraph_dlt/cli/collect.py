@@ -2,6 +2,10 @@ from dlt.destinations import filesystem
 from typing import Annotated
 from pathlib import Path
 from dlt.sources.sql_database import sql_database
+from opengraph_dlt.cli.preproc import (
+    kubernetes as preproc_kubernetes,
+    aws as preproc_aws,
+)
 import typer
 import dlt
 
@@ -19,7 +23,7 @@ OutputPath = Annotated[
 def aws(
     output_path: OutputPath,
     lookup: Annotated[
-        bool, typer.Option(help="Generate lookup database afterwards")
+        bool, typer.Option(help="Generate database for lookups/matching afterwards")
     ] = True,
 ):
     from opengraph_dlt.sources.aws.source import aws_resources
@@ -36,11 +40,17 @@ def aws(
     )
 
     pipeline.run(aws_resources(), write_disposition="replace")
+    if lookup:
+        preproc_aws(output_path / "aws")
 
 
-# TODO: type_adapter_callback
 @collect.command()
-def kubernetes(output_path: OutputPath):
+def kubernetes(
+    output_path: OutputPath,
+    lookup: Annotated[
+        bool, typer.Option(help="Generate database for lookups/matching afterwards")
+    ] = True,
+):
     from opengraph_dlt.sources.kubernetes.source import kubernetes_resources
     from kubernetes import config
 
@@ -67,7 +77,8 @@ def kubernetes(output_path: OutputPath):
         loader_file_format="jsonl",
     )
 
-    # kubernetes_lookup(Path(f"{output_path}/kubernetes"))
+    if lookup:
+        preproc_kubernetes(output_path / "kubernetes")
 
 
 @collect.command()
