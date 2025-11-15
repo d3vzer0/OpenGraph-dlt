@@ -7,9 +7,6 @@ from typing import Optional, ClassVar
 from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
 from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
 from opengraph_dlt.sources.shared.guid import Collector
-
-# from opengraph_dlt.sources.shared.models.examples import NodeExample
-import importlib
 import uuid
 
 
@@ -51,20 +48,6 @@ class KubernetesCollector(Collector):
         uuid_namespace = uuid.NAMESPACE_DNS
         resource_path = f"{name}.{type_value}.{namespace}.{cluster}"
         return str(uuid.uuid5(uuid_namespace, resource_path))
-
-
-# def KubernetesCollector.guid(
-#     name: str,
-#     resource_type: NodeTypes | str,
-#     cluster: str,
-#     namespace: str = "__global__",
-# ) -> str:
-#     type_value = (
-#         resource_type.value if isinstance(resource_type, NodeTypes) else resource_type
-#     )
-#     uuid_namespace = uuid.NAMESPACE_DNS
-#     resource_path = f"{name}.{type_value}.{namespace}.{cluster}"
-#     return str(uuid.uuid5(uuid_namespace, resource_path))
 
 
 class NodeProperties(BaseModel):

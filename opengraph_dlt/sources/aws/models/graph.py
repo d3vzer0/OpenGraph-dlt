@@ -1,10 +1,11 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonGraph
+from opengraph_dlt.sources.shared.guid import Collector
+from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
 from abc import ABC
 from datetime import datetime
 from typing import Optional
 from enum import Enum
-from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
 import uuid
 
 
@@ -19,20 +20,24 @@ class NodeTypes(str, Enum):
     AWSEKSCluster = "AWSEKSCluster"
 
 
-def gen_node_type(node_type: str) -> str:
-    pascal_case = "".join(x for x in node_type.title() if not x.isspace())
-    return f"AWS{pascal_case}"
+class AWSCollector(Collector):
 
+    @staticmethod
+    def guid(
+        name: str,
+        node_type: NodeTypes | str,
+        account_id,
+        scope: Optional[str] = "global",
+    ):
+        type_value = node_type.value if isinstance(node_type, NodeTypes) else node_type
+        uuid_namespace = uuid.NAMESPACE_DNS
+        resource_path = f"{name}.{type_value}.{account_id}.{scope}"
+        return str(uuid.uuid5(uuid_namespace, resource_path))
 
-def gen_guid(
-    name: str,
-    node_type: str,
-    account_id,
-    scope: Optional[str] = "global",
-) -> str:
-    uuid_namespace = uuid.NAMESPACE_DNS
-    resource_path = f"{name}.{node_type}.{account_id}.{scope}"
-    return str(uuid.uuid5(uuid_namespace, resource_path))
+    @staticmethod
+    def gen_node_type(node_type: str) -> str:
+        pascal_case = "".join(x for x in node_type.title() if not x.isspace())
+        return f"AWS{pascal_case}"
 
 
 class NodeProperties(BaseModel):
@@ -57,7 +62,7 @@ class Node(BaseNode, ABC):
     def id(self) -> str:
         account = self.properties.aws_account_id or self._account_id
         name = self.properties.arn if self.properties.arn else self.properties.name
-        return gen_guid(
+        return AWSCollector.guid(
             name, self.kinds[0], account_id=account, scope=self.properties.aws_region
         )
 

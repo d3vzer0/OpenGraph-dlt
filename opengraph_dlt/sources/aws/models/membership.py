@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from opengraph_dlt.sources.aws.lookup import LookupManager
 from opengraph_dlt.sources.shared.models.entries import EdgePath, Edge
-from opengraph_dlt.sources.aws.models.graph import NodeTypes, gen_guid
+from opengraph_dlt.sources.aws.models.graph import NodeTypes, AWSCollector
 
 
 class UserGroupMembership(BaseModel):
@@ -21,17 +21,17 @@ class MembershipEdges(BaseModel):
 
     @property
     def _user_id(self) -> str:
-        return gen_guid(
+        return AWSCollector.guid(
             name=self.membership.user_arn,
-            node_type=NodeTypes.AWSUser.value,
+            node_type=NodeTypes.AWSUser,
             account_id=self.membership.account_id,
         )
 
     @property
     def _group_id(self) -> str:
-        return gen_guid(
+        return AWSCollector.guid(
             name=self.membership.group_arn,
-            node_type=NodeTypes.AWSGroup.value,
+            node_type=NodeTypes.AWSGroup,
             account_id=self.membership.account_id,
         )
 

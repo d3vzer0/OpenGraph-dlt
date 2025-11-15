@@ -2,7 +2,12 @@ from datetime import datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from opengraph_dlt.sources.aws.models.graph import NodeProperties, Node, NodeTypes, gen_guid
+from opengraph_dlt.sources.aws.models.graph import (
+    NodeProperties,
+    Node,
+    NodeTypes,
+    AWSCollector,
+)
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 from opengraph_dlt.sources.aws.lookup import LookupManager
 import fnmatch
@@ -97,9 +102,9 @@ class GlobalPolicy(Node):
             match_principal = self.does_role_match(flatten_principals(principal))
             if match_principal:
                 start_principal = EdgePath(value=self._principal_guid, match_by="id")
-                role_id = gen_guid(
+                role_id = AWSCollector.guid(
                     name=role_arn,
-                    node_type=NodeTypes.AWSRole.value,
+                    node_type=NodeTypes.AWSRole,
                     account_id=self.properties.aws_account_id,
                 )
                 end = EdgePath(value=role_id, match_by="id")
@@ -136,7 +141,7 @@ class InlinePolicyNode(GlobalPolicy):
     @property
     def _principal_guid(self) -> str:
         node_type = self._ENTITY_NODE_TYPES[self.properties.source_entity_type]
-        return gen_guid(
+        return AWSCollector.guid(
             name=self.properties.source_entity,
             node_type=node_type,
             account_id=self.properties.aws_account_id,
@@ -231,9 +236,9 @@ class PolicyAttachmentEdges(BaseModel):
 
     @property
     def _policy_guid(self) -> str:
-        return gen_guid(
+        return AWSCollector.guid(
             name=self.policy.policy_arn,
-            node_type=NodeTypes.AWSPolicy.value,
+            node_type=NodeTypes.AWSPolicy,
             account_id=self.policy.account_id,
         )
 
@@ -246,7 +251,7 @@ class PolicyAttachmentEdges(BaseModel):
         }
         node_type = self._ENTITY_NODE_TYPES[self.policy.entity_type]
         source_key = lookup_arn[self.policy.entity_type](self.policy.entity_name)
-        return gen_guid(
+        return AWSCollector.guid(
             name=source_key,
             node_type=node_type,
             account_id=self.policy.account_id,

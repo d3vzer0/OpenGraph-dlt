@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from opengraph_dlt.sources.aws.models.graph import Node, Edge, gen_guid
+from opengraph_dlt.sources.aws.models.graph import Node, Edge, AWSCollector, NodeTypes
 from opengraph_dlt.sources.kubernetes.models.cluster import Cluster
 from opengraph_dlt.sources.kubernetes.models.identities import GroupNode
 from opengraph_dlt.sources.shared.models.entries import EdgePath, NodeProperties
@@ -110,7 +110,7 @@ class EKSAccessEntryEdges(BaseModel):
     @property
     def principal_guid(self) -> str:
         node_type = self._ENTITY_NODE_TYPES[self.entity_type]
-        return gen_guid(
+        return AWSCollector.guid(
             name=self._access_entry.principal_arn,
             node_type=node_type,
             account_id=self._access_entry.account_id,

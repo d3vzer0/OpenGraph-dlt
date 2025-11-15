@@ -1,7 +1,11 @@
 from pydantic import BaseModel, ConfigDict, computed_field, Field
-from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, gen_node_type
+from opengraph_dlt.sources.aws.models.graph import (
+    Node,
+    NodeProperties,
+    NodeTypes,
+    AWSCollector,
+)
 from datetime import datetime
-from enum import Enum
 
 
 class PropertiesData(BaseModel):
@@ -52,7 +56,7 @@ class ResourceNode(Node):
             arn=model.arn,
         )
 
-        kind = gen_node_type(model.resource_type)
+        kind = AWSCollector.gen_node_type(model.resource_type)
         node = cls(kinds=[kind, "BaseAWS"], properties=node_properties)
         node.attach_context(model.owning_account_id)
         return node
