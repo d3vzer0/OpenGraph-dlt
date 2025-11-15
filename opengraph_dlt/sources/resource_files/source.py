@@ -28,10 +28,10 @@ def resource_files(
     glob: str = "**/*.jsonl.gz",
     file_type: FileType = FileType.JSONL,
 ) -> Generator[DltResource, None, None]:
-    reader_source = filesystem(bucket_url=str(root), file_glob=glob)
     if file_type not in FileType:
         raise ValueError(f"Loader '{file_type}' not supported by filesystem readers")
 
     for resource in resource_names:
-        reader = reader_source.add_filter(lambda item: (resource in item["file_url"]))
+        resource_path = Path(root) / resource
+        reader = filesystem(bucket_url=str(resource_path), file_glob=glob)
         yield (reader | FILETYPE_LOADERS[file_type]).with_name(resource)
