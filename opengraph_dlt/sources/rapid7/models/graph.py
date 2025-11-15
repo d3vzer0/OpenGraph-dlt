@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonGraph
+from opengraph_dlt.sources.shared.guid import Collector
 from abc import ABC
 from typing import Optional
 from opengraph_dlt.sources.shared.models.entries import (
@@ -7,7 +8,6 @@ from opengraph_dlt.sources.shared.models.entries import (
     Edge,
 )
 from enum import Enum
-from typing import Optional
 import uuid
 
 
@@ -15,12 +15,19 @@ class NodeTypes(str, Enum):
     R7Vulnerability = "R7Vulnerability"
 
 
-def gen_guid(
-    name: str, node_type: str, scope: Optional[str] = "global", collector: str = "r7"
-) -> str:
-    uuid_namespace = uuid.NAMESPACE_DNS
-    resource_path = f"{name}.{node_type}.{scope}.{collector}"
-    return str(uuid.uuid5(uuid_namespace, resource_path))
+class R7Collector(Collector):
+    name: str = "DLTRapid7"
+
+    @staticmethod
+    def guid(
+        name: str,
+        node_type: NodeTypes | str,
+        scope: Optional[str] = "global",
+    ):
+        type_value = node_type.value if isinstance(node_type, NodeTypes) else node_type
+        uuid_namespace = uuid.NAMESPACE_DNS
+        resource_path = f"{name}.{type_value}.{scope}.{scope}"
+        return str(uuid.uuid5(uuid_namespace, resource_path))
 
 
 class Node(BaseNode, ABC):
@@ -29,7 +36,7 @@ class Node(BaseNode, ABC):
     @computed_field
     @property
     def id(self) -> str:
-        return gen_guid(
+        return R7Collector.guid(
             self.properties.name,
             self.kinds[0],
         )

@@ -3,8 +3,8 @@ from enum import Enum
 
 
 class Collector(ABC):
-    Types: type[Enum]
+    name: str
 
     @abstractmethod
-    def guid(self, name: str, kind: Enum | str, **kwargs) -> str:
+    def guid(self, name: str, node_type: Enum | str, **kwargs) -> str:
         pass
