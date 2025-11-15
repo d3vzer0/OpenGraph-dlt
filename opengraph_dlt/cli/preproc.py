@@ -1,9 +1,11 @@
 from opengraph_dlt.sources.resource_files.source import resource_files
-from dlt.sources.filesystem import readers
+from dlt.sources.filesystem import readers, filesystem, read_jsonl
 from typing import Annotated
 from pathlib import Path
 import typer
 import dlt
+
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 
 preprocess = typer.Typer()
 
@@ -24,6 +26,7 @@ def aws(input_path: Path):
         dataset_name="aws",
         progress="enlighten",
     )
+
     lookup.run(
         resource_files(
             input_path,
@@ -31,10 +34,7 @@ def aws(input_path: Path):
         )
     )
 
-    dbt = dlt.dbt.package(
-        lookup,
-        "opengraph_dlt/sources/aws/dbt",
-    )
+    dbt = dlt.dbt.package(lookup, str(PACKAGE_ROOT.joinpath("sources", "aws", "dbt")))
     dbt.run_all()
 
 
@@ -104,7 +104,6 @@ def kubernetes(input_path: Path):
     )
 
     dbt = dlt.dbt.package(
-        lookup,
-        "opengraph_dlt/sources/kubernetes/dbt",
+        lookup, str(PACKAGE_ROOT.joinpath("sources", "kubernetes", "dbt"))
     )
     dbt.run_all()
