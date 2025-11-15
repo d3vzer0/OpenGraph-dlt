@@ -19,7 +19,7 @@ OutputPath = Annotated[
 
 
 @collect.command()
-def aws_lookup(input_path: Path = Path("./output/aws")):
+def aws_lookup(input_path: Path):
     duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     lookup = dlt.pipeline(
         pipeline_name="duckdb_lookup",
@@ -36,7 +36,7 @@ def aws_lookup(input_path: Path = Path("./output/aws")):
 
     dbt = dlt.dbt.package(
         lookup,
-        "sources/aws/dbt",
+        "opengraph_dlt/sources/aws/dbt",
     )
     dbt.run_all()
 
@@ -70,7 +70,6 @@ def aws(
 @collect.command()
 def kubernetes_lookup(input_path: Path):
 
-    print(input_path)
     duckdb_dest = dlt.destinations.duckdb("lookup.duckdb")
     lookup = dlt.pipeline(
         pipeline_name="k8s_lookup",
@@ -190,6 +189,28 @@ def bloodhound(filters: Annotated[list[str], typer.Argument] = []):
         "opengraph_dlt/sources/bloodhound/dbt",
     )
     dbt.run_all(run_params=("--fail-fast", "--select", "staging_pg"))
+
+
+@collect.command()
+def okta(output_path: OutputPath):
+    from opengraph_dlt.sources.okta.source import okta_source
+
+    dest = filesystem(
+        bucket_url=str(output_path),
+    )
+
+    pipeline = dlt.pipeline(
+        pipeline_name="okta_collection",
+        destination=dest,
+        dataset_name="okta",
+        progress="enlighten",
+    )
+
+    pipeline.run(
+        okta_source(),
+        write_disposition="replace",
+        loader_file_format="jsonl",
+    )
 
 
 # @collect.command()

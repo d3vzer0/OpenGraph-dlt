@@ -49,13 +49,6 @@ class ServiceAccount(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "ServiceAccount"
 
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
 
 class ExtendedProperties(NodeProperties):
     namespace: str

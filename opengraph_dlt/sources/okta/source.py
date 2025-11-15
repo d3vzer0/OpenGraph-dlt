@@ -7,31 +7,13 @@ from dlt.sources.rest_api import rest_api_resources
 def okta_source(access_token=dlt.secrets.value):
     config: RESTAPIConfig = {
         "client": {
-            "base_url": "https://okta-domain.okta.com/api/v1/",
+            "base_url": "https://integrator-5800148.okta.com/api/v1/",
             "auth": {
-                "type": "bearer",
-                "token": access_token,
+                "type": "api_key",
+                "name": "Authorization",
+                "api_key": f"SSWS {access_token}",
             },
         },
-        "resources": [
-            {
-                "name": "assets",
-                "endpoint": {
-                    "path": "users",
-                },
-            },
-            {
-                "name": "groups",
-                "endpoint": {
-                    "path": "groups",
-                },
-            },
-            {
-                "name": "roles",
-                "endpoint": {
-                    "path": "roles",
-                },
-            },
-        ],
+        "resources": ["users", "groups", "iam/roles"],
     }
     yield from rest_api_resources(config)

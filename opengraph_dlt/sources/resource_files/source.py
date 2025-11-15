@@ -21,12 +21,12 @@ FILETYPE_LOADERS: dict[FileType, Any] = {
 }
 
 
-@dlt.source(name="resource_files")
+@dlt.source(name="resource_files", max_table_nesting=0)
 def resource_files(
     root: Path,
     resource_names: list[str],
-    glob: str = "**/*.parquet",
-    file_type: FileType = FileType.PARQUET,
+    glob: str = "**/*.jsonl.gz",
+    file_type: FileType = FileType.JSONL,
 ) -> Generator[DltResource, None, None]:
     reader_source = filesystem(bucket_url=str(root), file_glob=glob)
     if file_type not in FileType:
