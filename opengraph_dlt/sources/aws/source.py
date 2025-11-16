@@ -167,26 +167,36 @@ def aws_resources(
     @dlt.resource(name="policies", columns=Policy, parallelized=True)
     def policies():
         paginator = iam.get_paginator("list_policies")
-        for page in paginator.paginate(Scope="All", OnlyAttached=True):
+
+        @dlt.defer
+        def _get_policy_version(policy):
+            version = iam.get_policy_version(
+                PolicyArn=policy["Arn"],
+                VersionId=policy["DefaultVersionId"],
+            )
+            policy["AccountId"] = policy.get("Arn", "").split(":")[4] or account_id
+            policy["IsAWSManaged"] = policy["Arn"].startswith(
+                "arn:aws:iam::aws:policy/"
+            )
+            policy["PolicyDocument"] = version["PolicyVersion"]["Document"]
+            return policy
+
+        for page in paginator.paginate(
+            Scope="All", OnlyAttached=True, PaginationConfig={"PageSize": 1000}
+        ):
             for policy in page.get("Policies", []):
-                version_id = policy["DefaultVersionId"]
-                version = iam.get_policy_version(
-                    PolicyArn=policy["Arn"],
-                    VersionId=version_id,
-                )
-                policy["AccountId"] = policy.get("Arn", "").split(":")[4] or account_id
-                policy["IsAWSManaged"] = policy["Arn"].startswith(
-                    "arn:aws:iam::aws:policy/"
-                )
-                policy["PolicyDocument"] = version["PolicyVersion"]["Document"]
-                yield policy
+                yield _get_policy_version(policy)
 
     @dlt.resource(name="resources", columns=Resource, parallelized=True)
     def resources():
         view_arn = re.list_views()["Views"][0]
         paginator = re.get_paginator("search")
         for page in paginator.paginate(
-            ViewArn=view_arn, QueryString="arn", MaxResults=1000
+            ViewArn=view_arn,
+            QueryString="arn",
+            PaginationConfig={
+                "PageSize": 1000,
+            },
         ):
             for resource in page.get("Resources", []):
                 yield resource
