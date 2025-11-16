@@ -27,10 +27,8 @@ from .models.graph import (
     Graph,
 )
 import boto3
+import aioboto3
 import dlt
-from typing import TypeVar
-
-T = TypeVar("T", bound=GraphNode)
 
 
 @dlt.source(name="aws_resources")
@@ -40,305 +38,314 @@ def aws_resources(
     region_name: str | None = None,
     endpoint_url: str | None = None,
 ):
-    session = boto3.session.Session(profile_name=profile_name, region_name=region_name)
-    iam = session.client("iam", endpoint_url=endpoint_url)
-    sts = session.client("sts", endpoint_url=endpoint_url)
-    re = session.client("resource-explorer-2", region_name=region_name)
-    ec2 = session.client("ec2", region_name=region_name)
-    eks_client = session.client("eks", region_name=region_name)
+    session = aioboto3.session.Session(  # type: ignore
+        profile_name=profile_name, region_name=region_name
+    )
 
+    sync_session = boto3.session.Session(  # type: ignore
+        profile_name=profile_name, region_name=region_name
+    )
+    sts = sync_session.client("sts", endpoint_url=endpoint_url)
     account_id = sts.get_caller_identity()["Account"]
 
     def _with_account(record: dict) -> dict:
         record["AccountId"] = account_id
         return record
 
-    @dlt.resource(name="users", columns=User, primary_key="UserId", parallelized=True)
-    def users():
-        paginator = iam.get_paginator("list_users")
-        for page in paginator.paginate():
-            for user in page.get("Users", []):
-                yield _with_account(user)
+    @dlt.resource(name="users", columns=User, primary_key="UserId")
+    async def users():
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            paginator = iam.get_paginator("list_users")
+            async for page in paginator.paginate():
+                for user in page.get("Users", []):
+                    yield _with_account(user)
 
-    @dlt.resource(
-        name="groups", columns=Group, primary_key="GroupId", parallelized=True
-    )
-    def groups():
-        paginator = iam.get_paginator("list_groups")
-        for page in paginator.paginate():
-            for group in page.get("Groups", []):
-                yield _with_account(group)
+    @dlt.resource(name="groups", columns=Group, primary_key="GroupId")
+    async def groups():
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            paginator = iam.get_paginator("list_groups")
+            async for page in paginator.paginate():
+                for group in page.get("Groups", []):
+                    yield _with_account(group)
 
-    @dlt.resource(name="roles", columns=Role, primary_key="RoleId", parallelized=True)
-    def roles():
-        paginator = iam.get_paginator("list_roles")
-        for page in paginator.paginate():
-            for role in page.get("Roles", []):
-                yield _with_account(role)
+    @dlt.resource(name="roles", columns=Role, primary_key="RoleId")
+    async def roles():
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            paginator = iam.get_paginator("list_roles")
+            async for page in paginator.paginate():
+                for role in page.get("Roles", []):
+                    yield _with_account(role)
 
     @dlt.transformer(
         name="user_inline_policies",
         columns=InlinePolicy,
         data_from=users,
         table_name="inline_policies",
-        parallelized=True,
     )
-    def user_inline_policies(user: dict):
+    async def user_inline_policies(user: dict):
 
         @dlt.defer
-        def _get_role_policy(user_name, policy):
-            document = iam.get_user_policy(UserName=user_name, PolicyName=policy)
-            return {
-                "EntityType": "User",
-                "EntityName": user_name,
-                "EntityId": user["UserId"],
-                "EntityArn": user["Arn"],
-                "PolicyName": policy,
-                "PolicyDocument": document.get("PolicyDocument"),
-                "AccountId": account_id,
-            }
+        async def _get_user_policy(user_name, policy, user_id, user_arn):
+            async with session.client("iam", endpoint_url=endpoint_url) as iam:
+                document = await iam.get_user_policy(
+                    UserName=user_name, PolicyName=policy
+                )
+                return {
+                    "EntityType": "User",
+                    "EntityName": user_name,
+                    "EntityId": user_id,
+                    "EntityArn": user_arn,
+                    "PolicyName": policy,
+                    "PolicyDocument": document.get("PolicyDocument"),
+                    "AccountId": account_id,
+                }
 
-        paginator = iam.get_paginator("list_user_policies")
-        user_name = user["UserName"]
-        for page in paginator.paginate(UserName=user_name):
-            for policy in page.get("PolicyNames", []):
-                yield _get_role_policy(user_name, policy)
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            paginator = iam.get_paginator("list_user_policies")
+            user_name = user["UserName"]
+            async for page in paginator.paginate(UserName=user_name):
+                for policy in page.get("PolicyNames", []):
+                    yield _get_user_policy(
+                        user_name, policy, user["UserId"], user["Arn"]
+                    )
 
     @dlt.transformer(
         name="group_inline_policies",
         columns=InlinePolicy,
         data_from=groups,
         table_name="inline_policies",
-        parallelized=True,
     )
-    def group_inline_policies(group: dict):
+    async def group_inline_policies(group: dict):
 
         @dlt.defer
-        def _get_role_policy(group_name, policy):
-            document = iam.get_group_policy(GroupName=group_name, PolicyName=policy)
-            yield {
-                "EntityType": "Group",
-                "EntityName": group_name,
-                "EntityId": group["GroupId"],
-                "EntityArn": group["Arn"],
-                "PolicyName": policy,
-                "PolicyDocument": document.get("PolicyDocument"),
-                "AccountId": account_id,
-            }
+        async def _get_group_policy(group_name, policy, group_id, group_arn):
+            async with session.client("iam", endpoint_url=endpoint_url) as iam:
+                document = await iam.get_group_policy(
+                    GroupName=group_name, PolicyName=policy
+                )
+                return {
+                    "EntityType": "Group",
+                    "EntityName": group_name,
+                    "EntityId": group_id,
+                    "EntityArn": group_arn,
+                    "PolicyName": policy,
+                    "PolicyDocument": document.get("PolicyDocument"),
+                    "AccountId": account_id,
+                }
 
-        paginator = iam.get_paginator("list_group_policies")
-        group_name = group["GroupName"]
-        for page in paginator.paginate(GroupName=group_name):
-            for policy in page.get("PolicyNames", []):
-                yield _get_role_policy(group_name, policy)
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            paginator = iam.get_paginator("list_group_policies")
+            group_name = group["GroupName"]
+            async for page in paginator.paginate(GroupName=group_name):
+                for policy in page.get("PolicyNames", []):
+                    yield _get_group_policy(
+                        group_name, policy, group["GroupId"], group["Arn"]
+                    )
 
     @dlt.transformer(
         name="role_inline_policies",
         columns=InlinePolicy,
         data_from=roles,
         table_name="inline_policies",
-        parallelized=True,
     )
-    def role_inline_policies(role: dict):
+    async def role_inline_policies(role: dict):
 
         @dlt.defer
-        def _get_role_policy(role_name, policy):
-            document = iam.get_role_policy(RoleName=role_name, PolicyName=policy)
-            return {
-                "EntityType": "Role",
-                "EntityName": role_name,
-                "EntityId": role["RoleId"],
-                "EntityArn": role["Arn"],
-                "PolicyName": policy,
-                "PolicyDocument": document.get("PolicyDocument"),
-                "AccountId": account_id,
-            }
+        async def _get_role_policy(role_name, policy, role_id, role_arn):
+            async with session.client("iam", endpoint_url=endpoint_url) as iam:
+                document = await iam.get_role_policy(
+                    RoleName=role_name, PolicyName=policy
+                )
+                return {
+                    "EntityType": "Role",
+                    "EntityName": role_name,
+                    "EntityId": role_id,
+                    "EntityArn": role_arn,
+                    "PolicyName": policy,
+                    "PolicyDocument": document.get("PolicyDocument"),
+                    "AccountId": account_id,
+                }
 
-        paginator = iam.get_paginator("list_role_policies")
-        role_name = role["RoleName"]
-        for page in paginator.paginate(RoleName=role_name):
-            for policy in page.get("PolicyNames", []):
-                yield _get_role_policy(role_name, policy)
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            paginator = iam.get_paginator("list_role_policies")
+            role_name = role["RoleName"]
+            async for page in paginator.paginate(RoleName=role_name):
+                for policy in page.get("PolicyNames", []):
+                    yield _get_role_policy(
+                        role_name, policy, role["RoleId"], role["Arn"]
+                    )
 
     @dlt.transformer(
         data_from=users,
         name="user_group_memberships",
         columns=UserGroupMembership,
-        parallelized=True,
     )
-    def user_group_memberships(user):
-        username = user["UserName"]
-        groups_response = iam.list_groups_for_user(UserName=username)
-        for group in groups_response.get("Groups", []):
-            yield {
-                "UserName": username,
-                "UserArn": user["Arn"],
-                "GroupName": group["GroupName"],
-                "GroupId": group["GroupId"],
-                "GroupArn": group["Arn"],
-                "AccountId": account_id,
-            }
+    async def user_group_memberships(user: dict):
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            username = user["UserName"]
+            groups_response = await iam.list_groups_for_user(UserName=username)
+            for group in groups_response.get("Groups", []):
+                yield {
+                    "UserName": username,
+                    "UserArn": user["Arn"],
+                    "GroupName": group["GroupName"],
+                    "GroupId": group["GroupId"],
+                    "GroupArn": group["Arn"],
+                    "AccountId": account_id,
+                }
 
-    @dlt.resource(name="policies", columns=Policy, parallelized=True)
-    def policies():
-        paginator = iam.get_paginator("list_policies")
-
-        @dlt.defer
-        def _get_policy_version(policy):
-            version = iam.get_policy_version(
-                PolicyArn=policy["Arn"],
-                VersionId=policy["DefaultVersionId"],
-            )
-            policy["AccountId"] = policy.get("Arn", "").split(":")[4] or account_id
-            policy["IsAWSManaged"] = policy["Arn"].startswith(
-                "arn:aws:iam::aws:policy/"
-            )
-            policy["PolicyDocument"] = version["PolicyVersion"]["Document"]
-            return policy
-
-        for page in paginator.paginate(
-            Scope="All", OnlyAttached=True, PaginationConfig={"PageSize": 1000}
-        ):
-            for policy in page.get("Policies", []):
-                yield _get_policy_version(policy)
-
-    @dlt.resource(name="resources", columns=Resource, parallelized=True)
-    def resources():
-        view_arn = re.list_views()["Views"][0]
-        paginator = re.get_paginator("search")
-        for page in paginator.paginate(
-            ViewArn=view_arn,
-            QueryString="arn",
-            PaginationConfig={
-                "PageSize": 1000,
-            },
-        ):
-            for resource in page.get("Resources", []):
-                yield resource
-
-    @dlt.resource(name="eks", columns=EKSCluster, parallelized=True)
-    def eks():
+    @dlt.resource(name="policies", columns=Policy)
+    async def policies():
 
         @dlt.defer
-        def _get_cluster(cluster_name):
-            cluster = eks_client.describe_cluster(name=cluster_name)["cluster"]
-            cluster["accountId"] = cluster["arn"].split(":")[4]
-            cluster["region"] = cluster["arn"].split(":")[3]
-            return cluster
+        async def _get_policy_version(policy_data):
+            async with session.client("iam", endpoint_url=endpoint_url) as iam:
+                version = await iam.get_policy_version(
+                    PolicyArn=policy_data["Arn"],
+                    VersionId=policy_data["DefaultVersionId"],
+                )
+                policy_data["AccountId"] = (
+                    policy_data.get("Arn", "").split(":")[4] or account_id
+                )
+                policy_data["IsAWSManaged"] = policy_data["Arn"].startswith(
+                    "arn:aws:iam::aws:policy/"
+                )
+                policy_data["PolicyDocument"] = version["PolicyVersion"]["Document"]
+                return policy_data
 
-        paginator = eks_client.get_paginator("list_clusters")
-        for page in paginator.paginate():
-            for cluster_name in page.get("clusters", []):
-                yield _get_cluster(cluster_name)
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            paginator = iam.get_paginator("list_policies")
+            async for page in paginator.paginate(
+                Scope="All", OnlyAttached=True, PaginationConfig={"PageSize": 1000}
+            ):
+                for policy in page.get("Policies", []):
+                    yield _get_policy_version(policy)
+
+    @dlt.resource(name="resources", columns=Resource)
+    async def resources():
+        async with session.client("resource-explorer-2", region_name=region_name) as re:
+            views = await re.list_views()
+            view_arn = views["Views"][0]
+
+            paginator = re.get_paginator("search")
+            async for page in paginator.paginate(
+                ViewArn=view_arn,
+                QueryString="arn",
+                MaxResults=1000,
+            ):
+                for resource in page.get("Resources", []):
+                    yield resource
+
+    @dlt.resource(name="eks", columns=EKSCluster)
+    async def eks():
+
+        @dlt.defer
+        async def _get_cluster(cluster_name):
+            async with session.client("eks", region_name=region_name) as eks_client:
+                cluster = (await eks_client.describe_cluster(name=cluster_name))[
+                    "cluster"
+                ]
+                cluster["accountId"] = cluster["arn"].split(":")[4]
+                cluster["region"] = cluster["arn"].split(":")[3]
+                return cluster
+
+        async with session.client("eks", region_name=region_name) as eks_client:
+            paginator = eks_client.get_paginator("list_clusters")
+            async for page in paginator.paginate():
+                for cluster_name in page.get("clusters", []):
+                    yield _get_cluster(cluster_name)
 
     @dlt.transformer(
         name="eks_cluster_access_entries",
         data_from=eks,
         columns=EKSAccesssEntry,
-        parallelized=True,
     )
-    def eks_cluster_access_entries(cluster: dict):
-        region = cluster["arn"].split(":")[3]
+    async def eks_cluster_access_entries(cluster: dict):
 
         @dlt.defer
-        def _describe_acces_entry(cluster, principal):
+        async def _describe_access_entry(cluster_data, principal):
+            async with session.client("eks", region_name=region_name) as eks_client:
+                detail = await eks_client.describe_access_entry(
+                    clusterName=cluster_data["name"],
+                    principalArn=principal,
+                )
+                associated = await eks_client.list_associated_access_policies(
+                    clusterName=cluster_data["name"],
+                    principalArn=principal,
+                )
+                return {
+                    **detail["accessEntry"],
+                    "accountId": cluster_data["accountId"],
+                    "region": cluster_data["region"],
+                    "policies": associated["associatedAccessPolicies"],
+                }
 
-            detail = eks_client.describe_access_entry(
-                clusterName=cluster["name"],
-                principalArn=principal,
+        async with session.client("eks", region_name=region_name) as eks_client:
+            access_entries = await eks_client.list_access_entries(
+                clusterName=cluster["name"]
             )
-            associated = eks_client.list_associated_access_policies(
-                clusterName=cluster["name"],
-                principalArn=principal,
-            )
-            return {
-                **detail["accessEntry"],
-                "accountId": cluster["accountId"],
-                "region": cluster["region"],
-                "policies": associated["associatedAccessPolicies"],
-            }
-
-        access_entries = eks_client.list_access_entries(clusterName=cluster["name"])
-        for principal in access_entries["accessEntries"]:
-            yield _describe_acces_entry(cluster, principal)
+            for principal in access_entries["accessEntries"]:
+                yield _describe_access_entry(cluster, principal)
 
     @dlt.transformer(
         name="ec2_instances",
         data_from=resources,
         columns=EC2Instance,
-        parallelized=True,
     )
-    def ec2_instances(resource):
+    async def ec2_instances(resource: dict):
         if resource["ResourceType"] == "ec2:instance":
-            instance_id = resource["Arn"].split("/")[-1]
-            instance_details = ec2.describe_instances(InstanceIds=[instance_id])
-            for reservation in instance_details.get("Reservations", []):
-                for instance in reservation.get("Instances", []):
-                    yield instance
+            async with session.client("ec2", region_name=region_name) as ec2:
+                instance_id = resource["Arn"].split("/")[-1]
+                instance_details = await ec2.describe_instances(
+                    InstanceIds=[instance_id]
+                )
 
-    # @dlt.transformer(
-    #     name="ec2_instance_roles",
-    #     data_from=ec2_instances,
-    #     columns=EC2InstanceRole,
-    #     parallelized=True,
-    # )
-    # def ec2_instance_roles(instance):
-    #     profile_info = instance["IamInstanceProfile"]
-    #     if profile_info:
-    #         profile_arn = profile_info["Arn"]
-    #         profile_name = profile_arn.split("/")[-1]
-    #         profile = iam.get_instance_profile(InstanceProfileName=profile_name)[
-    #             "InstanceProfile"
-    #         ]
-    #         for role in profile.get("Roles", []):
-    #             yield {
-    #                 "InstanceId": instance["InstanceId"],
-    #                 "InstanceArn": instance["Arn"],
-    #                 "InstanceRegion": instance["Region"],
-    #                 **role,
-    #             }
+                for reservation in instance_details.get("Reservations", []):
+                    for instance in reservation.get("Instances", []):
+                        yield instance
 
     @dlt.transformer(
         data_from=policies,
         name="policy_attachments",
         columns=PolicyAttachment,
-        parallelized=True,
     )
-    def policy_attachments(policy):
-        arn = policy["Arn"]
-        account = policy.get("AccountId") or account_id
-        entities = iam.list_entities_for_policy(PolicyArn=arn)
-        policy_attachments = {
-            "PolicyUsers": {
-                "EntityId": "UserId",
-                "EntityType": "User",
-                "EntityName": "UserName",
-            },
-            "PolicyGroups": {
-                "EntityId": "GroupId",
-                "EntityType": "Group",
-                "EntityName": "GroupName",
-            },
-            "PolicyRoles": {
-                "EntityId": "RoleId",
-                "EntityType": "Role",
-                "EntityName": "RoleName",
-            },
-        }
+    async def policy_attachments(policy: dict):
+        async with session.client("iam", endpoint_url=endpoint_url) as iam:
+            arn = policy["Arn"]
+            account = policy.get("AccountId") or account_id
+            entities = await iam.list_entities_for_policy(PolicyArn=arn)
 
-        for target, fields in policy_attachments.items():
-            for entity in entities.get(target, []):
-                yield {
-                    "PolicyArn": arn,
-                    "EntityType": fields["EntityType"],
-                    "EntityName": entity.get(fields["EntityName"]),
-                    "EntityId": entity.get(fields["EntityId"]),
-                    "EntityArn": entity.get("Arn"),
-                    "AccountId": account,
-                    "PolicyDocument": policy["PolicyDocument"],
-                }
+            policy_attachments_map = {
+                "PolicyUsers": {
+                    "EntityId": "UserId",
+                    "EntityType": "User",
+                    "EntityName": "UserName",
+                },
+                "PolicyGroups": {
+                    "EntityId": "GroupId",
+                    "EntityType": "Group",
+                    "EntityName": "GroupName",
+                },
+                "PolicyRoles": {
+                    "EntityId": "RoleId",
+                    "EntityType": "Role",
+                    "EntityName": "RoleName",
+                },
+            }
 
-    yield (
+            for target, fields in policy_attachments_map.items():
+                for entity in entities.get(target, []):
+                    yield {
+                        "PolicyArn": arn,
+                        "EntityType": fields["EntityType"],
+                        "EntityName": entity.get(fields["EntityName"]),
+                        "EntityId": entity.get(fields["EntityId"]),
+                        "EntityArn": entity.get("Arn"),
+                        "AccountId": account,
+                        "PolicyDocument": policy["PolicyDocument"],
+                    }
+
+    return (
         users,
         groups,
         roles,
@@ -347,7 +354,6 @@ def aws_resources(
         policy_attachments,
         resources,
         ec2_instances,
-        # ec2_instance_roles,
         user_inline_policies,
         group_inline_policies,
         role_inline_policies,
