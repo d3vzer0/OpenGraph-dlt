@@ -84,20 +84,25 @@ def aws_resources(
         parallelized=True,
     )
     def user_inline_policies(user: dict):
+
+        @dlt.defer
+        def _get_role_policy(user_name, policy):
+            document = iam.get_user_policy(UserName=user_name, PolicyName=policy)
+            return {
+                "EntityType": "User",
+                "EntityName": user_name,
+                "EntityId": user["UserId"],
+                "EntityArn": user["Arn"],
+                "PolicyName": policy,
+                "PolicyDocument": document.get("PolicyDocument"),
+                "AccountId": account_id,
+            }
+
         paginator = iam.get_paginator("list_user_policies")
         user_name = user["UserName"]
         for page in paginator.paginate(UserName=user_name):
             for policy in page.get("PolicyNames", []):
-                document = iam.get_user_policy(UserName=user_name, PolicyName=policy)
-                yield {
-                    "EntityType": "User",
-                    "EntityName": user_name,
-                    "EntityId": user["UserId"],
-                    "EntityArn": user["Arn"],
-                    "PolicyName": policy,
-                    "PolicyDocument": document.get("PolicyDocument"),
-                    "AccountId": account_id,
-                }
+                yield _get_role_policy(user_name, policy)
 
     @dlt.transformer(
         name="group_inline_policies",
@@ -107,20 +112,25 @@ def aws_resources(
         parallelized=True,
     )
     def group_inline_policies(group: dict):
+
+        @dlt.defer
+        def _get_role_policy(group_name, policy):
+            document = iam.get_group_policy(GroupName=group_name, PolicyName=policy)
+            yield {
+                "EntityType": "Group",
+                "EntityName": group_name,
+                "EntityId": group["GroupId"],
+                "EntityArn": group["Arn"],
+                "PolicyName": policy,
+                "PolicyDocument": document.get("PolicyDocument"),
+                "AccountId": account_id,
+            }
+
         paginator = iam.get_paginator("list_group_policies")
         group_name = group["GroupName"]
         for page in paginator.paginate(GroupName=group_name):
             for policy in page.get("PolicyNames", []):
-                document = iam.get_group_policy(GroupName=group_name, PolicyName=policy)
-                yield {
-                    "EntityType": "Group",
-                    "EntityName": group_name,
-                    "EntityId": group["GroupId"],
-                    "EntityArn": group["Arn"],
-                    "PolicyName": policy,
-                    "PolicyDocument": document.get("PolicyDocument"),
-                    "AccountId": account_id,
-                }
+                yield _get_role_policy(group_name, policy)
 
     @dlt.transformer(
         name="role_inline_policies",
@@ -130,20 +140,25 @@ def aws_resources(
         parallelized=True,
     )
     def role_inline_policies(role: dict):
+
+        @dlt.defer
+        def _get_role_policy(role_name, policy):
+            document = iam.get_role_policy(RoleName=role_name, PolicyName=policy)
+            return {
+                "EntityType": "Role",
+                "EntityName": role_name,
+                "EntityId": role["RoleId"],
+                "EntityArn": role["Arn"],
+                "PolicyName": policy,
+                "PolicyDocument": document.get("PolicyDocument"),
+                "AccountId": account_id,
+            }
+
         paginator = iam.get_paginator("list_role_policies")
         role_name = role["RoleName"]
         for page in paginator.paginate(RoleName=role_name):
             for policy in page.get("PolicyNames", []):
-                document = iam.get_role_policy(RoleName=role_name, PolicyName=policy)
-                yield {
-                    "EntityType": "Role",
-                    "EntityName": role_name,
-                    "EntityId": role["RoleId"],
-                    "EntityArn": role["Arn"],
-                    "PolicyName": policy,
-                    "PolicyDocument": document.get("PolicyDocument"),
-                    "AccountId": account_id,
-                }
+                yield _get_role_policy(role_name, policy)
 
     @dlt.transformer(
         data_from=users,
@@ -203,13 +218,18 @@ def aws_resources(
 
     @dlt.resource(name="eks", columns=EKSCluster, parallelized=True)
     def eks():
+
+        @dlt.defer
+        def _get_cluster(cluster_name):
+            cluster = eks_client.describe_cluster(name=cluster_name)["cluster"]
+            cluster["accountId"] = cluster["arn"].split(":")[4]
+            cluster["region"] = cluster["arn"].split(":")[3]
+            return cluster
+
         paginator = eks_client.get_paginator("list_clusters")
         for page in paginator.paginate():
             for cluster_name in page.get("clusters", []):
-                cluster = eks_client.describe_cluster(name=cluster_name)["cluster"]
-                cluster["accountId"] = cluster["arn"].split(":")[4]
-                cluster["region"] = cluster["arn"].split(":")[3]
-                yield cluster
+                yield _get_cluster(cluster_name)
 
     @dlt.transformer(
         name="eks_cluster_access_entries",
@@ -219,8 +239,10 @@ def aws_resources(
     )
     def eks_cluster_access_entries(cluster: dict):
         region = cluster["arn"].split(":")[3]
-        access_entries = eks_client.list_access_entries(clusterName=cluster["name"])
-        for principal in access_entries["accessEntries"]:
+
+        @dlt.defer
+        def _describe_acces_entry(cluster, principal):
+
             detail = eks_client.describe_access_entry(
                 clusterName=cluster["name"],
                 principalArn=principal,
@@ -229,12 +251,16 @@ def aws_resources(
                 clusterName=cluster["name"],
                 principalArn=principal,
             )
-            yield {
+            return {
                 **detail["accessEntry"],
                 "accountId": cluster["accountId"],
                 "region": cluster["region"],
                 "policies": associated["associatedAccessPolicies"],
             }
+
+        access_entries = eks_client.list_access_entries(clusterName=cluster["name"])
+        for principal in access_entries["accessEntries"]:
+            yield _describe_acces_entry(cluster, principal)
 
     @dlt.transformer(
         name="ec2_instances",
@@ -312,7 +338,7 @@ def aws_resources(
                     "PolicyDocument": policy["PolicyDocument"],
                 }
 
-    return (
+    yield (
         users,
         groups,
         roles,
