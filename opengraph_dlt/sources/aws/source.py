@@ -261,6 +261,8 @@ def aws_resources(
         columns=EKSAccesssEntry,
     )
     async def eks_cluster_access_entries(cluster: dict):
+        if cluster["accessConfig"]["authenticationMode"] == "CONFIG_MAP":
+            return
 
         @dlt.defer
         async def _describe_access_entry(cluster_data, principal):
