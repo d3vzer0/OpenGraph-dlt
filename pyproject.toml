@@ -1,6 +1,6 @@
 [project]
 name = "opengraph-dlt"
-version = "0.1.0"
+version = "0.2.0"
 description = "OpenGraph collectors using DLT"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,7 +9,7 @@ dependencies = [
     "dbt>=1.0.0.40.6",
     "dbt-core>=1.10.13",
     "dbt-duckdb>=1.9.6",
-    # "dlt[deltalake,parquet]>=1.17.1",
+    "dlt[deltalake,parquet]>=1.17.1",
     "duckdb==1.3.2",
     "duckdb-engine>=0.17.0",
     "enlighten>=1.14.1",
