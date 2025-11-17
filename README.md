@@ -86,7 +86,11 @@ SOURCES__SOURCE__BLOODHOUND_SOURCE__HOST=....
 The `collect` CLI pulls raw objects from the source and stores them as Parquet/JSONL on the local filesystem. The service-specific collector additionally generates a DuckDB lookup used during graph conversion.
 
 ```console
-$ collect <service> [OPTIONS] OUTPUT_PATH
+# If opengraph-dlt was build/installed as a package
+$ opengraph collect <service> [OPTIONS] OUTPUT_PATH
+
+# If you're running opengraph-dlt directly from the source
+$ python -m opengraph_dlt.main collect <service> OUTPUT_PATH 
 ```
 **Arguments**:
 * `OUTPUT_PATH`: Where the <service> resources will be saved in parquet/jsonl format [required]
@@ -97,7 +101,11 @@ This will run the <service> collector and writes one file per resource under ./o
 Once the raw dataset exists, convert it into OpenGraph with the sync or convert CLI:
 
 ```console
+# If opengraph-dlt was build/installed as a package
 $ convert <service> [OPTIONS] INPUT_PATH OUTPUT_PATH
+
+# If you're running opengraph-dlt directly from the source
+$ python -m opengraph_dlt.main convert <service> INPUT_PATH OUTPUT_PATH
 ```
 **Arguments**:
 * `INPUT_PATH`: Where the <service> resources were saved by the collect command (parquet/jsonl) [required]
