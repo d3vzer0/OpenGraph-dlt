@@ -25,6 +25,11 @@ class Verbs(str, Enum):
     proxy = "proxy"
     wildcard = "*"
     impersonate = "impersonate"
+    approve = "approve"
+    sign = "sign"
+    escalate = "escalate"
+    bind = "bind"
+    use = "use"
 
     def __str__(self):
         return self.value
@@ -40,7 +45,13 @@ VERB_TO_PERMISSION = {
     "delete": "KubeCanDelete",
     "deletecollection": "KubeCanDeleteCollection",
     "proxy": "KubeCanProxy",
+    "impersonate": "KubeCanImpersonate",
+    "approve": "KubeCanApprove",
+    "sign": "KubeCanSign",
+    "escalate": "KubeCanEscalate",
+    "bind": "KubeCanBind",
     "*": "KubeCanAll",
+    "use": "KubeCanUse",
 }
 
 

@@ -1,6 +1,10 @@
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
-from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties, KubernetesCollector
+from opengraph_dlt.sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    KubernetesCollector,
+)
 from opengraph_dlt.sources.kubernetes.models.cluster import Cluster
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from typing import Optional, Any
@@ -25,6 +29,7 @@ class Verbs(str, Enum):
     sign = "sign"
     escalate = "escalate"
     bind = "bind"
+    use = "use"
 
     def __str__(self):
         return self.value
@@ -46,6 +51,7 @@ VERB_TO_PERMISSION = {
     "escalate": "KubeCanEscalate",
     "bind": "KubeCanBind",
     "*": "KubeCanAll",
+    "use": "KubeCanUse",
 }
 
 
