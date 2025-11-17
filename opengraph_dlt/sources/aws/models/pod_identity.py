@@ -8,7 +8,9 @@ class EKSPodIdentity(BaseModel):
     cluster_name: str = Field(alias="clusterName")
     association_arn: str = Field(alias="associationArn")
     owner_arn: str | None = Field(alias="ownerArn", default=None)
+    role_arn: str = Field(alias="roleArn")
     service_account: str = Field(alias="serviceAccount")
+    association_id: str = Field(alias="associationId")
     namespace: str
 
 

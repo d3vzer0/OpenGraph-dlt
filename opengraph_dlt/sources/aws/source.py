@@ -296,11 +296,22 @@ def aws_resources(
         columns=EKSPodIdentity,
     )
     async def eks_pod_identity_associations(cluster: dict):
+
+        @dlt.defer
+        async def _describe_pod_assoc(cluster_data, assoc):
+            async with session.client("eks", region_name=region_name) as eks_client:
+                detail = await eks_client.describe_pod_identity_association(
+                    clusterName=cluster_data["name"],
+                    associationId=assoc["associationId"],
+                )
+                return detail["association"]
+
         async with session.client("eks", region_name=region_name) as eks_client:
             pod_associations = await eks_client.list_pod_identity_associations(
                 clusterName=cluster["name"]
             )
-            yield pod_associations["associations"]
+            for assoc in pod_associations["associations"]:
+                yield _describe_pod_assoc(cluster, assoc)
 
     @dlt.transformer(
         name="ec2_instances",
