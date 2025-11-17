@@ -22,10 +22,17 @@ OutputPath = Annotated[
 @collect.command()
 def aws(
     output_path: OutputPath,
+    profile: Annotated[
+        str,
+        typer.Option(
+            help="Which AWS profile to use. If none specified, the default is used"
+        ),
+    ] = "default",
     lookup: Annotated[
         bool, typer.Option(help="Generate database for lookups/matching afterwards")
     ] = True,
 ):
+
     from opengraph_dlt.sources.aws.source import aws_resources
 
     dest = filesystem(
@@ -39,7 +46,7 @@ def aws(
         progress="enlighten",
     )
 
-    pipeline.run(aws_resources(), write_disposition="replace")
+    pipeline.run(aws_resources(profile_name=profile), write_disposition="replace")
     if lookup:
         preproc_aws(output_path / "aws")
 
