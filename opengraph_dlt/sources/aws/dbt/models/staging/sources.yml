@@ -24,3 +24,34 @@ sources:
           - name: assume_role_policy_document
             description: "Role allow policy document"
       
+      - name: groups
+        description: "Group data from AWS"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: arn
+            description: "AWS group arn"
+          - name: group_name
+            description: "AWS group name"
+          - name: group_id
+            description: "AWS group ID"
+          - name: account_id
+            description: "AWS Account ID"
+      
+      - name: users
+        description: "User data from AWS"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: arn
+            description: "AWS user arn"
+          - name: user_name
+            description: "AWS user name"
+          - name: user_id
+            description: "AWS user ID"
+          - name: account_id
+            description: "AWS Account ID"
