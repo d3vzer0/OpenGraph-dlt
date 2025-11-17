@@ -21,6 +21,7 @@ from .models.graph import Node as GraphNode, Graph, GraphEntries
 from .models.identities import User, UserNode, Group, GroupNode
 from .models.cluster import Cluster, ClusterNode
 from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
+from urllib3.util.retry import Retry
 import pandas as pd
 
 from functools import wraps
@@ -60,7 +61,15 @@ RESOURCE_TYPES = {
 def kubernetes_resources(kube_config: None | str = None, cluster: str | None = None):
 
     config.load_kube_config(kube_config)
-    api_client = client.ApiClient()
+
+    configuration = client.Configuration.get_default_copy()
+    configuration.retries = Retry(
+        total=10,
+        backoff_factor=2,
+        respect_retry_after_header=True,
+        status_forcelist=[429],
+    )
+    api_client = client.ApiClient(configuration=configuration)
     dyn_client = DynamicClient(api_client)
 
     @dlt.resource(
@@ -72,49 +81,49 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
 
     @dlt.resource(columns=KubeNode, table_name="nodes", parallelized=True)
     def nodes():
-        v1 = client.CoreV1Api()
+        v1 = client.CoreV1Api(api_client)
         nodes = v1.list_node()
         for node in nodes.items:
             yield node.to_dict()
 
     @dlt.resource(columns=Namespace, table_name="namespaces", parallelized=True)
     def namespaces():
-        v1 = client.CoreV1Api()
+        v1 = client.CoreV1Api(api_client)
         namespaces = v1.list_namespace()
         for ns in namespaces.items:
             yield ns.to_dict()
 
     @dlt.resource(columns=DaemonSet, table_name="daemonsets", parallelized=True)
     def daemonsets():
-        v1 = client.AppsV1Api()
+        v1 = client.AppsV1Api(api_client)
         daemonsets = v1.list_daemon_set_for_all_namespaces()
         for daemonset in daemonsets.items:
             yield daemonset.to_dict()
 
     @dlt.resource(columns=StatefulSet, table_name="statefulsets", parallelized=True)
     def statefulsets():
-        v1 = client.AppsV1Api()
+        v1 = client.AppsV1Api(api_client)
         statefulsets = v1.list_stateful_set_for_all_namespaces()
         for replica in statefulsets.items:
             yield replica.to_dict()
 
     @dlt.resource(columns=ReplicaSet, table_name="replicasets", parallelized=True)
     def replicasets():
-        v1 = client.AppsV1Api()
+        v1 = client.AppsV1Api(api_client)
         replicasets = v1.list_replica_set_for_all_namespaces()
         for replica in replicasets.items:
             yield replica.to_dict()
 
     @dlt.resource(columns=Deployment, table_name="deployments", parallelized=True)
     def deployments():
-        v1 = client.AppsV1Api()
+        v1 = client.AppsV1Api(api_client)
         deployments = v1.list_deployment_for_all_namespaces()
         for deployment in deployments.items:
             yield deployment.to_dict()
 
     @dlt.resource(columns=Pod, table_name="pods", parallelized=True)
     def pods():
-        v1 = client.CoreV1Api()
+        v1 = client.CoreV1Api(api_client)
         pods = v1.list_pod_for_all_namespaces()
         for pod in pods.items:
             yield pod.to_dict()
@@ -135,14 +144,14 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
 
     @dlt.resource(columns=Role, table_name="roles", parallelized=True)
     def roles():
-        v1 = client.RbacAuthorizationV1Api()
+        v1 = client.RbacAuthorizationV1Api(api_client)
         roles = v1.list_role_for_all_namespaces()
         for role in roles.items:
             yield role.to_dict()
 
     @dlt.resource(columns=RoleBinding, table_name="role_bindings", parallelized=True)
     def role_bindings():
-        v1 = client.RbacAuthorizationV1Api()
+        v1 = client.RbacAuthorizationV1Api(api_client)
         rolebs = v1.list_role_binding_for_all_namespaces()
         for roleb in rolebs.items:
             yield roleb.to_dict()
@@ -161,7 +170,7 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
 
     @dlt.resource(columns=ClusterRole, table_name="cluster_roles", parallelized=True)
     def cluster_roles():
-        v1 = client.RbacAuthorizationV1Api()
+        v1 = client.RbacAuthorizationV1Api(api_client)
         roles = v1.list_cluster_role()
         for role in roles.items:
             yield role.to_dict()
@@ -172,7 +181,7 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
         parallelized=True,
     )
     def cluster_role_bindings():
-        v1 = client.RbacAuthorizationV1Api()
+        v1 = client.RbacAuthorizationV1Api(api_client)
         rolebs = v1.list_cluster_role_binding()
         for roleb in rolebs.items:
             yield roleb.to_dict()
@@ -206,8 +215,6 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
         columns=Resource, table_name="resource_definitions", parallelized=True
     )
     def resource_definitions():
-        api_client = client.ApiClient()
-        dyn_client = DynamicClient(api_client)
         discovered_resources = dyn_client.resources.search()
         for resource in discovered_resources:
             if not resource.kind.endswith("List"):
