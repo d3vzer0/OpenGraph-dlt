@@ -55,3 +55,37 @@ sources:
             description: "AWS user ID"
           - name: account_id
             description: "AWS Account ID"
+          
+      - name: policies
+        description: "Policy data from AWS"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: arn
+            description: "AWS policy arn"
+          - name: policy_name
+            description: "AWS policy name"
+          - name: policy_id
+            description: "AWS policy ID"
+          - name: account_id
+            description: "AWS Account ID"
+          
+      - name: resources
+        description: "Resource data from AWS resource collector"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: arn
+            description: "AWS resource arn"
+          - name: owning_account_id
+            description: "AWS Account ID"
+          - name: resource_type
+            description: "AWS resource type"
+          - name: service
+            description: "AWS service"
+          - name: name
+            description: "AWS resource name"
