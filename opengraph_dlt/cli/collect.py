@@ -1,6 +1,7 @@
 from dlt.destinations import filesystem
 from typing import Annotated
 from pathlib import Path
+from typing import List
 from dlt.sources.sql_database import sql_database
 from opengraph_dlt.cli.preproc import (
     kubernetes as preproc_kubernetes,
@@ -22,6 +23,7 @@ OutputPath = Annotated[
 @collect.command()
 def aws(
     output_path: OutputPath,
+    resources: Annotated[List[str], typer.Argument()] = [],
     profile: Annotated[
         str,
         typer.Option(
@@ -46,7 +48,14 @@ def aws(
         progress="enlighten",
     )
 
-    pipeline.run(aws_resources(profile_name=profile), write_disposition="replace")
+    all_resources = aws_resources(profile_name=profile)
+    if resources:
+        all_resources = all_resources.with_resources(*resources)
+
+    pipeline.run(
+        all_resources,
+        write_disposition="replace",
+    )
     if lookup:
         preproc_aws(output_path / "aws")
 
