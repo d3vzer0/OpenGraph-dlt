@@ -226,16 +226,17 @@ def aws_resources(
     async def resources():
         async with session.client("resource-explorer-2", region_name=region_name) as re:
             views = await re.list_views()
-            view_arn = views["Views"][0]
+            if views["Views"]:
+                view_arn = views["Views"][0]
 
-            paginator = re.get_paginator("search")
-            async for page in paginator.paginate(
-                ViewArn=view_arn,
-                QueryString="arn",
-                MaxResults=1000,
-            ):
-                for resource in page.get("Resources", []):
-                    yield resource
+                paginator = re.get_paginator("search")
+                async for page in paginator.paginate(
+                    ViewArn=view_arn,
+                    QueryString="arn",
+                    MaxResults=1000,
+                ):
+                    for resource in page.get("Resources", []):
+                        yield resource
 
     @dlt.resource(name="eks", columns=EKSCluster)
     async def eks():

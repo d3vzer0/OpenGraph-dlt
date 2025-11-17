@@ -30,6 +30,10 @@ def aws(
             help="Which AWS profile to use. If none specified, the default is used"
         ),
     ] = "default",
+    region: Annotated[
+        str | None,
+        typer.Option(help="Which AWS region to use"),
+    ] = None,
     lookup: Annotated[
         bool, typer.Option(help="Generate database for lookups/matching afterwards")
     ] = True,
@@ -48,7 +52,7 @@ def aws(
         progress="enlighten",
     )
 
-    all_resources = aws_resources(profile_name=profile)
+    all_resources = aws_resources(profile_name=profile, region_name=region)
     if resources:
         all_resources = all_resources.with_resources(*resources)
 
