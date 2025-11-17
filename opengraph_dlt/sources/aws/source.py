@@ -9,7 +9,7 @@ from .models.eks import (
     EKSClusterNode,
     EKSAccessEntryEdges,
 )
-from .models.pod_identity import EKSPodIdentity, EKSPodIdentityEdge
+from .models.pod_identity import EKSPodIdentity, EKSPodIdentityEdges
 from .models.user import User, UserNode
 from .models.policy import (
     Policy,
@@ -478,6 +478,14 @@ def aws_opengraph(
         for entry in entries:
             yield build_graph_edges(EKSAccessEntryEdges, entry)
 
+    @dlt.transformer(
+        data_from=json_resource("eks_pod_identity_associations"),
+        columns=Graph,
+    )
+    def eks_pod_identity_associations_graph(entries: list):
+        for entry in entries:
+            yield build_graph_edges(EKSPodIdentityEdges, entry)
+
     return (
         users_graph,
         roles_graph,
@@ -488,4 +496,5 @@ def aws_opengraph(
         inline_policies_graph,
         eks_graph,
         eks_cluster_access_entries_graph,
+        eks_pod_identity_associations_graph,
     )
