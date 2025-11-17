@@ -9,6 +9,7 @@ from .models.eks import (
     EKSClusterNode,
     EKSAccessEntryEdges,
 )
+from .models.pod_identity import EKSPodIdentity, EKSPodIdentityEdge
 from .models.user import User, UserNode
 from .models.policy import (
     Policy,
@@ -290,6 +291,18 @@ def aws_resources(
                 yield _describe_access_entry(cluster, principal)
 
     @dlt.transformer(
+        name="eks_pod_identity_associations",
+        data_from=eks,
+        columns=EKSPodIdentity,
+    )
+    async def eks_pod_identity_associations(cluster: dict):
+        async with session.client("eks", region_name=region_name) as eks_client:
+            pod_associations = await eks_client.list_pod_identity_associations(
+                clusterName=cluster["name"]
+            )
+            yield pod_associations["associations"]
+
+    @dlt.transformer(
         name="ec2_instances",
         data_from=resources,
         columns=EC2Instance,
@@ -361,6 +374,7 @@ def aws_resources(
         role_inline_policies,
         eks,
         eks_cluster_access_entries,
+        eks_pod_identity_associations,
     )
 
 
