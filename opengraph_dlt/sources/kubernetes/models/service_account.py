@@ -11,10 +11,10 @@ import json
 
 
 class Secret(BaseModel):
-    field_path: str
+    field_path: str | None = None
     name: str
-    namespace: str
-    uid: str
+    namespace: str | None = None
+    uid: str | None = None
 
 
 class Subject(BaseModel):
