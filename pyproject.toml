@@ -5,6 +5,7 @@ description = "OpenGraph collectors using DLT"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aioboto3>=15.5.0",
     "boto3>=1.40.47",
     "dbt>=1.0.0.40.6",
     "dbt-core>=1.10.13",
