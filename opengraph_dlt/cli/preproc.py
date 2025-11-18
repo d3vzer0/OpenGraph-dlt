@@ -30,8 +30,16 @@ def aws(input_path: Path):
     lookup.run(
         resource_files(
             input_path,
-            resource_names=["resources", "users", "groups", "roles"],
-        )
+            resource_names=[
+                "resources",
+                "users",
+                "groups",
+                "roles",
+                "policies",
+                "policy_attachments",
+            ],
+        ),
+        write_disposition="replace",
     )
 
     dbt = dlt.dbt.package(lookup, str(PACKAGE_ROOT.joinpath("sources", "aws", "dbt")))

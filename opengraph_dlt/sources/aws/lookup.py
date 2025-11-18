@@ -58,13 +58,25 @@ class AWSLookup(LookupManager):
         )
 
     @lru_cache
+    def used_policy(self, policy_arn: str) -> str | None:
+        return self._find_single_object(
+            f"""SELECT
+            policy_arn
+            FROM {self.schema}.used_policies
+            WHERE policy_arn = ?
+            """,
+            [policy_arn],
+        )
+
+    @lru_cache
     def allowed_resources(self, target: str) -> list[tuple]:
         return self._find_all_objects(
-            f"""SELECT 
+            f"""SELECT
                 arn,
                 region,
-                resource_type
-            FROM {self.schema}.resources
+                resource_type,
+                owning_account_id
+            FROM {self.schema}.resources_with_identities
             WHERE arn GLOB ?;""",
             [target],
         )

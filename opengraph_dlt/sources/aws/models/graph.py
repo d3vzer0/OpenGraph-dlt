@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Optional
 from enum import Enum
 import uuid
+from functools import cache, lru_cache
 
 
 class NodeTypes(str, Enum):
@@ -23,6 +24,7 @@ class NodeTypes(str, Enum):
 class AWSCollector(Collector):
 
     @staticmethod
+    @lru_cache(maxsize=65536)
     def guid(
         name: str,
         node_type: NodeTypes | str,
@@ -35,9 +37,10 @@ class AWSCollector(Collector):
         return str(uuid.uuid5(uuid_namespace, resource_path))
 
     @staticmethod
+    @cache
     def gen_node_type(node_type: str) -> str:
         pascal_case = "".join(x for x in node_type.title() if not x.isspace())
-        return f"AWS{pascal_case}"
+        return f"AWS{pascal_case}".replace(":", "")
 
 
 class NodeProperties(BaseModel):

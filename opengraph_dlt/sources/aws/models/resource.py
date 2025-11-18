@@ -20,7 +20,7 @@ class ResourceProperties(BaseModel):
 
 
 class Resource(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
     arn: str = Field(alias="Arn")
     owning_account_id: str = Field(alias="OwningAccountId")
     region: str = Field(alias="Region")

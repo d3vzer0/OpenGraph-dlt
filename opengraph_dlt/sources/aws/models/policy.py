@@ -9,8 +9,9 @@ from opengraph_dlt.sources.aws.models.graph import (
     AWSCollector,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
-from opengraph_dlt.sources.aws.lookup import LookupManager
+from opengraph_dlt.sources.aws.lookup import AWSLookup
 import fnmatch
+from functools import lru_cache, cache
 
 
 def flatten_principals(principal_obj: dict) -> list[str]:
@@ -80,7 +81,7 @@ class ExtendedInlinePolicyProperties(NodeProperties):
 
 class GlobalPolicy(Node):
     _policy: InlinePolicy = PrivateAttr()
-    _lookup: LookupManager = PrivateAttr()
+    _lookup: AWSLookup = PrivateAttr()
 
     _ENTITY_NODE_TYPES = {
         "User": "AWSUser",
@@ -183,8 +184,39 @@ class InlinePolicyNode(GlobalPolicy):
 class PolicyNode(GlobalPolicy):
     properties: NodeProperties
 
+    def _impacted_resources(self, resources: list[str]) -> list[dict]:
+        all_resources = []
+        for resource in resources:
+            find_resources = self._lookup.allowed_resources(resource)
+            for resource_arn, region, resource_type, account in find_resources:
+                all_resources.append(
+                    {
+                        "arn": resource_arn,
+                        "region": region,
+                        "resource_type": resource_type,
+                        "account": account,
+                    }
+                )
+        return all_resources
+
     @property
-    def edges(self):
+    def _has_permissions(self):
+        all_permissions = []
+        start_path = EdgePath(value=self.id, match_by="id")
+        for statement in self._policy.policy_document["Statement"]:
+            resources = statement.get("Resource")
+            resources = resources if isinstance(resources, list) else [resources]
+            impacted_resources = self._impacted_resources(resources)
+            for rec in impacted_resources:
+                kind = AWSCollector.gen_node_type(rec["resource_type"])
+                end_id = AWSCollector.guid(
+                    rec["arn"], kind, rec["account"], rec["region"]
+                )
+                end_path = EdgePath(value=end_id, match_by="id")
+                all_permissions.append(
+                    Edge(kind="AWSCanAction", start=start_path, end=end_path)
+                )
+
         # for statement in self._policy.policy_document["Statement"]:
         #     if (
         #         statement["Action"] == "sts:AssumeRole"
@@ -193,7 +225,11 @@ class PolicyNode(GlobalPolicy):
         #         print(statement)
         # # print
         # # print(self._policy.policy_document)
-        return []
+        return all_permissions
+
+    @property
+    def edges(self) -> list[Edge]:
+        return [*self._assume_roles, *self._has_permissions]
 
     @classmethod
     def from_input(cls, **kwargs) -> "PolicyNode":
@@ -226,7 +262,7 @@ class PolicyAttachment(BaseModel):
 
 class PolicyAttachmentEdges(BaseModel):
     policy: PolicyAttachment
-    _lookup: LookupManager = PrivateAttr()
+    _lookup: AWSLookup = PrivateAttr()
 
     _ENTITY_NODE_TYPES = {
         "User": "AWSUser",

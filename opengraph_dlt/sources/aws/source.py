@@ -21,7 +21,7 @@ from .models.policy import (
     PolicyAttachmentEdges,
 )
 from .models.ec2_instance import EC2Instance, EC2InstanceRole
-from .models.resource import Resource
+from .models.resource import Resource, ResourceNode
 from .models.graph import (
     Node as GraphNode,
     GraphEntries,
@@ -487,6 +487,14 @@ def aws_opengraph(
         for entry in entries:
             yield build_graph_edges(EKSPodIdentityEdges, entry)
 
+    @dlt.transformer(
+        data_from=json_resource("resources"),
+        columns=Graph,
+    )
+    def resources_graph(entries: list):
+        for entry in entries:
+            yield build_graph(ResourceNode, entry)
+
     return (
         users_graph,
         roles_graph,
@@ -498,4 +506,5 @@ def aws_opengraph(
         eks_graph,
         eks_cluster_access_entries_graph,
         eks_pod_identity_associations_graph,
+        resources_graph,
     )

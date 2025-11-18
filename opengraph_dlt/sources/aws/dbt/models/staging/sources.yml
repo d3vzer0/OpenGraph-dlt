@@ -72,6 +72,16 @@ sources:
           - name: account_id
             description: "AWS Account ID"
           
+      - name: policy_attachments
+        description: "Policy data from AWS"
+        columns:
+          - name: _dlt_id
+            description: "DLT unique identifier"
+          - name: _dlt_load_id
+            description: "DLT load batch identifier"
+          - name: policy_arn
+            description: "Policy ARN"
+          
       - name: resources
         description: "Resource data from AWS resource collector"
         columns:
