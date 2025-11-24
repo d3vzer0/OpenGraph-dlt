@@ -36,6 +36,7 @@ from dlt.sources.filesystem import (
 import dlt
 from typing import Type, TypeVar
 
+
 T = TypeVar("T", bound=GraphNode)
 E = TypeVar("E", bound=GraphEntries)
 
@@ -54,6 +55,27 @@ RESOURCE_TYPES = {
     "StatefulSet": StatefulSet,
     "Deployment": Deployment,
     # "Service": ServiceNode
+}
+
+KUBERNETES_NODES = {
+    "nodes": NodeOutput,
+    "pods": PodNode,
+    "cust_volumes": VolumeNode,
+    "namespaces": NamespaceNode,
+    "unmapped": GenericNode,
+    "deployments": DeploymentNode,
+    "replicasets": ReplicaSetNode,
+    "service_accounts": ServiceAccountNode,
+    "roles": RoleNode,
+    "role_bindings": RoleBindingNode,
+    "cluster_roles": ClusterRoleNode,
+    "cluster_role_bindings": ClusterRoleBindingNode,
+    "resource_definitions": ResourceNode,
+    "cust_users": UserNode,
+    "cust_groups": GroupNode,
+    "statefulsets": StatefulSetNode,
+    "daemonsets": DaemonSetNode,
+    "clusters": ClusterNode,
 }
 
 
@@ -280,7 +302,7 @@ def kubernetes_opengraph(
     bucket_url: str = dlt.config.value,
 ):
 
-    def raw_resource(subdir: str):
+    def json_resource(subdir: str):
         files = filesystemsource(
             bucket_url=bucket_url,
             file_glob=f"{subdir}/**/*.jsonl.gz",
@@ -288,131 +310,26 @@ def kubernetes_opengraph(
         reader = (files | read_jsonl()).with_name(f"{subdir}_fs")
         return reader
 
-    def build_graph(model_cls, resource: dict) -> Graph:
-        node = model_cls.from_input(**resource)
-        node._cluster = cluster
-        node._lookup = lookup
-
-        entries = GraphEntries(
-            nodes=[node],
-            edges=[edge for edge in node.edges if edge],
-        )
-        return Graph(graph=entries)
-
-    @dlt.transformer(data_from=raw_resource("nodes"), columns=Graph)
-    def nodes_graph(nodes):
+    def build_graph(nodes, model):
         for node in nodes:
-            yield build_graph(NodeOutput, node)
+            node = model.from_input(**node)
+            node._cluster = cluster
+            node._lookup = lookup
 
-    @dlt.transformer(data_from=raw_resource("pods"), columns=Graph)
-    def pods_graph(pods: list):
-        for pod in pods:
-            yield build_graph(PodNode, pod)
+            entries = GraphEntries(
+                nodes=[node],
+                edges=[edge for edge in node.edges if edge],
+            )
+            yield Graph(graph=entries)
 
-    @dlt.transformer(data_from=raw_resource("cust_volumes"), columns=Graph)
-    def volumes_graph(volumes: list):
-        for volume in volumes:
-            node_name = volume.get("node_name")
-            path = volume.get("path")
-            if not node_name or not path:
-                continue
-            yield build_graph(VolumeNode, volume)
-
-    @dlt.transformer(data_from=raw_resource("namespaces"), columns=Graph)
-    def namespaces_graph(namespaces):
-        for namespace in namespaces:
-            yield build_graph(NamespaceNode, namespace)
-
-    @dlt.transformer(data_from=raw_resource("unmapped"), columns=Graph)
-    def unmapped_graph(resources):
-        for resource in resources:
-            yield build_graph(GenericNode, resource)
-
-    @dlt.transformer(data_from=raw_resource("deployments"), columns=Graph)
-    def deployments_graph(deployments):
-        for deployment in deployments:
-            yield build_graph(DeploymentNode, deployment)
-
-    @dlt.transformer(data_from=raw_resource("replicasets"), columns=Graph)
-    def replicasets_graph(replicasets):
-        for replicaset in replicasets:
-            yield build_graph(ReplicaSetNode, replicaset)
-
-    @dlt.transformer(data_from=raw_resource("service_accounts"), columns=Graph)
-    def service_accounts_graph(service_accounts):
-        for service_account in service_accounts:
-            yield build_graph(ServiceAccountNode, service_account)
-
-    @dlt.transformer(data_from=raw_resource("roles"), columns=Graph)
-    def roles_graph(roles):
-        for role in roles:
-            yield build_graph(RoleNode, role)
-
-    @dlt.transformer(data_from=raw_resource("role_bindings"), columns=Graph)
-    def role_bindings_graph(role_bindings):
-        for role_binding in role_bindings:
-            yield build_graph(RoleBindingNode, role_binding)
-
-    @dlt.transformer(data_from=raw_resource("cluster_roles"), columns=Graph)
-    def cluster_roles_graph(roles):
-        for role in roles:
-            yield build_graph(ClusterRoleNode, role)
-
-    @dlt.transformer(data_from=raw_resource("cluster_role_bindings"), columns=Graph)
-    def cluster_role_bindings_graph(cluster_role_bindings):
-        for cluster_role_binding in cluster_role_bindings:
-            yield build_graph(ClusterRoleBindingNode, cluster_role_binding)
-
-    @dlt.transformer(data_from=raw_resource("resource_definitions"), columns=Graph)
-    def resource_definitions_graph(resource_definitions):
-        for resource_definition in resource_definitions:
-            yield build_graph(ResourceNode, resource_definition)
-
-    @dlt.transformer(data_from=raw_resource("cust_users"), columns=Graph)
-    def users_graph(users):
-        for user in users:
-            yield build_graph(UserNode, user)
-
-    @dlt.transformer(data_from=raw_resource("cust_groups"), columns=Graph)
-    def groups_graph(groups):
-        for group in groups:
-            yield build_graph(GroupNode, group)
-
-    @dlt.transformer(data_from=raw_resource("statefulsets"), columns=Graph)
-    def statefulsets_graph(statefulsets):
-        for statefulset in statefulsets:
-            yield build_graph(StatefulSetNode, statefulset)
-
-    @dlt.transformer(data_from=raw_resource("daemonsets"), columns=Graph)
-    def daemonsets_graph(daemonsets):
-        for daemonset in daemonsets:
-            yield build_graph(DaemonSetNode, daemonset)
-
-    @dlt.transformer(data_from=raw_resource("clusters"), columns=Graph)
-    def clusters_graph(clusters):
-        for cluster_node in clusters:
-            yield build_graph(ClusterNode, cluster_node)
-
-    return (
-        pods_graph,
-        namespaces_graph,
-        nodes_graph,
-        service_accounts_graph,
-        deployments_graph,
-        replicasets_graph,
-        statefulsets_graph,
-        daemonsets_graph,
-        roles_graph,
-        role_bindings_graph,
-        cluster_roles_graph,
-        cluster_role_bindings_graph,
-        resource_definitions_graph,
-        users_graph,
-        groups_graph,
-        unmapped_graph,
-        volumes_graph,
-        clusters_graph,
-    )
+    for table, model in KUBERNETES_NODES.items():
+        reader = json_resource(table)
+        yield dlt.resource(
+            build_graph(reader, model),
+            name=f"{table}_fs",
+            columns=Graph,
+            parallelized=False,
+        )
 
 
 @dlt.source(name="kubernetes_opengraph_eks")
