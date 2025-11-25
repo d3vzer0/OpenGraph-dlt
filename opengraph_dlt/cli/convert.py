@@ -28,7 +28,7 @@ InputPath = Annotated[
 def aws(
     ctx: typer.Context, input_path: InputPath, output_path: OutputPath = Path("./graph")
 ):
-    from opengraph_dlt.sources.aws.source import aws_opengraph
+    from opengraph_dlt.sources.aws.convert import aws_opengraph
     from opengraph_dlt.sources.aws.lookup import AWSLookup
 
     client = duckdb.connect("lookup.duckdb", read_only=True)
