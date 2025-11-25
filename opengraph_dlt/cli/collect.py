@@ -71,7 +71,7 @@ def kubernetes(
         bool, typer.Option(help="Generate database for lookups/matching afterwards")
     ] = True,
 ):
-    from opengraph_dlt.sources.kubernetes.source import kubernetes_resources
+    from opengraph_dlt.sources.kubernetes.collect import kubernetes_resources
     from kubernetes import config
 
     contexts, active = config.list_kube_config_contexts()

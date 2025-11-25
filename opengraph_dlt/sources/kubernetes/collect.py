@@ -1,40 +1,29 @@
 from kubernetes import client, config
 from kubernetes.dynamic import DynamicClient
 from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
-from .models.pod import Pod, PodNode, Volume as PodVolume
-from .models.volume import Volume, VolumeNode
-from .models.namespace import Namespace, NamespaceNode
-from .models.daemonset import DaemonSet, DaemonSetNode
-from .models.replicaset import ReplicaSet, ReplicaSetNode
-from .models.statefulset import StatefulSet, StatefulSetNode
-from .models.deployment import Deployment, DeploymentNode
-from .models.resource_group import ResourceGroup, ResourceGroupNode
-from .models.generic import Generic, GenericNode
-from .models.node import Node as KubeNode, NodeOutput
-from .models.role import Role, RoleNode
-from .models.role_binding import RoleBinding, RoleBindingNode
+from .models.pod import Pod, Volume as PodVolume
+from .models.volume import Volume
+from .models.namespace import Namespace
+from .models.daemonset import DaemonSet
+from .models.replicaset import ReplicaSet
+from .models.statefulset import StatefulSet
+from .models.deployment import Deployment
+from .models.resource_group import ResourceGroup
+from .models.generic import Generic
+from .models.node import Node as KubeNode
+from .models.role import Role
+from .models.role_binding import RoleBinding
 from .models.cluster_role import ClusterRole, ClusterRoleNode
-from .models.cluster_role_binding import ClusterRoleBinding, ClusterRoleBindingNode
-from .models.service_account import ServiceAccount, ServiceAccountNode
-from .models.resource import Resource, ResourceNode
+from .models.cluster_role_binding import ClusterRoleBinding
+from .models.service_account import ServiceAccount
+from .models.resource import Resource
 from .models.graph import Node as GraphNode, Graph, GraphEntries
-from .models.identities import User, UserNode, Group, GroupNode
-from .models.cluster import Cluster, ClusterNode
-from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole, Metadata
+from .models.identities import User, Group
+from .models.cluster import Cluster
+from .models.eks.eks_cluster_role import EKSVirtualClusterAdminRole
 from urllib3.util.retry import Retry
-import pandas as pd
-
-from functools import wraps
-from dlt.sources.filesystem import (
-    filesystem as filesystemsource,
-    read_jsonl,
-    readers,
-    read_parquet,
-)
-
-
 import dlt
-from typing import Type, TypeVar
+from typing import TypeVar
 
 
 T = TypeVar("T", bound=GraphNode)
@@ -55,27 +44,6 @@ RESOURCE_TYPES = {
     "StatefulSet": StatefulSet,
     "Deployment": Deployment,
     # "Service": ServiceNode
-}
-
-KUBERNETES_NODES = {
-    "nodes": NodeOutput,
-    "pods": PodNode,
-    "cust_volumes": VolumeNode,
-    "namespaces": NamespaceNode,
-    "unmapped": GenericNode,
-    "deployments": DeploymentNode,
-    "replicasets": ReplicaSetNode,
-    "service_accounts": ServiceAccountNode,
-    "roles": RoleNode,
-    "role_bindings": RoleBindingNode,
-    "cluster_roles": ClusterRoleNode,
-    "cluster_role_bindings": ClusterRoleBindingNode,
-    "resource_definitions": ResourceNode,
-    "cust_users": UserNode,
-    "cust_groups": GroupNode,
-    "statefulsets": StatefulSetNode,
-    "daemonsets": DaemonSetNode,
-    "clusters": ClusterNode,
 }
 
 
@@ -292,44 +260,6 @@ def kubernetes_resources(kube_config: None | str = None, cluster: str | None = N
         groups_role,
         clusters,
     )
-
-
-@dlt.source(name="kubernetes_opengraph")
-def kubernetes_opengraph(
-    *,
-    cluster: str,
-    lookup: KubernetesLookup,
-    bucket_url: str = dlt.config.value,
-):
-
-    def json_resource(subdir: str):
-        files = filesystemsource(
-            bucket_url=bucket_url,
-            file_glob=f"{subdir}/**/*.jsonl.gz",
-        )
-        reader = (files | read_jsonl()).with_name(f"{subdir}_fs")
-        return reader
-
-    def build_graph(nodes, model):
-        for node in nodes:
-            node = model.from_input(**node)
-            node._cluster = cluster
-            node._lookup = lookup
-
-            entries = GraphEntries(
-                nodes=[node],
-                edges=[edge for edge in node.edges if edge],
-            )
-            yield Graph(graph=entries)
-
-    for table, model in KUBERNETES_NODES.items():
-        reader = json_resource(table)
-        yield dlt.resource(
-            build_graph(reader, model),
-            name=f"{table}_fs",
-            columns=Graph,
-            parallelized=False,
-        )
 
 
 @dlt.source(name="kubernetes_opengraph_eks")
