@@ -56,4 +56,5 @@ dev = [
     "ipython>=9.6.0",
     "jupyterlab>=4.4.10",
     "marimo>=0.17.0",
+    "pytest>=9.0.1",
 ]
