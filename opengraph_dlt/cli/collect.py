@@ -39,7 +39,7 @@ def aws(
     ] = True,
 ):
 
-    from opengraph_dlt.sources.aws.source import aws_resources
+    from opengraph_dlt.sources.aws.collect import aws_resources
 
     dest = filesystem(
         bucket_url=str(output_path),
