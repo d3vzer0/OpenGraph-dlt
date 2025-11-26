@@ -6,21 +6,18 @@ resources to OpenGraph for BloodHound.
 
 ## Components
 
-- `source.py` – DLT sources/transformers which collect resources from a Kubernetes cluster using the Kubernetes API or re-load
-  collected files (e.g., `kubernetes_resources`, `kubernetes_opengraph`).
-- `lookup.py` – DuckDB database used to look up resource metadata during graph
-  generation (`KubernetesLookup`).
-- `models/` – Pydantic schemas that normalize Kubernetes API responses and
-  describe graph nodes/edges.
-- `dbt/` – Models that transform/normalize the lookup database
-- `icons.py` Contains the icons used for each node type in BloodHound
+- `collect.py` – DLT source which collect resources from a Kubernetes cluster using the Kubernetes API (e.g., `kubernetes_resources`);
+- `transform.py` - DLT source which loads the collected resource files and runs the OpenGraph transformation (eg. `kubernetes_opengraph`);
+- `lookup.py` – DuckDB database used to look up resource metadata during graph generation (`KubernetesLookup`);
+- `models/` – Pydantic schemas that normalize Kubernetes API responses and describe graph nodes/edges;
+- `dbt/` – Models that transform/normalize the lookup database;
+- `icons.py` Contains the icons used for each node type in BloodHound.
 
 
 ## Workflow
-
 1. **Collect raw resources** – call the collector to save cluster data to
    filesystem storage (JSONL gz files).
-2. **Build lookup** – ingest raw files into DuckDB + dbt models for resolving
+2. **Build lookup (ie. preprocess)** – ingest raw files into DuckDB + dbt models for resolving
    names, namespaces, and resource definitions.
 3. **Convert or sync** – turn collected data into OpenGraph graph entries for
    local inspection or direct sync to a destination.
@@ -40,18 +37,14 @@ opengraph collect kubernetes ./output
 
 
 ### 2a. Convert to OpenGraph files
-
 ```
 opengraph convert kubernetes ./output/kubernetes ./graph
 ```
 
 - Requires an up-to-date `lookup.duckdb`.
-- Uses `kubernetes_opengraph` to read the collected files (`bucket_url`
-  argument) and yields `GraphEntries` into the file destination created by
-  the `destinations/opengraph` methods
+- Uses `kubernetes_opengraph` to read the collected files (`bucket_url` argument) and yields `GraphEntries` into the file destination created by the `destinations/opengraph` methods
 
 ### 3b. Sync directly to BloodHound
-
 ```
 opengraph sync kubernetes ./output/kubernetes
 ```
@@ -61,7 +54,5 @@ opengraph sync kubernetes ./output/kubernetes
 
 ## Tips
 
-- The collector assumes the kubeconfig context’s cluster name should be stored
-  on every node; override by passing a different `cluster` argument if you use
-  the Python API (`kubernetes_resources(kube_config=..., cluster="....")`).
-- For offline troubleshooting, inspect the JSONL files directly and/or query `lookup.duckdb` with DuckDB CLI or UI
+- The collector assumes the kubeconfig context’s cluster name;
+- For offline troubleshooting, inspect the JSONL files directly and/or query `lookup.duckdb` with DuckDB CLI or UI. You can use the following SQL query to import the JSON files directly: `SELECT * FROM read_json('output/kubernetes/<resource_type>/**/*.jsonl.gz');`.
