@@ -1,7 +1,18 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
-from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes
+from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, Edge
+
+
+class UserProperties(NodeProperties):
+    model_config = ConfigDict(extra="allow")
+    user_id: str
+    path: str
+    password_last_used: Optional[datetime] = None
+
+
+class UserNode(Node):
+    properties: UserProperties
 
 
 class User(BaseModel):
@@ -17,35 +28,23 @@ class User(BaseModel):
     )
     account_id: Optional[str] = Field(alias="AccountId", default=None)
 
-
-class UserProperties(NodeProperties):
-    model_config = ConfigDict(extra="allow")
-    user_id: str
-    path: str
-    password_last_used: Optional[datetime] = None
-
-
-class UserNode(Node):
-    properties: UserProperties
+    @property
+    def as_node(self) -> "UserNode":
+        properties = UserProperties(
+            name=self.user_name,
+            displayname=self.user_name,
+            aws_account_id=self.account_id,
+            aws_region="global",
+            user_id=self.user_id,
+            arn=self.arn,
+            path=self.path,
+            password_last_used=self.password_last_used,
+            created_at=self.create_date,
+        )
+        node = UserNode(kinds=[NodeTypes.AWSUser.value], properties=properties)
+        node.attach_context(self.account_id)
+        return node
 
     @property
-    def edges(self):
+    def edges(self) -> list[Edge]:
         return []
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "UserNode":
-        model = User(**kwargs)
-        properties = UserProperties(
-            name=model.user_name,
-            displayname=model.user_name,
-            aws_account_id=model.account_id,
-            aws_region="global",
-            user_id=model.user_id,
-            arn=model.arn,
-            path=model.path,
-            password_last_used=model.password_last_used,
-            created_at=model.create_date,
-        )
-        node = cls(kinds=[NodeTypes.AWSUser.value], properties=properties)
-        node.attach_context(model.account_id)
-        return node

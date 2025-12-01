@@ -8,6 +8,14 @@ from opengraph_dlt.sources.aws.models.graph import (
 from datetime import datetime
 
 
+class ExtendedProperties(NodeProperties):
+    model_config = ConfigDict(extra="allow")
+
+
+class ResourceNode(Node):
+    properties: ExtendedProperties
+
+
 class PropertiesData(BaseModel):
     key: str = Field(alias="Key")
     value: str = Field(alias="Value")
@@ -33,30 +41,21 @@ class Resource(BaseModel):
     def name(self) -> str:
         return self.arn.split(":")[-1]
 
-
-class ExtendedProperties(NodeProperties):
-    model_config = ConfigDict(extra="allow")
-
-
-class ResourceNode(Node):
-    properties: ExtendedProperties
-
     @property
     def edges(self):
         return []
 
-    @classmethod
-    def from_input(cls, **kwargs) -> "ResourceNode":
-        model = Resource(**kwargs)
+    @property
+    def as_node(self) -> "ResourceNode":
         node_properties = ExtendedProperties(
-            name=model.name,
-            displayname=model.name,
-            aws_account_id=model.owning_account_id,
-            aws_region=model.region,
-            arn=model.arn,
+            name=self.name,
+            displayname=self.name,
+            aws_account_id=self.owning_account_id,
+            aws_region=self.region,
+            arn=self.arn,
         )
 
-        kind = AWSCollector.gen_node_type(model.resource_type)
-        node = cls(kinds=[kind, "BaseAWS"], properties=node_properties)
-        node.attach_context(model.owning_account_id)
+        kind = AWSCollector.gen_node_type(self.resource_type)
+        node = ResourceNode(kinds=[kind, "BaseAWS"], properties=node_properties)
+        node.attach_context(self.owning_account_id)
         return node

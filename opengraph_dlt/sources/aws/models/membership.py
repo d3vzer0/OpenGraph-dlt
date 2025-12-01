@@ -14,25 +14,20 @@ class UserGroupMembership(BaseModel):
     group_arn: str = Field(alias="GroupArn")
     account_id: str = Field(alias="AccountId")
 
-
-class MembershipEdges(BaseModel):
-    membership: UserGroupMembership
-    _lookup: LookupManager = PrivateAttr()
-
     @property
     def _user_id(self) -> str:
         return AWSCollector.guid(
-            name=self.membership.user_arn,
+            name=self.user_arn,
             node_type=NodeTypes.AWSUser,
-            account_id=self.membership.account_id,
+            account_id=self.account_id,
         )
 
     @property
     def _group_id(self) -> str:
         return AWSCollector.guid(
-            name=self.membership.group_arn,
+            name=self.group_arn,
             node_type=NodeTypes.AWSGroup,
-            account_id=self.membership.account_id,
+            account_id=self.account_id,
         )
 
     @property
@@ -41,7 +36,34 @@ class MembershipEdges(BaseModel):
         end = EdgePath(value=self._group_id, match_by="id")
         return [Edge(kind="AWSMemberOf", start=start, end=end)]
 
-    @classmethod
-    def from_input(cls, **kwargs) -> "MembershipEdges":
-        model = UserGroupMembership(**kwargs)
-        return cls(membership=model)
+
+# class MembershipEdges(BaseModel):
+#     membership: UserGroupMembership
+#     _lookup: LookupManager = PrivateAttr()
+
+#     @property
+#     def _user_id(self) -> str:
+#         return AWSCollector.guid(
+#             name=self.membership.user_arn,
+#             node_type=NodeTypes.AWSUser,
+#             account_id=self.membership.account_id,
+#         )
+
+#     @property
+#     def _group_id(self) -> str:
+#         return AWSCollector.guid(
+#             name=self.membership.group_arn,
+#             node_type=NodeTypes.AWSGroup,
+#             account_id=self.membership.account_id,
+#         )
+
+#     @property
+#     def edges(self) -> list[Edge]:
+#         start = EdgePath(value=self._user_id, match_by="id")
+#         end = EdgePath(value=self._group_id, match_by="id")
+#         return [Edge(kind="AWSMemberOf", start=start, end=end)]
+
+#     @classmethod
+#     def from_input(cls, **kwargs) -> "MembershipEdges":
+#         model = UserGroupMembership(**kwargs)
+#         return cls(membership=model)
