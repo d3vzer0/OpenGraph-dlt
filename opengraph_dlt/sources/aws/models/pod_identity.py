@@ -6,8 +6,25 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeTypes as KubeNodeTypes,
 )
 from opengraph_dlt.sources.shared.models.entries import EdgePath
+from opengraph_dlt.sources.shared.models.docs import graph_resource, EdgeDef
 
 
+@graph_resource(
+    edges=[
+        EdgeDef(
+            start="K8sPod",
+            end="AWSUser",
+            kind="KubeRunsAs",
+            description="Pod runs as AWS user edge",
+        ),
+        EdgeDef(
+            start=KubeNodeTypes.KubeServiceAccount.value,
+            end=NodeTypes.AWSRole.value,
+            kind="AWSAllowsAssume",
+            description="Kube SA allowed to assume AWS IAM role",
+        ),
+    ]
+)
 class EKSPodIdentity(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
