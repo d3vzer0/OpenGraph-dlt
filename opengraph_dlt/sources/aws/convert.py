@@ -1,21 +1,20 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
-from .models.group import GroupNode
-from .models.membership import MembershipEdges
+from .models.group import Group
+from .models.membership import UserGroupMembership
 from opengraph_dlt.sources.aws.lookup import AWSLookup
 from .models.graph import Node
-from .models.role import RoleNode
-from .models.eks import (
-    EKSClusterNode,
-    EKSAccessEntryEdges,
-)
-from .models.pod_identity import EKSPodIdentityEdges
-from .models.user import UserNode
-from .models.policy import (
-    PolicyNode,
-    InlinePolicyNode,
-    PolicyAttachmentEdges,
-)
-from .models.resource import ResourceNode
+from .models.role import Role
+
+# from .models.eks import (
+#     EKSClusterNode,
+#     EKSAccessEntryEdges,
+# )
+from .models.pod_identity import EKSPodIdentity
+from .models.user import User
+from .models.policy import Policy
+from .models.inline_policy import InlinePolicy
+from .models.policy_attachments import PolicyAttachment
+from .models.resource import Resource
 from .models.graph import (
     GraphEntries,
     Graph,
@@ -23,17 +22,17 @@ from .models.graph import (
 import dlt
 
 AWS_NODES = {
-    "policies": PolicyNode,
-    "groups": GroupNode,
-    "user_group_memberships": MembershipEdges,
-    "users": UserNode,
-    "roles": RoleNode,
-    "policy_attachments": PolicyAttachmentEdges,
-    "inline_policies": InlinePolicyNode,
-    "eks": EKSClusterNode,
-    "eks_cluster_access_entries": EKSAccessEntryEdges,
-    "eks_pod_identity_associations": EKSPodIdentityEdges,
-    "resources": ResourceNode,
+    "policies": Policy,
+    "groups": Group,
+    "user_group_memberships": UserGroupMembership,
+    "users": User,
+    "roles": Role,
+    "policy_attachments": PolicyAttachment,
+    "inline_policies": InlinePolicy,
+    # "eks": EKSClusterNode,
+    # "eks_cluster_access_entries": EKSAccessEntryEdges,
+    # "eks_pod_identity_associations": EKSPodIdentityEdges,
+    "resources": Resource,
 }
 
 
@@ -51,13 +50,17 @@ def aws_opengraph(
         )
         return (files | read_jsonl()).with_name(f"{subdir}_fs")
 
-    def parse_nodes(nodes, model):
-        for node in nodes:
-            node = model.from_input(**node)
-            node._lookup = lookup
+    def parse_nodes(resources: list, model):
+        for resource in resources:
+            resource_object = model(**resource)
+            resource_object._lookup = lookup
             entries = GraphEntries(
-                nodes=[node] if isinstance(node, Node) else [],
-                edges=[edge for edge in node.edges if edge],
+                nodes=(
+                    [resource_object.as_node]
+                    if hasattr(resource_object, "as_node")
+                    else []
+                ),
+                edges=[edge for edge in resource_object.edges if edge],
             )
 
             yield Graph(graph=entries)

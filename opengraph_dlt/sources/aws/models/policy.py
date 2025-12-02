@@ -1,17 +1,14 @@
 from datetime import datetime
-from typing import Literal, Optional
-
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import ConfigDict, Field
 from opengraph_dlt.sources.aws.models.graph import (
     NodeProperties,
     Node,
     NodeTypes,
     AWSCollector,
-    BaseResource
+    BaseResource,
 )
-from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties,
-from opengraph_dlt.sources.aws.lookup import AWSLookup
-import fnmatch
+from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.models.docs import graph_resource, NodeDef
 
 
 ENTITY_NODE_TYPES = {
@@ -42,6 +39,7 @@ class PolicyNode(Node):
     properties: ExtendedPolicyProperties
 
 
+@graph_resource(node=NodeDef(kind="AWSPolicy", description="AWS IAM policy node"))
 class Policy(BaseResource):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
