@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
+from opengraph_dlt.sources.aws.lookup import AWSLookup
 from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonGraph
 from opengraph_dlt.sources.shared.guid import Collector
 from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
@@ -43,6 +44,10 @@ class AWSCollector(Collector):
         return f"AWS{pascal_case}".replace(":", "")
 
 
+class BaseResource(BaseModel):
+    _lookup: AWSLookup = PrivateAttr()
+
+
 class NodeProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: str
@@ -55,7 +60,7 @@ class NodeProperties(BaseModel):
     last_seen: datetime = Field(default_factory=datetime.utcnow)
 
 
-class Node(BaseNode, ABC):
+class Node(BaseNode):
     properties: NodeProperties
     _account_id: Optional[str] = PrivateAttr(default=None)
     _scope: Optional[str] = PrivateAttr(default=None)
