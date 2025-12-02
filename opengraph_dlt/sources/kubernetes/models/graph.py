@@ -3,7 +3,7 @@ from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonG
 from abc import ABC
 from enum import Enum
 from datetime import datetime
-from typing import Optional, ClassVar
+from typing import Optional
 from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
 from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
 from opengraph_dlt.sources.shared.guid import Collector
@@ -59,7 +59,7 @@ class NodeProperties(BaseModel):
     uid: str | None
 
 
-class Node(BaseNode, ABC):
+class Node(BaseNode):
     properties: NodeProperties
     _lookup: KubernetesLookup = PrivateAttr()
     _cluster: str = PrivateAttr()
