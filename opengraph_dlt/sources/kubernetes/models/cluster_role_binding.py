@@ -32,6 +32,7 @@ class Metadata(BaseModel):
 
 
 class ClusterRoleBinding(BaseModel):
+
     kind: str | None = "ClusterRoleBinding"
     metadata: Metadata
     role_ref: RoleRef
@@ -41,24 +42,24 @@ class ClusterRoleBinding(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "ClusterRoleBinding"
 
-    @field_validator("role_ref", mode="before")
-    def validate_role_ref(cls, value):
-        if isinstance(value, str):
-            value = json.loads(value)
-        return value
+    # @field_validator("role_ref", mode="before")
+    # def validate_role_ref(cls, value):
+    #     if isinstance(value, str):
+    #         value = json.loads(value)
+    #     return value
 
-    @field_validator("subjects", mode="before")
-    def validate_subjects(cls, value):
-        if isinstance(value, str):
-            value = json.loads(value)
-        return value or []
+    # @field_validator("subjects", mode="before")
+    # def validate_subjects(cls, value):
+    #     if isinstance(value, str):
+    #         value = json.loads(value)
+    #     return value or []
 
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
+    # @field_validator("metadata", mode="before")
+    # @classmethod
+    # def parse_json_string(cls, v):
+    #     if isinstance(v, str):
+    #         return json.loads(v)
+    #     return v
 
 
 class ExtendedProperties(NodeProperties):
@@ -86,7 +87,7 @@ class ClusterRoleBindingNode(Node):
         return edge_path
 
     @property
-    def _role_edge(self):
+    def _role_edge(self) -> "Edge":
         start_path = EdgePath(value=self.id, match_by="id")
         return Edge(kind="KubeReferencesRole", start=start_path, end=self._role_path)
 
