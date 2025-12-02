@@ -1,5 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from opengraph_dlt.sources.aws.lookup import LookupManager
+from pydantic import BaseModel, ConfigDict, Field
 from opengraph_dlt.sources.shared.models.entries import EdgePath, Edge
 from opengraph_dlt.sources.shared.models.docs import graph_resource, EdgeDef
 from opengraph_dlt.sources.aws.models.graph import NodeTypes, AWSCollector
@@ -46,35 +45,3 @@ class UserGroupMembership(BaseModel):
         start = EdgePath(value=self._user_id, match_by="id")
         end = EdgePath(value=self._group_id, match_by="id")
         return [Edge(kind="AWSMemberOf", start=start, end=end)]
-
-
-# class MembershipEdges(BaseModel):
-#     membership: UserGroupMembership
-#     _lookup: LookupManager = PrivateAttr()
-
-#     @property
-#     def _user_id(self) -> str:
-#         return AWSCollector.guid(
-#             name=self.membership.user_arn,
-#             node_type=NodeTypes.AWSUser,
-#             account_id=self.membership.account_id,
-#         )
-
-#     @property
-#     def _group_id(self) -> str:
-#         return AWSCollector.guid(
-#             name=self.membership.group_arn,
-#             node_type=NodeTypes.AWSGroup,
-#             account_id=self.membership.account_id,
-#         )
-
-#     @property
-#     def edges(self) -> list[Edge]:
-#         start = EdgePath(value=self._user_id, match_by="id")
-#         end = EdgePath(value=self._group_id, match_by="id")
-#         return [Edge(kind="AWSMemberOf", start=start, end=end)]
-
-#     @classmethod
-#     def from_input(cls, **kwargs) -> "MembershipEdges":
-#         model = UserGroupMembership(**kwargs)
-#         return cls(membership=model)
