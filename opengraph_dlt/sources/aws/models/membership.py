@@ -1,9 +1,20 @@
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from opengraph_dlt.sources.aws.lookup import LookupManager
 from opengraph_dlt.sources.shared.models.entries import EdgePath, Edge
+from opengraph_dlt.sources.shared.models.docs import graph_resource, EdgeDef
 from opengraph_dlt.sources.aws.models.graph import NodeTypes, AWSCollector
 
 
+@graph_resource(
+    edges=[
+        EdgeDef(
+            start=NodeTypes.AWSUser.value,
+            end=NodeTypes.AWSGroup.value,
+            kind="AWSMemberOf",
+            description="User to Group membership",
+        )
+    ]
+)
 class UserGroupMembership(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
