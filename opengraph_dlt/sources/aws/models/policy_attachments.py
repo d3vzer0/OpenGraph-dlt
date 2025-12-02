@@ -7,12 +7,11 @@ from opengraph_dlt.sources.aws.models.graph import (
     Node,
     NodeTypes,
     AWSCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 from opengraph_dlt.sources.aws.lookup import AWSLookup
 from opengraph_dlt.sources.shared.models.docs import graph_resource, EdgeDef
-import fnmatch
-from functools import lru_cache, cache
 
 ENTITY_NODE_TYPES = {
     "User": "AWSUser",
@@ -51,7 +50,7 @@ class PolicyAttachmentEdges(BaseModel):
         ),
     ]
 )
-class PolicyAttachment(BaseModel):
+class PolicyAttachment(BaseResource):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     policy_arn: str = Field(alias="PolicyArn")
     entity_type: Literal["User", "Group", "Role"] = Field(alias="EntityType")
