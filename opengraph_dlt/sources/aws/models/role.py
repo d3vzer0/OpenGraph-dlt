@@ -1,9 +1,24 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
-from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes
+from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, Edge
+from opengraph_dlt.sources.shared.models.docs import graph_resource, NodeDef
 
 
+class RoleProperties(NodeProperties):
+    model_config = ConfigDict(extra="allow")
+    role_id: str
+    path: str
+    assume_role_policy: Optional[dict] = None
+
+
+class RoleNode(Node):
+    properties: RoleProperties
+
+
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.AWSRole.value, description="Example description")
+)
 class Role(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
@@ -18,41 +33,24 @@ class Role(BaseModel):
     description: Optional[str] = Field(alias="Description", default=None)
     account_id: Optional[str] = Field(alias="AccountId", default=None)
 
-
-class RoleProperties(NodeProperties):
-    model_config = ConfigDict(extra="allow")
-    role_id: str
-    path: str
-    assume_role_policy: Optional[dict] = None
-
-
-class RoleNode(Node):
-    properties: RoleProperties
-
-    # @property
-    # def _assume_role(self):
-    #     identities_allowed = []
-    #     for statement in self.properties.assume_role_policy["Statement"]:
+    @property
+    def as_node(self) -> "RoleNode":
+        properties = RoleProperties(
+            name=self.role_name,
+            displayname=self.role_name,
+            aws_account_id=self.account_id,
+            role_id=self.role_id,
+            aws_region="global",
+            arn=self.arn,
+            path=self.path,
+            assume_role_policy=self.assume_role_policy_document,
+            description=self.description,
+            created_at=self.create_date,
+        )
+        node = RoleNode(kinds=[NodeTypes.AWSRole.value], properties=properties)
+        node.attach_context(self.account_id)
+        return node
 
     @property
-    def edges(self):
+    def edges(self) -> list[Edge]:
         return []
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "RoleNode":
-        model = Role(**kwargs)
-        properties = RoleProperties(
-            name=model.role_name,
-            displayname=model.role_name,
-            aws_account_id=model.account_id,
-            role_id=model.role_id,
-            aws_region="global",
-            arn=model.arn,
-            path=model.path,
-            assume_role_policy=model.assume_role_policy_document,
-            description=model.description,
-            created_at=model.create_date,
-        )
-        node = cls(kinds=[NodeTypes.AWSRole.value], properties=properties)
-        node.attach_context(model.account_id)
-        return node

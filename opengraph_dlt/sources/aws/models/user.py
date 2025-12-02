@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, Edge
+from opengraph_dlt.sources.shared.models.docs import graph_resource, NodeDef, EdgeDef
 
 
 class UserProperties(NodeProperties):
@@ -15,7 +16,9 @@ class UserNode(Node):
     properties: UserProperties
 
 
+@graph_resource(node=NodeDef(kind=NodeTypes.AWSUser.value, description="AWS User node"))
 class User(BaseModel):
+
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     user_name: str = Field(alias="UserName")
