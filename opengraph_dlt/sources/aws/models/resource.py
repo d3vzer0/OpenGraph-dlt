@@ -5,6 +5,8 @@ from opengraph_dlt.sources.aws.models.graph import (
     NodeTypes,
     AWSCollector,
 )
+from opengraph_dlt.sources.shared.models.docs import graph_resource, NodeDef
+
 from datetime import datetime
 
 
@@ -27,6 +29,9 @@ class ResourceProperties(BaseModel):
     data: list[PropertiesData] = Field(alias="Data")
 
 
+@graph_resource(
+    node=NodeDef(kind="AWSResource", description="AWS dynamic resource node")
+)
 class Resource(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     arn: str = Field(alias="Arn")
