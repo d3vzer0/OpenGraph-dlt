@@ -70,6 +70,7 @@ class DaemonSet(BaseResource):
             displayname=self.metadata.name,
             namespace=self.metadata.namespace,
             uid=self.metadata.uid,
+            cluster=self._cluster,
         )
         return DaemonSetNode(kinds=["KubeDaemonSet"], properties=properties)
 

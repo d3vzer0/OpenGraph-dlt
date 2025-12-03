@@ -18,8 +18,7 @@ class Metadata(BaseModel):
     labels: dict = {}
 
 
-class NodeOutput(GraphNode):
-    pass
+class NodeOutput(GraphNode): ...
 
 
 @graph_resource(
@@ -39,7 +38,7 @@ class NodeOutput(GraphNode):
         # ),
     ],
 )
-class Node(BaseResource):
+class KubeNode(BaseResource):
     metadata: Metadata
     kind: str | None = "Node"
 
@@ -54,6 +53,7 @@ class Node(BaseResource):
             displayname=self.metadata.name,
             uid=self.metadata.uid,
             namespace=None,
+            cluster=self._cluster,
         )
         return NodeOutput(kinds=["KubeNode"], properties=properties)
 

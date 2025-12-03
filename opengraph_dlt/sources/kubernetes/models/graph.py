@@ -61,15 +61,16 @@ class NodeProperties(BaseModel):
     name: str
     displayname: str
     namespace: str | None
+    cluster: str
     last_seen: datetime = Field(default_factory=datetime.now)
     uid: str | None
 
 
 class Node(BaseNode):
     properties: NodeProperties
-    _lookup: KubernetesLookup = PrivateAttr()
-    _cluster: str = PrivateAttr()
-    _scope: Optional[str] = PrivateAttr(default=None)
+    # _lookup: KubernetesLookup = PrivateAttr()
+    # _cluster: str = PrivateAttr()
+    # _scope: Optional[str] = PrivateAttr(default=None)
 
     @computed_field
     @property
@@ -81,7 +82,7 @@ class Node(BaseNode):
         kind = self.kinds[0]
         resource_type = NodeTypes[kind] if kind in NodeTypes else kind
         dyn_uid = KubernetesCollector.guid(
-            self.properties.name, resource_type, self._cluster, scope
+            self.properties.name, resource_type, self.properties.cluster, scope
         )
         return dyn_uid
 

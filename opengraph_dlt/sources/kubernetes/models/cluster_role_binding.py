@@ -99,6 +99,7 @@ class ClusterRoleBinding(BaseResource):
             subjects=self.subjects,
             uid=self.metadata.uid,
             namespace=None,
+            cluster=self._cluster,
         )
         return ClusterRoleBindingNode(
             kinds=["KubeClusterRoleBinding", "KubeRoleBinding"],

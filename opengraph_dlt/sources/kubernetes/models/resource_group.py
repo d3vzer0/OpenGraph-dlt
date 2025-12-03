@@ -36,7 +36,11 @@ class ResourceGroup(BaseResource):
     @property
     def as_node(self) -> "ResourceGroupNode":
         properties = NodeProperties(
-            name=self.name, displayname=self.name, uid=self.uid, namespace=None
+            name=self.name,
+            displayname=self.name,
+            uid=self.uid,
+            namespace=None,
+            cluster=self._cluster,
         )
         return ResourceGroupNode(kinds=["KubeResourceGroup"], properties=properties)
 

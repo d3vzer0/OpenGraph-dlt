@@ -271,9 +271,9 @@ def kubernetes_eks_opengraph(
 
     def build_graph(model_cls, resource: dict) -> Graph:
         resource_model = model_cls(**resource)
+        resource_model._cluster = cluster
+        resource_model._lookup = lookup
         node = resource_model.as_node
-        node._cluster = cluster
-        node._lookup = lookup
 
         entries = GraphEntries(
             nodes=[node],

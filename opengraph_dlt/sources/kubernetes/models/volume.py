@@ -53,6 +53,7 @@ class Volume(BaseResource):
             node_name=self.node_name,
             namespace=None,
             uid=self.uid,
+            cluster=self._cluster,
         )
         return VolumeNode(kinds=["KubeVolume"], properties=properties)
 

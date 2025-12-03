@@ -43,6 +43,7 @@ class Generic(BaseResource):
             namespace=self.metadata.namespace,
             uid=self.metadata.uid,
             kind=self.kind,
+            cluster=self._cluster,
         )
         return GenericNode(kinds=[f"Kube{self.kind}"], properties=properties)
 

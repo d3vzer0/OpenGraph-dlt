@@ -5,7 +5,7 @@ from opengraph_dlt.sources.aws.models.graph import (
     NodeTypes,
     AWSCollector,
 )
-from opengraph_dlt.sources.shared.models.docs import graph_resource, NodeDef
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 from datetime import datetime
 

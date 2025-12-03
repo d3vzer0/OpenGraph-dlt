@@ -35,6 +35,7 @@ class StaleReference(BaseModel):
             source_edge_type=self.edge_type,
             namespace=None,
             uid=None,
+            cluster=self._cluster,
         )
         return StaleNode(kinds=[self.resource_type], properties=properties)
 

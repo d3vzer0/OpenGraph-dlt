@@ -76,6 +76,7 @@ class ReplicaSet(BaseResource):
             displayname=self.metadata.name,
             namespace=self.metadata.namespace,
             uid=self.metadata.uid,
+            cluster=self._cluster,
         )
         node = ReplicaSetNode(kinds=["KubeReplicaSet"], properties=properties)
         return node

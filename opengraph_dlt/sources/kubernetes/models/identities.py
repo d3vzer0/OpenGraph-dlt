@@ -4,12 +4,16 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
-class User(BaseModel):
+class UserNode(Node): ...
+
+
+class User(BaseResource):
     name: str
     api_group: str
     kind: str = "User"
@@ -33,12 +37,34 @@ class User(BaseModel):
     @property
     def as_node(self) -> "UserNode":
         properties = NodeProperties(
-            name=self.name, displayname=self.name, uid=self.uid, namespace=None
+            name=self.name,
+            displayname=self.name,
+            uid=self.uid,
+            namespace=None,
+            cluster=self._cluster,
         )
         return UserNode(kinds=["KubeUser"], properties=properties)
 
+    @property
+    def _authenticated_group_edge(self):
+        # target_id = self._lookup.groups("system:authenticated")
+        target_id = KubernetesCollector.guid(
+            "system:authenticated", NodeTypes.KubeGroup, self._cluster
+        )
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
+        end_path = EdgePath(value=target_id, match_by="id")
+        edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
+        return edge
 
-class Group(BaseModel):
+    @property
+    def edges(self):
+        return [self._authenticated_group_edge]
+
+
+class GroupNode(Node): ...
+
+
+class Group(BaseResource):
     name: str
     api_group: str
     kind: str = "Group"
@@ -55,30 +81,14 @@ class Group(BaseModel):
     @property
     def as_node(self) -> "GroupNode":
         properties = NodeProperties(
-            name=self.name, displayname=self.name, uid=self.uid, namespace=None
+            name=self.name,
+            displayname=self.name,
+            uid=self.uid,
+            namespace=None,
+            cluster=self._cluster,
         )
         return GroupNode(kinds=["KubeGroup"], properties=properties)
 
-
-class UserNode(Node):
-
-    @property
-    def _authenticated_group_edge(self):
-        # target_id = self._lookup.groups("system:authenticated")
-        target_id = KubernetesCollector.guid(
-            "system:authenticated", NodeTypes.KubeGroup, self._cluster
-        )
-        start_path = EdgePath(value=self.id, match_by="id")
-        end_path = EdgePath(value=target_id, match_by="id")
-        edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
-        return edge
-
-    @property
-    def edges(self):
-        return [self._authenticated_group_edge]
-
-
-class GroupNode(Node):
     @property
     def edges(self):
         return []

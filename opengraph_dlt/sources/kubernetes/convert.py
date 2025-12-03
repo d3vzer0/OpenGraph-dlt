@@ -7,7 +7,7 @@ from .models.replicaset import ReplicaSet
 from .models.statefulset import StatefulSet
 from .models.deployment import Deployment
 from .models.generic import Generic
-from .models.node import Node as KubeNode
+from .models.node import KubeNode
 from .models.role import Role
 from .models.role_binding import RoleBinding
 from .models.cluster_role import ClusterRole
@@ -66,13 +66,12 @@ def kubernetes_opengraph(
     def build_graph(nodes, model):
         for node in nodes:
             resource = model(**node)
+            resource._cluster = cluster
+            resource._lookup = lookup
             graph_node = resource.as_node
-            graph_node._cluster = cluster
-            graph_node._lookup = lookup
-
             entries = GraphEntries(
                 nodes=[graph_node],
-                edges=[edge for edge in graph_node.edges if edge],
+                edges=[edge for edge in resource.edges if edge],
             )
             yield Graph(graph=entries)
 

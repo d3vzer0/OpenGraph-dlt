@@ -49,6 +49,7 @@ class Namespace(BaseResource):
             displayname=self.metadata.name,
             uid=self.metadata.uid,
             namespace=None,
+            cluster=self._cluster,
         )
         return NamespaceNode(kinds=["KubeNamespace"], properties=properties)
 

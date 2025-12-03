@@ -32,6 +32,7 @@ class Cluster(BaseResource):
             displayname=self.name,
             uid=self.uid,
             namespace=None,
+            cluster=self._cluster,
         )
         return ClusterNode(kinds=["KubeCluster"], properties=properties)
 

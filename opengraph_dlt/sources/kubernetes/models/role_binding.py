@@ -95,6 +95,7 @@ class RoleBinding(BaseResource):
             role_ref=self.role_ref.name,
             subjects=self.subjects,
             uid=self.metadata.uid,
+            cluster=self._cluster,
         )
         return RoleBindingNode(
             kinds=["KubeScopedRoleBinding", "KubeRoleBinding"],

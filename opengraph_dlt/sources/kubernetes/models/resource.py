@@ -83,6 +83,7 @@ class Resource(BaseResource):
             namespace=None,
             api_group_name=self.group,
             uid=self.uid,
+            cluster=self._cluster,
         )
         return ResourceNode(kinds=["KubeResource"], properties=properties)
 

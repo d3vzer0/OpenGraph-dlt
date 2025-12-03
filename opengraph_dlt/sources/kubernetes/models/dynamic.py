@@ -82,6 +82,7 @@ class DynamicResource(BaseResource):
             namespace=self.metadata.namespace,
             uid=self.metadata.uid,
             **self.metadata.labels,
+            cluster=self._cluster,
         )
         return DynamicNode(
             kinds=[f"Kube{self.kind}"],

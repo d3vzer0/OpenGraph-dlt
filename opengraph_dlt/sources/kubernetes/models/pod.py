@@ -156,6 +156,7 @@ class Pod(BaseResource):
             node_name=self.spec.node_name,
             uid=self.metadata.uid,
             service_account_name=self.spec.service_account_name,
+            cluster=self._cluster,
             **self.metadata.labels,
             **self.spec.containers[0].security_context.model_dump(),
         )
@@ -167,7 +168,7 @@ class Pod(BaseResource):
         target_id = KubernetesCollector.guid(
             self.metadata.namespace, NodeTypes.KubeNamespace, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
