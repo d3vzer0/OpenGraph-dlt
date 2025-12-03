@@ -9,6 +9,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from typing import Optional
 import json
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class ResourceLookup(BaseModel):
@@ -27,6 +28,19 @@ class ResourceNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(
+        kind=NodeTypes.KubeResource.value, description="Kubernetes resource definitions"
+    ),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeResource.value,
+            end=NodeTypes.KubeResourceGroup.value,
+            kind="KubeInResourceGroup",
+            description="Resource belongs to an API group",
+        )
+    ],
+)
 class Resource(BaseResource):
     name: str
     categories: Optional[list[str]] = []

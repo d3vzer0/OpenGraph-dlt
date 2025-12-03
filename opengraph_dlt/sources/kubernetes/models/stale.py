@@ -1,12 +1,24 @@
 from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from pydantic import BaseModel
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class SourceRef(BaseModel):
     uid: str
 
 
+@graph_resource(
+    node=NodeDef(kind="Kube{StaleResource}", description="Placeholder for stale resource"),
+    edges=[
+        EdgeDef(
+            start="Kube{Source}",
+            end="Kube{StaleResource}",
+            kind="StaleReference",
+            description="Stale reference from a source entity",
+        )
+    ],
+)
 class StaleReference(BaseModel):
     name: str
     resource_type: str

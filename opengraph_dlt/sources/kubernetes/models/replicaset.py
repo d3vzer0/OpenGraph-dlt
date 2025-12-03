@@ -10,6 +10,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from opengraph_dlt.sources.kubernetes.models.pod import Container
 import json
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class OwnerReferences(BaseModel):
@@ -42,6 +43,17 @@ class ReplicaSetNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeReplicaSet.value, description="ReplicaSet node"),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeReplicaSet.value,
+            end="Kube{Controller}",
+            kind="KubeOwnedBy",
+            description="",
+        )
+    ],
+)
 class ReplicaSet(BaseResource):
     kind: str | None = "ReplicaSet"
     metadata: Metadata

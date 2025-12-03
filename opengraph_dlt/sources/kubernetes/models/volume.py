@@ -7,6 +7,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class ExtendedProperties(NodeProperties):
@@ -18,6 +19,17 @@ class VolumeNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeVolume.value, description="HostPath-based volume"),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeVolume.value,
+            end=NodeTypes.KubeNode.value,
+            kind="KubeHostedOn",
+            description="Volume resides on the physical/virtual node",
+        )
+    ],
+)
 class Volume(BaseResource):
     node_name: str
     path: str

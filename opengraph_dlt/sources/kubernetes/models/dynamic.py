@@ -9,6 +9,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 VERB_TO_PERMISSION = {
@@ -51,6 +52,23 @@ class DynamicNode(Node):
     source_role_permissions: list[str] = Field(exclude=True)
 
 
+@graph_resource(
+    node=NodeDef(kind="Kube{DynamicKind}", description="Dynamically discovered resource"),
+    edges=[
+        EdgeDef(
+            start="Kube{DynamicKind}",
+            end=NodeTypes.KubeNamespace.value,
+            kind="KubeBelongsTo",
+            description="Resource belongs to a namespace",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeScopedRole.value,
+            end="Kube{DynamicKind}",
+            kind="KubeCan*",
+            description="Permissions from source role to dynamic resource",
+        ),
+    ],
+)
 class DynamicResource(BaseResource):
     kind: str
     role: SourceRole

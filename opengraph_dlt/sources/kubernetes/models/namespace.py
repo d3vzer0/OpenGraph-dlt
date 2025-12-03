@@ -7,6 +7,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 import json
 
 
@@ -21,6 +22,17 @@ class NamespaceNode(Node):
     pass
 
 
+@graph_resource(
+    node=NodeDef(kind="KubeNamespace", description="Kubernetes Namespace node"),
+    edges=[
+        EdgeDef(
+            start="KubeNamespace",
+            end="KubeCluster",
+            kind="KubeBelongsTo",
+            description="Namespace belongs to the cluster",
+        )
+    ],
+)
 class Namespace(BaseResource):
     metadata: Metadata
     kind: str | None = "Namespace"

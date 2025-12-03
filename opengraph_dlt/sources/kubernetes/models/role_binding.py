@@ -8,6 +8,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 import json
 
 
@@ -42,6 +43,38 @@ class RoleBindingNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(
+        kind=NodeTypes.KubeScopedRoleBinding.value,
+        description="Namespaced role binding",
+    ),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeScopedRoleBinding.value,
+            end=NodeTypes.KubeNamespace.value,
+            kind="KubeBelongsTo",
+            description="RoleBinding scoped to a namespace",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeScopedRoleBinding.value,
+            end=NodeTypes.KubeScopedRole.value,
+            kind="KubeReferencesRole",
+            description="Binding references a role",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeScopedRoleBinding.value,
+            end="Kube{Subject}",
+            kind="KubeAuthorizes",
+            description="Binding authorizes subjects (ServiceAccount/User/Group)",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeServiceAccount.value,
+            end=NodeTypes.KubeScopedRole.value,
+            kind="KubeInheritsRole",
+            description="ServiceAccount inherits role via binding",
+        ),
+    ],
+)
 class RoleBinding(BaseResource):
     kind: str | None = "RoleBinding"
     subjects: list[Subject] = []

@@ -8,6 +8,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class Metadata(BaseModel):
@@ -21,6 +22,23 @@ class NodeOutput(GraphNode):
     pass
 
 
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeNode.value, description="Kubernetes node"),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeNode.value,
+            end=NodeTypes.KubeCluster.value,
+            kind="KubeBelongsTo",
+            description="Node belongs to the cluster",
+        ),
+        # EdgeDef(
+        #     start=NodeTypes.KubeNode.value,
+        #     end=NodeTypes.KubeGroup.value,
+        #     kind="KubeMemberOf",
+        #     description="Groups",
+        # ),
+    ],
+)
 class Node(BaseResource):
     metadata: Metadata
     kind: str | None = "Node"

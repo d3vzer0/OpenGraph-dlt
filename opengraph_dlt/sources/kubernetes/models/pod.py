@@ -19,6 +19,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 from opengraph_dlt.sources.shared.models.entries import EdgePath
 from typing import Optional, Any, TypeVar, Annotated
 from opengraph_dlt.sources.kubernetes.models.volume import Volume as HostVolume
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 def default_if_none(value: Any) -> Any:
@@ -99,6 +100,41 @@ class PodNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubePod.value, description="Kubernetes pod node"),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubePod.value,
+            end=NodeTypes.KubeNode.value,
+            kind="KubeRunsOn",
+            description="Pod is running on a node",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubePod.value,
+            end=NodeTypes.KubeNamespace.value,
+            kind="KubeBelongsTo",
+            description="Pod belongs to a namespace",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubePod.value,
+            end=NodeTypes.KubeServiceAccount.value,
+            kind="KubeRunsAs",
+            description="Pod runs as the service account",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubePod.value,
+            end="Kube{Controller}",
+            kind="KubeOwnedBy",
+            description="Pod is part of a ReplicaSet/StatefulSet/DaemonSet/etc",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubePod.value,
+            end=NodeTypes.KubeVolume.value,
+            kind="KubeAttaches",
+            description="Pod attaches HostPath volumes",
+        ),
+    ],
+)
 class Pod(BaseResource):
     metadata: Metadata
     spec: Spec

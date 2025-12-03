@@ -12,6 +12,7 @@ from typing import Optional, Any
 from enum import Enum
 import fnmatch
 import json
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class Verbs(str, Enum):
@@ -96,6 +97,23 @@ class RoleNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeScopedRole.value, description="Namespaced role"),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeScopedRole.value,
+            end=NodeTypes.KubeNamespace.value,
+            kind="KubeBelongsTo",
+            description="Role belongs to a namespace",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeScopedRole.value,
+            end="Kube{Resource}",
+            kind="KubeHasPermissions",
+            description="Role grants permissions to namespaced resources",
+        ),
+    ],
+)
 class Role(BaseResource):
     metadata: Metadata
     rules: Optional[list[Rule]] = []

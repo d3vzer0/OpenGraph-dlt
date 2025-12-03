@@ -7,6 +7,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from typing import Optional
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class GroupVersion(BaseModel):
@@ -18,6 +19,11 @@ class ResourceGroupNode(Node):
     pass
 
 
+@graph_resource(
+    node=NodeDef(
+        kind=NodeTypes.KubeResourceGroup.value, description="Kubernetes API group"
+    )
+)
 class ResourceGroup(BaseResource):
     name: str
     api_version: Optional[str] = None

@@ -5,6 +5,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     BaseResource,
 )
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 import json
 
 
@@ -26,6 +27,10 @@ class GenericNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(kind="Kube{Kind}", description="Unmapped Kubernetes resource"),
+    edges=[],
+)
 class Generic(BaseResource):
     metadata: Metadata
     kind: str

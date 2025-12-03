@@ -6,12 +6,16 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     KubernetesCollector,
     BaseResource,
 )
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class ClusterNode(Node):
     pass
 
 
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeCluster.value, description="Kubernetes cluster"),
+)
 class Cluster(BaseResource):
     name: str
     kind: str = "Cluster"

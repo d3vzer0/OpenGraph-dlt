@@ -6,6 +6,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.kubernetes.models.pod import Container
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class Metadata(BaseModel):
@@ -51,6 +52,7 @@ class DaemonSetNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(node=NodeDef(kind="KubeDaemonSet", description="Kube DaemonSet"))
 class DaemonSet(BaseResource):
     kind: str | None = "DaemonSet"
     metadata: Metadata

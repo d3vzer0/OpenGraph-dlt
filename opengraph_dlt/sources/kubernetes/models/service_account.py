@@ -8,6 +8,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 import json
 
 
@@ -48,6 +49,26 @@ class ServiceAccountNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(
+        kind=NodeTypes.KubeServiceAccount.value,
+        description="Kubernetes service account",
+    ),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeServiceAccount.value,
+            end=NodeTypes.KubeNamespace.value,
+            kind="KubeBelongsTo",
+            description="ServiceAccount belongs to a namespace",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeServiceAccount.value,
+            end=NodeTypes.KubeGroup.value,
+            kind="KubeMemberOf",
+            description="ServiceAccount is a member of groups",
+        ),
+    ],
+)
 class ServiceAccount(BaseResource):
     kind: str | None = "ServiceAccount"
     metadata: Metadata

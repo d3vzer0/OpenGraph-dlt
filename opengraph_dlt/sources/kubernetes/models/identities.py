@@ -6,6 +6,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     KubernetesCollector,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class User(BaseModel):
@@ -18,6 +19,17 @@ class User(BaseModel):
     def uid(self) -> str:
         return KubernetesCollector.guid(self.name, NodeTypes.KubeUser, "")
 
+    @graph_resource(
+        node=NodeDef(kind=NodeTypes.KubeUser.value, description="Kubernetes user"),
+        edges=[
+            EdgeDef(
+                start=NodeTypes.KubeUser.value,
+                end=NodeTypes.KubeGroup.value,
+                kind="KubeMemberOf",
+                description="User is a member of system groups via bindings",
+            )
+        ],
+    )
     @property
     def as_node(self) -> "UserNode":
         properties = NodeProperties(
@@ -36,6 +48,10 @@ class Group(BaseModel):
     def uid(self) -> str:
         return KubernetesCollector.guid(self.name, NodeTypes.KubeGroup, "")
 
+    @graph_resource(
+        node=NodeDef(kind=NodeTypes.KubeGroup.value, description="Kubernetes group"),
+        edges=[],
+    )
     @property
     def as_node(self) -> "GroupNode":
         properties = NodeProperties(

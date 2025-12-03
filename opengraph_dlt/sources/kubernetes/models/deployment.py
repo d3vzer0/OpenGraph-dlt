@@ -6,6 +6,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.kubernetes.models.pod import Container
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 import json
 
 
@@ -53,6 +54,7 @@ class DeploymentNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(node=NodeDef(kind="KubeDeployment", description="Kube deployment"))
 class Deployment(BaseResource):
     kind: str | None = "Deployment"
     metadata: Metadata

@@ -8,6 +8,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class Subject(BaseModel):
@@ -46,6 +47,38 @@ class ClusterRoleBindingNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(
+        kind=NodeTypes.KubeClusterRoleBinding.value,
+        description="Cluster-wide role binding",
+    ),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeClusterRoleBinding.value,
+            end=NodeTypes.KubeClusterRole.value,
+            kind="KubeReferencesRole",
+            description="Binding references a ClusterRole",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeClusterRoleBinding.value,
+            end="KubeUser",
+            kind="KubeAuthorizes",
+            description="Binding authorizes cluster-scoped subjects",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeClusterRoleBinding.value,
+            end="KubeGroup",
+            kind="KubeAuthorizes",
+            description="Binding authorizes cluster-scoped subjects",
+        ),
+        EdgeDef(
+            start=NodeTypes.KubeServiceAccount.value,
+            end=NodeTypes.KubeClusterRole.value,
+            kind="KubeInheritsRole",
+            description="ServiceAccount inherits ClusterRole via binding",
+        ),
+    ],
+)
 class ClusterRoleBinding(BaseResource):
 
     kind: str | None = "ClusterRoleBinding"

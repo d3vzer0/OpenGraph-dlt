@@ -9,6 +9,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from opengraph_dlt.sources.kubernetes.models.pod import Container
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class Metadata(BaseModel):
@@ -54,6 +55,9 @@ class StatefulSetNode(Node):
     properties: ExtendedProperties
 
 
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeStatefulSet.value, description="StatefulSet node")
+)
 class StatefulSet(BaseResource):
     kind: str | None = "StatefulSet"
     metadata: Metadata
