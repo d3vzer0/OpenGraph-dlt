@@ -5,6 +5,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 import json
@@ -38,7 +39,16 @@ class Metadata(BaseModel):
     labels: dict | None = None
 
 
-class ServiceAccount(BaseModel):
+class ExtendedProperties(NodeProperties):
+    namespace: str
+    bla: str | None = None
+
+
+class ServiceAccountNode(Node):
+    properties: ExtendedProperties
+
+
+class ServiceAccount(BaseResource):
     kind: str | None = "ServiceAccount"
     metadata: Metadata
     automount_service_account_token: bool | None = None
@@ -49,21 +59,22 @@ class ServiceAccount(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "ServiceAccount"
 
-
-class ExtendedProperties(NodeProperties):
-    namespace: str
-    bla: str | None = None
-
-
-class ServiceAccountNode(Node):
-    properties: ExtendedProperties
+    @property
+    def as_node(self) -> "ServiceAccountNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+        )
+        return ServiceAccountNode(kinds=["KubeServiceAccount"], properties=properties)
 
     @property
     def _namespace_edge(self):
         target_id = KubernetesCollector.guid(
-            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
+            self.metadata.namespace, NodeTypes.KubeNamespace, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
@@ -73,7 +84,7 @@ class ServiceAccountNode(Node):
         target_id = KubernetesCollector.guid(
             "system:serviceaccounts", NodeTypes.KubeGroup, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
@@ -83,7 +94,7 @@ class ServiceAccountNode(Node):
         target_id = KubernetesCollector.guid(
             "system:serviceaccounts", NodeTypes.KubeServiceAccount, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
@@ -95,14 +106,3 @@ class ServiceAccountNode(Node):
             self._authenticated_group_edge,
             self._service_accounts_edge,
         ]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "ServiceAccountNode":
-        model = ServiceAccount(**kwargs)
-        properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            namespace=model.metadata.namespace,
-            uid=model.metadata.uid,
-        )
-        return cls(kinds=["KubeServiceAccount"], properties=properties)

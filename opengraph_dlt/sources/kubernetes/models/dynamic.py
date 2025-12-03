@@ -6,6 +6,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 
@@ -39,12 +40,6 @@ class SourceRole(BaseModel):
     permissions: list[str]
 
 
-class DynamicResource(BaseModel):
-    kind: str
-    role: SourceRole
-    metadata: Metadata
-
-
 class ExtendedProperties(NodeProperties):
     model_config = ConfigDict(extra="allow")
     # namespace: str
@@ -55,13 +50,35 @@ class DynamicNode(Node):
     source_role_uid: str = Field(exclude=True)
     source_role_permissions: list[str] = Field(exclude=True)
 
+
+class DynamicResource(BaseResource):
+    kind: str
+    role: SourceRole
+    metadata: Metadata
+
+    @property
+    def as_node(self) -> "DynamicNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+            **self.metadata.labels,
+        )
+        return DynamicNode(
+            kinds=[f"Kube{self.kind}"],
+            properties=properties,
+            source_role_uid=self.role.uid,
+            source_role_permissions=self.role.permissions,
+        )
+
     @property
     def _namespace_edge(self):
         # target_id = self._lookup.namespaces(self.properties.namespace)
         target_id = KubernetesCollector.guid(
-            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
+            self.metadata.namespace, NodeTypes.KubeNamespace, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
@@ -69,11 +86,9 @@ class DynamicNode(Node):
     @property
     def _role_edge(self):
         role_edges = []
-        for permission in self.source_role_permissions:
-            end_path = EdgePath(value=self.id, match_by="id")
-            # target_id = self.source_role_uid
-            # target_id =
-            start_path = EdgePath(value=target_id, match_by="id")
+        for permission in self.role.permissions:
+            end_path = EdgePath(value=self.as_node.id, match_by="id")
+            start_path = EdgePath(value=self.role.uid, match_by="id")
             mapped_permission = VERB_TO_PERMISSION[permission]
             edge = Edge(kind=mapped_permission, start=start_path, end=end_path)
             role_edges.append(edge)
@@ -82,19 +97,3 @@ class DynamicNode(Node):
     @property
     def edges(self):
         return [*self._role_edge, self._namespace_edge]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "DynamicNode":
-        kube_resource = DynamicResource(**kwargs)
-        properties = ExtendedProperties(
-            name=kube_resource.metadata.name,
-            displayname=kube_resource.metadata.name,
-            namespace=kube_resource.metadata.namespace,
-            **kube_resource.metadata.labels,
-        )
-        return cls(
-            kinds=[f"Kube{kube_resource.kind}"],
-            properties=properties,
-            source_role_uid=kube_resource.role.uid,
-            source_role_permissions=kube_resource.role.permissions,
-        )

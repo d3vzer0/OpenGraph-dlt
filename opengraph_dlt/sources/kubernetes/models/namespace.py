@@ -1,7 +1,11 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from .cluster import Cluster
-from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
+from opengraph_dlt.sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    BaseResource,
+)
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 import json
 
@@ -13,7 +17,11 @@ class Metadata(BaseModel):
     labels: dict
 
 
-class Namespace(BaseModel):
+class NamespaceNode(Node):
+    pass
+
+
+class Namespace(BaseResource):
     metadata: Metadata
     kind: str | None = "Namespace"
 
@@ -22,19 +30,19 @@ class Namespace(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "Namespace"
 
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
-
-class NamespaceNode(Node):
+    @property
+    def as_node(self) -> "NamespaceNode":
+        properties = NodeProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            uid=self.metadata.uid,
+            namespace=None,
+        )
+        return NamespaceNode(kinds=["KubeNamespace"], properties=properties)
 
     @property
     def _cluster_edge(self):
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         cluster = Cluster(name=self._cluster)
         end_path = EdgePath(value=cluster.uid, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
@@ -43,14 +51,3 @@ class NamespaceNode(Node):
     @property
     def edges(self):
         return [self._cluster_edge]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "NamespaceNode":
-        ns_node = Namespace(**kwargs)
-        properties = NodeProperties(
-            name=ns_node.metadata.name,
-            displayname=ns_node.metadata.name,
-            uid=ns_node.metadata.uid,
-            namespace=None,
-        )
-        return cls(kinds=["KubeNamespace"], properties=properties)

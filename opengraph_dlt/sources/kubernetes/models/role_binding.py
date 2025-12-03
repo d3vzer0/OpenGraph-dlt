@@ -5,6 +5,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 import json
@@ -31,7 +32,17 @@ class Metadata(BaseModel):
     labels: dict | None = None
 
 
-class RoleBinding(BaseModel):
+class ExtendedProperties(NodeProperties):
+    # namespace: str
+    role_ref: str
+    subjects: list[Subject]
+
+
+class RoleBindingNode(Node):
+    properties: ExtendedProperties
+
+
+class RoleBinding(BaseResource):
     kind: str | None = "RoleBinding"
     subjects: list[Subject] = []
     metadata: Metadata
@@ -42,34 +53,20 @@ class RoleBinding(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "RoleBinding"
 
-    @field_validator("subjects", mode="before")
-    def validate_subjects(cls, value):
-        if isinstance(value, str):
-            value = json.loads(value)
-        return value or []
-
-    @field_validator("role_ref", mode="before")
-    def validate_role_ref(cls, value):
-        if isinstance(value, str):
-            value = json.loads(value)
-        return value
-
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
-
-class ExtendedProperties(NodeProperties):
-    # namespace: str
-    role_ref: str
-    subjects: list[Subject]
-
-
-class RoleBindingNode(Node):
-    properties: ExtendedProperties
+    @property
+    def as_node(self) -> "RoleBindingNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            role_ref=self.role_ref.name,
+            subjects=self.subjects,
+            uid=self.metadata.uid,
+        )
+        return RoleBindingNode(
+            kinds=["KubeScopedRoleBinding", "KubeRoleBinding"],
+            properties=properties,
+        )
 
     def _get_target_user(self, target_name: str) -> "EdgePath":
         target_id = KubernetesCollector.guid(
@@ -92,9 +89,9 @@ class RoleBindingNode(Node):
     @property
     def _namespace_edge(self):
         target_id = KubernetesCollector.guid(
-            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
+            self.metadata.namespace, NodeTypes.KubeNamespace, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
@@ -102,28 +99,28 @@ class RoleBindingNode(Node):
     @property
     def _role_path(self):
         role_id = KubernetesCollector.guid(
-            self.properties.role_ref,
+            self.role_ref.name,
             NodeTypes.KubeScopedRole,
             self._cluster,
-            namespace=self.properties.namespace,
+            namespace=self.metadata.namespace,
         )
         edge_path = EdgePath(value=role_id, match_by="id")
         return edge_path
 
     @property
     def _role_edge(self):
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         edge = Edge(kind="KubeReferencesRole", start=start_path, end=self._role_path)
         return edge
 
     @property
     def _subjects(self):
         edges = []
-        rb_path = EdgePath(value=self.id, match_by="id")
-        for target in self.properties.subjects:
+        rb_path = EdgePath(value=self.as_node.id, match_by="id")
+        for target in self.subjects:
             if target.kind == "ServiceAccount":
                 namespace = (
-                    target.namespace if target.namespace else self.properties.namespace
+                    target.namespace if target.namespace else self.metadata.namespace
                 )
                 get_sa_path = self._service_account_path(target.name, namespace)
                 sa_edge = Edge(kind="KubeAuthorizes", start=rb_path, end=get_sa_path)
@@ -148,7 +145,7 @@ class RoleBindingNode(Node):
 
             else:
                 print(
-                    f"Unsupported subject kind: {target.kind} in RoleBinding {self.properties.name}"
+                    f"Unsupported subject kind: {target.kind} in RoleBinding {self.metadata.name}"
                 )
 
         return edges
@@ -157,20 +154,3 @@ class RoleBindingNode(Node):
     def edges(self):
         all_edges = self._subjects
         return [self._namespace_edge, self._role_edge, *all_edges]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "RoleBindingNode":
-        model = RoleBinding(**kwargs)
-        properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            # objectid=model.metadata.uid,
-            namespace=model.metadata.namespace,
-            role_ref=model.role_ref.name,
-            subjects=model.subjects,
-            uid=model.metadata.uid,
-        )
-        return cls(
-            kinds=["KubeScopedRoleBinding", "KubeRoleBinding"],
-            properties=properties,
-        )

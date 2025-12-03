@@ -5,6 +5,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 from typing import Optional, Any
@@ -80,30 +81,6 @@ class Rule(BaseModel):
         return v
 
 
-class Role(BaseModel):
-    metadata: Metadata
-    rules: Optional[list[Rule]] = []
-    kind: str | None = "Role"
-
-    @field_validator("kind", mode="before")
-    def set_default_if_none(cls, v):
-        return v if v is not None else "Role"
-
-    @field_validator("rules", mode="before")
-    @classmethod
-    def parse_rules(cls, value: Any):
-        if isinstance(value, str):
-            value = json.loads(value)
-        return value or []
-
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
-
 class ExtendedProperties(NodeProperties):
     namespace: str
     rules: list[Rule] = Field(exclude=True)
@@ -118,6 +95,30 @@ class ExtendedProperties(NodeProperties):
 class RoleNode(Node):
     properties: ExtendedProperties
 
+
+class Role(BaseResource):
+    metadata: Metadata
+    rules: Optional[list[Rule]] = []
+    kind: str | None = "Role"
+
+    @field_validator("kind", mode="before")
+    def set_default_if_none(cls, v):
+        return v if v is not None else "Role"
+
+    @property
+    def as_node(self) -> "RoleNode":
+        properties = ExtendedProperties(
+            rules=self.rules,
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+        )
+        return RoleNode(
+            kinds=["KubeScopedRole", "KubeRole"],
+            properties=properties,
+        )
+
     def _matching_verbs(self, verbs: list) -> list:
         matched = []
         for verb in verbs:
@@ -129,9 +130,9 @@ class RoleNode(Node):
     @property
     def _namespace_edge(self):
         target_id = KubernetesCollector.guid(
-            self.properties.namespace, NodeTypes.KubeNamespace, self._cluster
+            self.metadata.namespace, NodeTypes.KubeNamespace, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
@@ -140,9 +141,9 @@ class RoleNode(Node):
         if not rule.api_groups or not rule.resources:
             return []
 
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         matched_verbs = self._matching_verbs(rule.verbs)
-        namespace = self.properties.namespace
+        namespace = self.metadata.namespace
         targets = []
         for resource in rule.resources:
             allowed_resources = self._lookup.allowed_namespaced_resources(
@@ -168,25 +169,10 @@ class RoleNode(Node):
     @property
     def _rules_edge(self):
         edges = []
-        for rule in self.properties.rules:
+        for rule in self.rules:
             edges.extend(self._rule_edge(rule))
         return edges
 
     @property
     def edges(self):
         return [self._namespace_edge, *self._rules_edge]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "RoleNode":
-        model = Role(**kwargs)
-        properties = ExtendedProperties(
-            rules=model.rules,
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            namespace=model.metadata.namespace,
-            uid=model.metadata.uid,
-        )
-        return cls(
-            kinds=["KubeScopedRole", "KubeRole"],
-            properties=properties,
-        )

@@ -18,6 +18,13 @@ class User(BaseModel):
     def uid(self) -> str:
         return KubernetesCollector.guid(self.name, NodeTypes.KubeUser, "")
 
+    @property
+    def as_node(self) -> "UserNode":
+        properties = NodeProperties(
+            name=self.name, displayname=self.name, uid=self.uid, namespace=None
+        )
+        return UserNode(kinds=["KubeUser"], properties=properties)
+
 
 class Group(BaseModel):
     name: str
@@ -28,6 +35,13 @@ class Group(BaseModel):
     @property
     def uid(self) -> str:
         return KubernetesCollector.guid(self.name, NodeTypes.KubeGroup, "")
+
+    @property
+    def as_node(self) -> "GroupNode":
+        properties = NodeProperties(
+            name=self.name, displayname=self.name, uid=self.uid, namespace=None
+        )
+        return GroupNode(kinds=["KubeGroup"], properties=properties)
 
 
 class UserNode(Node):
@@ -47,24 +61,8 @@ class UserNode(Node):
     def edges(self):
         return [self._authenticated_group_edge]
 
-    @classmethod
-    def from_input(cls, **kwargs) -> "UserNode":
-        model = User(**kwargs)
-        properties = NodeProperties(
-            name=model.name, displayname=model.name, uid=model.uid, namespace=None
-        )
-        return cls(kinds=["KubeUser"], properties=properties)
-
 
 class GroupNode(Node):
     @property
     def edges(self):
         return []
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "GroupNode":
-        model = Group(**kwargs)
-        properties = NodeProperties(
-            name=model.name, displayname=model.name, uid=model.uid, namespace=None
-        )
-        return cls(kinds=["KubeGroup"], properties=properties)

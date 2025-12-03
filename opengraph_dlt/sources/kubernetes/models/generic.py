@@ -1,6 +1,10 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
-from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
+from opengraph_dlt.sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    BaseResource,
+)
 import json
 
 
@@ -12,18 +16,6 @@ class Metadata(BaseModel):
     labels: dict | None = None
 
 
-class Generic(BaseModel):
-    metadata: Metadata
-    kind: str
-
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
-
 class ExtendedProperties(NodeProperties):
     model_config = ConfigDict(extra="allow")
     uid: str | None
@@ -33,18 +25,22 @@ class ExtendedProperties(NodeProperties):
 class GenericNode(Node):
     properties: ExtendedProperties
 
+
+class Generic(BaseResource):
+    metadata: Metadata
+    kind: str
+
+    @property
+    def as_node(self) -> "GenericNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+            kind=self.kind,
+        )
+        return GenericNode(kinds=[f"Kube{self.kind}"], properties=properties)
+
     @property
     def edges(self):
         return []
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "GenericNode":
-        model = Generic(**kwargs)
-        properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            namespace=model.metadata.namespace,
-            uid=model.metadata.uid,
-            kind=model.kind,
-        )
-        return cls(kinds=[f"Kube{model.kind}"], properties=properties)

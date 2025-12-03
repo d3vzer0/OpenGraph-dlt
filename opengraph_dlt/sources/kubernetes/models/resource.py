@@ -4,6 +4,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from typing import Optional
@@ -16,7 +17,17 @@ class ResourceLookup(BaseModel):
     namespace: str | None
 
 
-class Resource(BaseModel):
+class ExtendedProperties(NodeProperties):
+    kind: str
+    api_group_name: Optional[str] = ""
+    api_group_uid: Optional[str] = ""
+
+
+class ResourceNode(Node):
+    properties: ExtendedProperties
+
+
+class Resource(BaseResource):
     name: str
     categories: Optional[list[str]] = []
     kind: str
@@ -49,25 +60,27 @@ class Resource(BaseModel):
             value = json.loads(value)
         return value or []
 
-
-class ExtendedProperties(NodeProperties):
-    kind: str
-    api_group_name: Optional[str] = ""
-    api_group_uid: Optional[str] = ""
-
-
-class ResourceNode(Node):
-    properties: ExtendedProperties
+    @property
+    def as_node(self) -> "ResourceNode":
+        properties = ExtendedProperties(
+            name=self.name,
+            displayname=self.name,
+            kind=self.kind,
+            namespace=None,
+            api_group_name=self.group,
+            uid=self.uid,
+        )
+        return ResourceNode(kinds=["KubeResource"], properties=properties)
 
     @property
     def _resource_group_edge(self):
-        if self.properties.api_group_name:
+        if self.group:
             target_id = KubernetesCollector.guid(
-                self.properties.api_group_name,
+                self.group,
                 NodeTypes.KubeResourceGroup,
                 self._cluster,
             )
-            start_path = EdgePath(value=self.id, match_by="id")
+            start_path = EdgePath(value=self.as_node.id, match_by="id")
             end_path = EdgePath(value=target_id, match_by="id")
             edge = Edge(kind="KubeInResourceGroup", start=start_path, end=end_path)
             return edge
@@ -80,19 +93,6 @@ class ResourceNode(Node):
             [self._resource_group_edge] if self._resource_group_edge else []
         )
         return resource_group_edge
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "ResourceNode":
-        model = Resource(**kwargs)
-        properties = ExtendedProperties(
-            name=model.name,
-            displayname=model.name,
-            kind=model.kind,
-            namespace=None,
-            api_group_name=model.group,
-            uid=model.uid,
-        )
-        return cls(kinds=["KubeResource"], properties=properties)
 
 
 # class CustomResourceNode(Node):

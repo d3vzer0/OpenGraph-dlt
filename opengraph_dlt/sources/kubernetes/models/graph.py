@@ -50,6 +50,12 @@ class KubernetesCollector(Collector):
         return str(uuid.uuid5(uuid_namespace, resource_path))
 
 
+class BaseResource(BaseModel):
+    _lookup: KubernetesLookup = PrivateAttr()
+    _cluster: str = PrivateAttr()
+    _scope: Optional[str] = PrivateAttr(default=None)
+
+
 class NodeProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: str

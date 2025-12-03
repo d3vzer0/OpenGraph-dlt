@@ -4,6 +4,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
     NodeProperties,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.kubernetes.models.cluster import Cluster
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
@@ -76,7 +77,21 @@ class Rule(BaseModel):
         return v
 
 
-class ClusterRole(BaseModel):
+class ExtendedProperties(NodeProperties):
+    rules: list[Rule] = Field(exclude=True)
+
+    @field_validator("rules")
+    def validate_rules(cls, v):
+        if not v:
+            return []
+        return v
+
+
+class ClusterRoleNode(Node):
+    properties: ExtendedProperties
+
+
+class ClusterRole(BaseResource):
     metadata: Metadata
     rules: list[Rule] = []
     kind: str | None = "ClusterRole"
@@ -92,30 +107,23 @@ class ClusterRole(BaseModel):
             value = json.loads(value)
         return value or []
 
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
-
-class ExtendedProperties(NodeProperties):
-    rules: list[Rule] = Field(exclude=True)
-
-    @field_validator("rules")
-    def validate_rules(cls, v):
-        if not v:
-            return []
-        return v
-
-
-class ClusterRoleNode(Node):
-    properties: ExtendedProperties
+    @property
+    def as_node(self) -> "ClusterRoleNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            rules=self.rules,
+            uid=self.metadata.uid,
+            namespace=None,
+        )
+        return ClusterRoleNode(
+            kinds=["KubeClusterRole", "KubeRole"],
+            properties=properties,
+        )
 
     @property
     def _cluster_edge(self):
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         cluster = Cluster(name=self._cluster)
         end_path = EdgePath(value=cluster.uid, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
@@ -133,7 +141,7 @@ class ClusterRoleNode(Node):
         if not rule.api_groups or not rule.resources:
             return []
 
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         matched_verbs = self._matching_verbs(rule.verbs)
 
         all_allowed_resources = []
@@ -162,7 +170,7 @@ class ClusterRoleNode(Node):
     @property
     def _rules_edge(self):
         edges = []
-        for rule in self.properties.rules:
+        for rule in self.rules:
             edges.extend(self._rule_edge(rule))
 
         return edges
@@ -170,21 +178,6 @@ class ClusterRoleNode(Node):
     @property
     def edges(self):
         return [self._cluster_edge, *self._rules_edge]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "ClusterRoleNode":
-        model = ClusterRole(**kwargs)
-        properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            rules=model.rules,
-            uid=model.metadata.uid,
-            namespace=None,
-        )
-        return cls(
-            kinds=["KubeClusterRole", "KubeRole"],
-            properties=properties,
-        )
 
 
 # class ClusterRoleGraphEntries(GraphEntries):
