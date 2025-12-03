@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from opengraph_dlt.sources.aws.models.graph import Node, Edge, AWSCollector, NodeTypes
 from opengraph_dlt.sources.kubernetes.models.cluster import Cluster
-from opengraph_dlt.sources.kubernetes.models.identities import GroupNode
+from opengraph_dlt.sources.kubernetes.models.identities import Group
 from opengraph_dlt.sources.shared.models.entries import EdgePath, NodeProperties
 
 
@@ -125,9 +125,10 @@ class EKSAccessEntryEdges(BaseModel):
             )
             start = EdgePath(value=self.principal_guid, match_by="id")
             for group_name in eks_groups:
-                group = GroupNode.from_input(name=group_name, api_group="")
-                group._cluster = self._access_entry.cluster_name
-                end = EdgePath(value=group.id, match_by="id")
+                group_model = Group(name=group_name, api_group="")
+                group_node = group_model.as_node
+                group_node._cluster = self._access_entry.cluster_name
+                end = EdgePath(value=group_node.id, match_by="id")
                 all_policy_edges.append(Edge(start=start, end=end, kind="K8sMemberOf"))
 
         return all_policy_edges

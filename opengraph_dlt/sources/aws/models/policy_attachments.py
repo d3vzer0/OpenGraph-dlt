@@ -11,7 +11,7 @@ from opengraph_dlt.sources.aws.models.graph import (
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 from opengraph_dlt.sources.aws.lookup import AWSLookup
-from opengraph_dlt.sources.shared.models.docs import graph_resource, EdgeDef
+from opengraph_dlt.sources.shared.docs import graph_resource, EdgeDef
 
 ENTITY_NODE_TYPES = {
     "User": "AWSUser",
