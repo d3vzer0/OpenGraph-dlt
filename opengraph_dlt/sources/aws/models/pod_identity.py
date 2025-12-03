@@ -6,7 +6,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeTypes as KubeNodeTypes,
 )
 from opengraph_dlt.sources.shared.models.entries import EdgePath
-from opengraph_dlt.sources.shared.models.docs import graph_resource, EdgeDef
+from opengraph_dlt.sources.shared.docs import graph_resource, EdgeDef
 
 
 @graph_resource(

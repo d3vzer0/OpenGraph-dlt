@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from opengraph_dlt.sources.shared.models.entries import EdgePath, Edge
 from opengraph_dlt.sources.aws.models.graph import NodeTypes, AWSCollector
-from opengraph_dlt.sources.shared.models.docs import graph_resource, EdgeDef
+from opengraph_dlt.sources.shared.docs import graph_resource, EdgeDef
 
 
 @graph_resource(

@@ -8,7 +8,7 @@ from opengraph_dlt.sources.aws.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
-from opengraph_dlt.sources.shared.models.docs import graph_resource, NodeDef
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 ENTITY_NODE_TYPES = {

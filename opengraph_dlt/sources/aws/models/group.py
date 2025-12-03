@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, Edge
-from opengraph_dlt.sources.shared.models.docs import graph_resource, NodeDef
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class GroupProperties(NodeProperties):

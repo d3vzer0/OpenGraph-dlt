@@ -1,22 +1,22 @@
 from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
-from .models.pod import PodNode
-from .models.volume import VolumeNode
-from .models.namespace import NamespaceNode
-from .models.daemonset import DaemonSetNode
-from .models.replicaset import ReplicaSetNode
-from .models.statefulset import StatefulSetNode
-from .models.deployment import DeploymentNode
-from .models.generic import GenericNode
-from .models.node import NodeOutput
-from .models.role import RoleNode
-from .models.role_binding import RoleBindingNode
-from .models.cluster_role import ClusterRoleNode
-from .models.cluster_role_binding import ClusterRoleBindingNode
-from .models.service_account import ServiceAccountNode
-from .models.resource import ResourceNode
+from .models.pod import Pod
+from .models.volume import Volume
+from .models.namespace import Namespace
+from .models.daemonset import DaemonSet
+from .models.replicaset import ReplicaSet
+from .models.statefulset import StatefulSet
+from .models.deployment import Deployment
+from .models.generic import Generic
+from .models.node import Node as KubeNode
+from .models.role import Role
+from .models.role_binding import RoleBinding
+from .models.cluster_role import ClusterRole
+from .models.cluster_role_binding import ClusterRoleBinding
+from .models.service_account import ServiceAccount
+from .models.resource import Resource
 from .models.graph import Graph, GraphEntries
-from .models.identities import UserNode, GroupNode
-from .models.cluster import ClusterNode
+from .models.identities import User, Group
+from .models.cluster import Cluster
 from dlt.sources.filesystem import (
     filesystem as filesystemsource,
     read_jsonl,
@@ -26,24 +26,24 @@ import dlt
 
 
 KUBERNETES_NODES = {
-    "nodes": NodeOutput,
-    "pods": PodNode,
-    "cust_volumes": VolumeNode,
-    "namespaces": NamespaceNode,
-    "unmapped": GenericNode,
-    "deployments": DeploymentNode,
-    "replicasets": ReplicaSetNode,
-    "service_accounts": ServiceAccountNode,
-    "roles": RoleNode,
-    "role_bindings": RoleBindingNode,
-    "cluster_roles": ClusterRoleNode,
-    "cluster_role_bindings": ClusterRoleBindingNode,
-    "resource_definitions": ResourceNode,
-    "cust_users": UserNode,
-    "cust_groups": GroupNode,
-    "statefulsets": StatefulSetNode,
-    "daemonsets": DaemonSetNode,
-    "clusters": ClusterNode,
+    "nodes": KubeNode,
+    "pods": Pod,
+    "cust_volumes": Volume,
+    "namespaces": Namespace,
+    "unmapped": Generic,
+    "deployments": Deployment,
+    "replicasets": ReplicaSet,
+    "service_accounts": ServiceAccount,
+    "roles": Role,
+    "role_bindings": RoleBinding,
+    "cluster_roles": ClusterRole,
+    "cluster_role_bindings": ClusterRoleBinding,
+    "resource_definitions": Resource,
+    "cust_users": User,
+    "cust_groups": Group,
+    "statefulsets": StatefulSet,
+    "daemonsets": DaemonSet,
+    "clusters": Cluster,
 }
 
 
@@ -65,13 +65,14 @@ def kubernetes_opengraph(
 
     def build_graph(nodes, model):
         for node in nodes:
-            node = model.from_input(**node)
-            node._cluster = cluster
-            node._lookup = lookup
+            resource = model(**node)
+            graph_node = resource.as_node
+            graph_node._cluster = cluster
+            graph_node._lookup = lookup
 
             entries = GraphEntries(
-                nodes=[node],
-                edges=[edge for edge in node.edges if edge],
+                nodes=[graph_node],
+                edges=[edge for edge in graph_node.edges if edge],
             )
             yield Graph(graph=entries)
 
