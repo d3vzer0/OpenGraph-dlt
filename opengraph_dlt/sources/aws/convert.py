@@ -1,24 +1,21 @@
 from dlt.sources.filesystem import filesystem as filesystemsource, read_jsonl
-from .models.group import Group
-from .models.membership import UserGroupMembership
+from opengraph_dlt.sources.aws.models.group import Group
+from opengraph_dlt.sources.aws.models.membership import UserGroupMembership
 from opengraph_dlt.sources.aws.lookup import AWSLookup
-from .models.graph import Node
-from .models.role import Role
+from opengraph_dlt.sources.aws.models.role import Role
 
 # from .models.eks import (
 #     EKSClusterNode,
 #     EKSAccessEntryEdges,
 # )
-from .models.pod_identity import EKSPodIdentity
-from .models.user import User
-from .models.policy import Policy
-from .models.inline_policy import InlinePolicy
-from .models.policy_attachments import PolicyAttachment
-from .models.resource import Resource
-from .models.graph import (
-    GraphEntries,
-    Graph,
-)
+from opengraph_dlt.sources.aws.models.pod_identity import EKSPodIdentity
+from opengraph_dlt.sources.aws.models.user import User
+from opengraph_dlt.sources.aws.models.policy import Policy
+from opengraph_dlt.sources.aws.models.inline_policy import InlinePolicy
+from opengraph_dlt.sources.aws.models.policy_attachments import PolicyAttachment
+from opengraph_dlt.sources.aws.models.resource import Resource
+from opengraph_dlt.sources.aws.models.graph import GraphEntries, Graph, Node, Edge
+
 import dlt
 
 AWS_NODES = {
@@ -41,35 +38,30 @@ def aws_opengraph(
     *,
     lookup: AWSLookup,
     bucket_url: str = dlt.config.value,
+    chunk_size: int = dlt.config.value,
 ):
 
-    def json_resource(subdir: str):
-        files = filesystemsource(
-            bucket_url=bucket_url,
-            file_glob=f"{subdir}/**/*.jsonl.gz",
-        )
-        return (files | read_jsonl()).with_name(f"{subdir}_fs")
-
-    def parse_nodes(resources: list, model):
+    @dlt.transformer(columns=Graph, max_table_nesting=0)
+    def bundle_graph(resources, model):
+        graph_entries = GraphEntries(nodes=[], edges=[])
         for resource in resources:
             resource_object = model(**resource)
             resource_object._lookup = lookup
-            entries = GraphEntries(
-                nodes=(
-                    [resource_object.as_node]
-                    if hasattr(resource_object, "as_node")
-                    else []
-                ),
-                edges=[edge for edge in resource_object.edges if edge],
-            )
+            if hasattr(resource_object, "as_node"):
+                graph_entries.nodes.append(resource_object.as_node)
 
-            yield Graph(graph=entries)
+            graph_entries.edges.extend(resource_object.edges)
+
+            if len(graph_entries.nodes) + len(graph_entries.edges) >= chunk_size:
+                yield Graph(graph=graph_entries)
+                graph_entries = GraphEntries(nodes=[], edges=[])
+
+        yield Graph(graph=graph_entries)
 
     for table, model in AWS_NODES.items():
-        reader = json_resource(table)
-        yield dlt.resource(
-            parse_nodes(reader, model),
-            name=f"{table}_fs",
-            columns=Graph,
-            parallelized=False,
-        )
+        reader = (
+            filesystemsource(bucket_url=bucket_url, file_glob=f"{table}/**/*.jsonl.gz")
+            | read_jsonl()
+        ).with_name(f"{table}_fs")
+
+        yield (reader | bundle_graph(model)).with_name(f"{table}_fs_graph")
