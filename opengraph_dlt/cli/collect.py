@@ -21,6 +21,30 @@ OutputPath = Annotated[
 
 
 @collect.command()
+def dummy(output_path: OutputPath):
+
+    from opengraph_dlt.sources.dummy.collect import dummy_resources
+
+    dest = filesystem(
+        bucket_url=str(output_path),
+    )
+
+    pipeline = dlt.pipeline(
+        pipeline_name="dummy_collector",
+        destination=dest,
+        dataset_name="dummy",
+        progress="enlighten",
+    )
+
+    all_resources = dummy_resources()
+
+    pipeline.run(
+        all_resources,
+        write_disposition="replace",
+    )
+
+
+@collect.command()
 def aws(
     output_path: OutputPath,
     resources: Annotated[List[str], typer.Argument()] = [],
