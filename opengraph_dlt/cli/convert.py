@@ -64,7 +64,10 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
     )
     pipeline.run(
         kubernetes_opengraph(
-            cluster=cluster_name, lookup=lookup, bucket_url=str(input_path)
+            cluster=cluster_name,
+            lookup=lookup,
+            bucket_url=str(input_path),
+            chunk_size=1000,
         )
     )
 

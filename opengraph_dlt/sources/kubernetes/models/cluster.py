@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, computed_field
 from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
@@ -6,6 +8,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     KubernetesCollector,
     BaseResource,
 )
+from opengraph_dlt.sources.shared.models.entries import Edge
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
@@ -37,5 +40,5 @@ class Cluster(BaseResource):
         return ClusterNode(kinds=["KubeCluster"], properties=properties)
 
     @property
-    def edges(self):
-        return []
+    def edges(self) -> Iterator["Edge"]:
+        yield from ()

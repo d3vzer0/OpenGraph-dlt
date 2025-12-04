@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -156,42 +158,36 @@ class Role(BaseResource):
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
-    def _rule_edge(self, rule: Rule):
+    def _rule_edge(self, rule: Rule) -> Iterator[Edge]:
         if not rule.api_groups or not rule.resources:
-            return []
+            return
 
         start_path = EdgePath(value=self.as_node.id, match_by="id")
         matched_verbs = self._matching_verbs(rule.verbs)
         namespace = self.metadata.namespace
-        targets = []
         for resource in rule.resources:
             allowed_resources = self._lookup.allowed_namespaced_resources(
                 resource, namespace
             )
             for name, kind, r_namespace, singular, rd in allowed_resources:
-                targets.append(
-                    Edge(
-                        kind="KubeHasPermissions",
-                        start=start_path,
-                        end=EdgePath(
-                            value=KubernetesCollector.guid(
-                                name, f"Kube{kind}", self._cluster, namespace
-                            ),
-                            match_by="id",
+                yield Edge(
+                    kind="KubeHasPermissions",
+                    start=start_path,
+                    end=EdgePath(
+                        value=KubernetesCollector.guid(
+                            name, f"Kube{kind}", self._cluster, namespace
                         ),
-                        properties=EdgeProperties(verbs=matched_verbs),
-                    )
+                        match_by="id",
+                    ),
+                    properties=EdgeProperties(verbs=matched_verbs),
                 )
 
-        return targets
-
     @property
-    def _rules_edge(self):
-        edges = []
+    def _rules_edge(self) -> Iterator[Edge]:
         for rule in self.rules:
-            edges.extend(self._rule_edge(rule))
-        return edges
+            yield from self._rule_edge(rule)
 
     @property
-    def edges(self):
-        return [self._namespace_edge, *self._rules_edge]
+    def edges(self) -> Iterator[Edge]:
+        yield self._namespace_edge
+        yield from self._rules_edge

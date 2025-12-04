@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, computed_field, ConfigDict
 from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
@@ -68,5 +70,5 @@ class Volume(BaseResource):
         return edge
 
     @property
-    def edges(self):
-        return [self._node_edge]
+    def edges(self) -> Iterator[Edge]:
+        yield self._node_edge

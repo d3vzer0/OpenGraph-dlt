@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, computed_field
 from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
@@ -57,8 +59,8 @@ class User(BaseResource):
         return edge
 
     @property
-    def edges(self):
-        return [self._authenticated_group_edge]
+    def edges(self) -> Iterator[Edge]:
+        yield self._authenticated_group_edge
 
 
 class GroupNode(Node): ...
@@ -90,5 +92,5 @@ class Group(BaseResource):
         return GroupNode(kinds=["KubeGroup"], properties=properties)
 
     @property
-    def edges(self):
-        return []
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

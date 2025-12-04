@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -88,9 +90,7 @@ class KubeNode(BaseResource):
         return edge
 
     @property
-    def edges(self):
-        return [
-            self._cluster_edge,
-            self._authenticated_group_edge,
-            self._nodes_group_edge,
-        ]
+    def edges(self) -> Iterator[Edge]:
+        yield self._cluster_edge
+        yield self._authenticated_group_edge
+        yield self._nodes_group_edge

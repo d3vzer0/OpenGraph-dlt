@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from pydantic import BaseModel
@@ -61,5 +63,5 @@ class StaleNode(Node):
         return edge
 
     @property
-    def edges(self):
-        return [self._source_refs]
+    def edges(self) -> Iterator[Edge]:
+        yield self._source_refs

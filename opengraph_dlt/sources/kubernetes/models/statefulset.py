@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -79,5 +81,5 @@ class StatefulSet(BaseResource):
         return StatefulSetNode(kinds=["KubeStatefulSet"], properties=properties)
 
     @property
-    def edges(self):
-        return []
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

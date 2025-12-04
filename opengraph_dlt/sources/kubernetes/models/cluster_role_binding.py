@@ -1,4 +1,6 @@
-from pydantic import BaseModel, field_validator
+from collections.abc import Iterator
+
+from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
@@ -84,11 +86,15 @@ class ClusterRoleBinding(BaseResource):
     kind: str | None = "ClusterRoleBinding"
     metadata: Metadata
     role_ref: RoleRef
-    subjects: list[Subject] = []
+    subjects: list[Subject] = Field(default_factory=list)
 
     @field_validator("kind", mode="before")
     def set_default_if_none(cls, v):
         return v if v is not None else "ClusterRoleBinding"
+
+    @field_validator("subjects", mode="before")
+    def set_default_subjects_if_none(cls, v):
+        return v if v is not None else []
 
     @property
     def as_node(self) -> "ClusterRoleBindingNode":
@@ -140,34 +146,29 @@ class ClusterRoleBinding(BaseResource):
         return EdgePath(value=target_id, match_by="id")
 
     @property
-    def _subjects(self):
-        edges = []
+    def _subjects(self) -> Iterator[Edge]:
         rb_path = EdgePath(value=self.as_node.id, match_by="id")
         for target in self.subjects:
             if target.kind == "ServiceAccount":
                 get_sa_path = self._service_account_path(target.name, target.namespace)
-                sa_edge = Edge(kind="KubeAuthorizes", start=rb_path, end=get_sa_path)
+                yield Edge(kind="KubeAuthorizes", start=rb_path, end=get_sa_path)
 
-                role_edge = Edge(
+                yield Edge(
                     kind="KubeInheritsRole",
                     start=get_sa_path,
                     end=self._role_path,
                     properties=EdgeProperties(composed=True),
                 )
 
-                edges.append(sa_edge)
-                edges.append(role_edge)
-
             elif target.kind == "User":
                 end_path = self._get_target_user(target.name)
-                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
+                yield Edge(kind="KubeAuthorizes", start=rb_path, end=end_path)
 
             elif target.kind == "Group":
                 end_path = self._get_target_group(target.name)
-                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
-
-        return edges
+                yield Edge(kind="KubeAuthorizes", start=rb_path, end=end_path)
 
     @property
-    def edges(self):
-        return [self._role_edge, *self._subjects]
+    def edges(self) -> Iterator[Edge]:
+        yield self._role_edge
+        yield from self._subjects

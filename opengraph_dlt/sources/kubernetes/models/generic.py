@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -5,8 +7,8 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     BaseResource,
 )
+from opengraph_dlt.sources.shared.models.entries import Edge
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
-import json
 
 
 class Metadata(BaseModel):
@@ -48,5 +50,5 @@ class Generic(BaseResource):
         return GenericNode(kinds=[f"Kube{self.kind}"], properties=properties)
 
     @property
-    def edges(self):
-        return []
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

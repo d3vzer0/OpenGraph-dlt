@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -156,22 +158,17 @@ class ClusterRole(BaseResource):
                     matched.append(key)
         return matched
 
-    def _rule_edge(self, rule: Rule):
+    def _rule_edge(self, rule: Rule) -> Iterator[Edge]:
         if not rule.api_groups or not rule.resources:
-            return []
+            return
 
         start_path = EdgePath(value=self.as_node.id, match_by="id")
         matched_verbs = self._matching_verbs(rule.verbs)
 
-        all_allowed_resources = []
         for resource in rule.resources:
             allowed_resources = self._lookup.allowed_system_resources(resource)
-            all_allowed_resources.extend(allowed_resources)
-
-        targets = []
-        for name, kind, singular, rd in all_allowed_resources:
-            targets.append(
-                Edge(
+            for name, kind, singular, rd in allowed_resources:
+                yield Edge(
                     kind="KubeHasPermissions",
                     start=start_path,
                     end=EdgePath(
@@ -182,21 +179,16 @@ class ClusterRole(BaseResource):
                     ),
                     properties={"verbs": matched_verbs},
                 )
-            )
-
-        return targets
 
     @property
-    def _rules_edge(self):
-        edges = []
+    def _rules_edge(self) -> Iterator[Edge]:
         for rule in self.rules:
-            edges.extend(self._rule_edge(rule))
-
-        return edges
+            yield from self._rule_edge(rule)
 
     @property
-    def edges(self):
-        return [self._cluster_edge, *self._rules_edge]
+    def edges(self) -> Iterator[Edge]:
+        yield self._cluster_edge
+        yield from self._rules_edge
 
 
 # class ClusterRoleGraphEntries(GraphEntries):

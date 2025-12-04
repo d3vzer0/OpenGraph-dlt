@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -6,6 +8,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     BaseResource,
 )
 from opengraph_dlt.sources.kubernetes.models.pod import Container
+from opengraph_dlt.sources.shared.models.entries import Edge
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
@@ -75,5 +78,5 @@ class DaemonSet(BaseResource):
         return DaemonSetNode(kinds=["KubeDaemonSet"], properties=properties)
 
     @property
-    def edges(self):
-        return []
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

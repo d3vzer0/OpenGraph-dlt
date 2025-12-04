@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, ConfigDict, PrivateAttr
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -82,8 +84,7 @@ class ReplicaSet(BaseResource):
         return node
 
     @property
-    def _owned_by(self):
-        edges = []
+    def _owned_by(self) -> Iterator[Edge]:
         start_path = EdgePath(value=self.as_node.id, match_by="id")
         if self.metadata.owner_references:
             for owner in self.metadata.owner_references:
@@ -94,9 +95,8 @@ class ReplicaSet(BaseResource):
                     namespace=self.metadata.namespace,
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
-                edges.append(Edge(kind="KubeOwnedBy", start=start_path, end=end_path))
-        return edges
+                yield Edge(kind="KubeOwnedBy", start=start_path, end=end_path)
 
     @property
-    def edges(self):
-        return [*self._owned_by]
+    def edges(self) -> Iterator[Edge]:
+        yield from self._owned_by

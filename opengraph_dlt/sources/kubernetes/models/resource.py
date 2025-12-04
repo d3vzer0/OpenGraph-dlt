@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, computed_field, Field, field_validator
 from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
@@ -103,11 +105,10 @@ class Resource(BaseResource):
             return None
 
     @property
-    def edges(self):
-        resource_group_edge = (
-            [self._resource_group_edge] if self._resource_group_edge else []
-        )
-        return resource_group_edge
+    def edges(self) -> Iterator[Edge]:
+        resource_group_edge = self._resource_group_edge
+        if resource_group_edge:
+            yield resource_group_edge
 
 
 # class CustomResourceNode(Node):

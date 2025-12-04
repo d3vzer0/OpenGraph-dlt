@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from pydantic import Field
@@ -53,7 +55,9 @@ class DynamicNode(Node):
 
 
 @graph_resource(
-    node=NodeDef(kind="Kube{DynamicKind}", description="Dynamically discovered resource"),
+    node=NodeDef(
+        kind="Kube{DynamicKind}", description="Dynamically discovered resource"
+    ),
     edges=[
         EdgeDef(
             start="Kube{DynamicKind}",
@@ -103,16 +107,14 @@ class DynamicResource(BaseResource):
         return edge
 
     @property
-    def _role_edge(self):
-        role_edges = []
+    def _role_edge(self) -> Iterator[Edge]:
         for permission in self.role.permissions:
             end_path = EdgePath(value=self.as_node.id, match_by="id")
             start_path = EdgePath(value=self.role.uid, match_by="id")
             mapped_permission = VERB_TO_PERMISSION[permission]
-            edge = Edge(kind=mapped_permission, start=start_path, end=end_path)
-            role_edges.append(edge)
-        return role_edges
+            yield Edge(kind=mapped_permission, start=start_path, end=end_path)
 
     @property
-    def edges(self):
-        return [*self._role_edge, self._namespace_edge]
+    def edges(self) -> Iterator[Edge]:
+        yield self._namespace_edge
+        yield from self._role_edge

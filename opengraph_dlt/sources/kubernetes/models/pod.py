@@ -20,6 +20,7 @@ from opengraph_dlt.sources.shared.models.entries import EdgePath
 from typing import Optional, Any, TypeVar, Annotated
 from opengraph_dlt.sources.kubernetes.models.volume import Volume as HostVolume
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
+from collections.abc import Iterator
 
 
 def default_if_none(value: Any) -> Any:
@@ -174,7 +175,7 @@ class Pod(BaseResource):
         return edge
 
     @property
-    def _node_edge(self) -> "Edge | None":
+    def _node_edge(self) -> "Edge":
         if self.spec.node_name:
             target_id = KubernetesCollector.guid(
                 self.spec.node_name, NodeTypes.KubeNode, self._cluster
@@ -183,8 +184,6 @@ class Pod(BaseResource):
             end_path = EdgePath(value=target_id, match_by="id")
             edge = Edge(kind="KubeRunsOn", start=start_path, end=end_path)
             return edge
-        else:
-            return None
 
     @property
     def _service_account_edge(self) -> "Edge":
@@ -200,8 +199,7 @@ class Pod(BaseResource):
         return edge
 
     @property
-    def _owned_by(self) -> "list[Edge]":
-        edges = []
+    def _owned_by(self) -> "Iterator[Edge]":
         start_path = EdgePath(value=self.as_node.id, match_by="id")
         if self.metadata.owner_references:
             for owner in self.metadata.owner_references:
@@ -212,12 +210,10 @@ class Pod(BaseResource):
                     namespace=self.metadata.namespace,
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
-                edges.append(Edge(kind="KubeOwnedBy", start=start_path, end=end_path))
-        return edges
+                yield Edge(kind="KubeOwnedBy", start=start_path, end=end_path)
 
     @property
-    def _volume_edges(self) -> "list[Edge]":
-        edges = []
+    def _volume_edges(self) -> "Iterator[Edge]":
         start_path = EdgePath(value=self.as_node.id, match_by="id")
         for volume in self.spec.volumes:
             if volume.host_path:
@@ -231,22 +227,17 @@ class Pod(BaseResource):
                     volume_object.name, NodeTypes.KubeVolume, self._cluster
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
-                edges.append(
-                    Edge(
-                        kind="KubeAttaches",
-                        start=start_path,
-                        end=end_path,
-                        properties={"name": volume.name, "type": "HostPath"},
-                    )
+                yield Edge(
+                    kind="KubeAttaches",
+                    start=start_path,
+                    end=end_path,
+                    properties={"name": volume.name, "type": "HostPath"},
                 )
-        return edges
 
     @property
-    def edges(self) -> "list[Edge]":
-        return [
-            self._node_edge,
-            self._namespace_edge,
-            self._service_account_edge,
-            *self._owned_by,
-            *self._volume_edges,
-        ]
+    def edges(self) -> "Iterator[Edge]":
+        yield self._node_edge
+        yield self._namespace_edge
+        yield self._service_account_edge
+        yield from self._owned_by
+        yield from self._volume_edges

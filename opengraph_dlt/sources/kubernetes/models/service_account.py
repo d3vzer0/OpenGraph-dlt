@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -9,7 +11,6 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
-import json
 
 
 class Secret(BaseModel):
@@ -122,9 +123,7 @@ class ServiceAccount(BaseResource):
         return edge
 
     @property
-    def edges(self) -> list:
-        return [
-            self._namespace_edge,
-            self._authenticated_group_edge,
-            self._service_accounts_edge,
-        ]
+    def edges(self) -> Iterator[Edge]:
+        yield self._namespace_edge
+        yield self._authenticated_group_edge
+        yield self._service_accounts_edge

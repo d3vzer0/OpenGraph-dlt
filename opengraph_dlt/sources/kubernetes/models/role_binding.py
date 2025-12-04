@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -9,7 +11,6 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProperties
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
-import json
 
 
 class Subject(BaseModel):
@@ -148,8 +149,7 @@ class RoleBinding(BaseResource):
         return edge
 
     @property
-    def _subjects(self):
-        edges = []
+    def _subjects(self) -> Iterator[Edge]:
         rb_path = EdgePath(value=self.as_node.id, match_by="id")
         for target in self.subjects:
             if target.kind == "ServiceAccount":
@@ -157,34 +157,30 @@ class RoleBinding(BaseResource):
                     target.namespace if target.namespace else self.metadata.namespace
                 )
                 get_sa_path = self._service_account_path(target.name, namespace)
-                sa_edge = Edge(kind="KubeAuthorizes", start=rb_path, end=get_sa_path)
+                yield Edge(kind="KubeAuthorizes", start=rb_path, end=get_sa_path)
 
-                role_edge = Edge(
+                yield Edge(
                     kind="KubeInheritsRole",
                     start=get_sa_path,
                     end=self._role_path,
                     properties=EdgeProperties(composed=True),
                 )
 
-                edges.append(sa_edge)
-                edges.append(role_edge)
-
             elif target.kind == "User":
                 end_path = self._get_target_user(target.name)
-                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
+                yield Edge(kind="KubeAuthorizes", start=rb_path, end=end_path)
 
             elif target.kind == "Group":
                 end_path = self._get_target_group(target.name)
-                edges.append(Edge(kind="KubeAuthorizes", start=rb_path, end=end_path))
+                yield Edge(kind="KubeAuthorizes", start=rb_path, end=end_path)
 
             else:
                 print(
                     f"Unsupported subject kind: {target.kind} in RoleBinding {self.metadata.name}"
                 )
 
-        return edges
-
     @property
-    def edges(self):
-        all_edges = self._subjects
-        return [self._namespace_edge, self._role_edge, *all_edges]
+    def edges(self) -> Iterator[Edge]:
+        yield self._namespace_edge
+        yield self._role_edge
+        yield from self._subjects

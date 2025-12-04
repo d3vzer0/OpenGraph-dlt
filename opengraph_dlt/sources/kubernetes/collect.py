@@ -10,7 +10,7 @@ from .models.statefulset import StatefulSet
 from .models.deployment import Deployment
 from .models.resource_group import ResourceGroup
 from .models.generic import Generic
-from .models.node import Node as KubeNode
+from .models.node import KubeNode
 from .models.role import Role
 from .models.role_binding import RoleBinding
 from .models.cluster_role import ClusterRole
