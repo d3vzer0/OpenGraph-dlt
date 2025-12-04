@@ -1,4 +1,6 @@
+from collections.abc import Iterator
 from typing import Literal
+
 from pydantic import ConfigDict, Field
 from opengraph_dlt.sources.aws.models.graph import (
     NodeProperties,
@@ -85,8 +87,7 @@ class InlinePolicy(BaseResource):
                 return True
         return False
 
-    def verify_roles(self, roles: list) -> list[Edge]:
-        allowed_roles = []
+    def verify_roles(self, roles: list) -> Iterator[Edge]:
         for role_arn, role_name, condition, principal in roles:
             match_principal = self.does_role_match(flatten_principals(principal))
             if match_principal:
@@ -97,23 +98,17 @@ class InlinePolicy(BaseResource):
                 )
                 end = EdgePath(value=role_id, match_by="id")
                 start_policy = EdgePath(value=self.as_node.id, match_by="id")
-                policy_edge = Edge(kind="AWSAllowsAssume", start=start_policy, end=end)
-                allowed_roles.append(policy_edge)
-
-        return allowed_roles
+                yield Edge(kind="AWSAllowsAssume", start=start_policy, end=end)
 
     @property
-    def _assume_roles(self) -> list[Edge]:
-        allowed_roles = []
+    def _assume_roles(self) -> Iterator[Edge]:
         for statement in self.policy_document["Statement"]:
             if (
                 statement["Action"] == "sts:AssumeRole"
                 and statement["Effect"] == "Allow"
             ):
                 get_roles = self._lookup.role_trusts(statement["Resource"])
-                allowed_roles.extend(self.verify_roles(get_roles))
-
-        return allowed_roles
+                yield from self.verify_roles(get_roles)
 
     @property
     def _principal_guid(self) -> str:
@@ -125,20 +120,15 @@ class InlinePolicy(BaseResource):
         )
 
     @property
-    def _attaches_policy(self):
+    def _attaches_policy(self) -> Edge:
         start = EdgePath(value=self._principal_guid, match_by="id")
         end = EdgePath(value=self.as_node.id, match_by="id")
-        return [
-            Edge(
-                kind="AWSAttachesPolicy",
-                start=start,
-                end=end,
-            )
-        ]
+        return Edge(kind="AWSAttachesPolicy", start=start, end=end)
 
     @property
-    def edges(self) -> list[Edge]:
-        return [*self._attaches_policy, *self._assume_roles]
+    def edges(self) -> Iterator[Edge]:
+        yield self._attaches_policy
+        yield from self._assume_roles
 
     @property
     def as_node(self) -> "InlinePolicyNode":

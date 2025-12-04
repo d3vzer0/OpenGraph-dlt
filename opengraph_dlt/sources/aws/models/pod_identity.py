@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from opengraph_dlt.sources.aws.models.graph import Node, Edge, NodeTypes
 from opengraph_dlt.sources.aws.models.graph import AWSCollector
@@ -70,5 +72,6 @@ class EKSPodIdentity(BaseModel):
         return Edge(kind="AWSAllowsAssume", start=start_path, end=end_path)
 
     @property
-    def edges(self) -> list[Edge]:
-        return [self._aws_to_kube, self._kube_to_aws]
+    def edges(self) -> Iterator[Edge]:
+        yield self._aws_to_kube
+        yield self._kube_to_aws

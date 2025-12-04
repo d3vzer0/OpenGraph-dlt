@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from datetime import datetime
 from typing import Literal, Optional
 
@@ -84,10 +85,8 @@ class PolicyAttachment(BaseResource):
         )
 
     @property
-    def edges(self) -> list[Edge]:
+    def edges(self) -> Iterator[Edge]:
         start = EdgePath(value=self._principal_guid, match_by="id")
         end = EdgePath(value=self._policy_guid, match_by="id")
         properties = ExtendedAttachmentProperties(entity_type=self.entity_type)
-        return [
-            Edge(kind="AWSAttachesPolicy", start=start, end=end, properties=properties)
-        ]
+        yield Edge(kind="AWSAttachesPolicy", start=start, end=end, properties=properties)

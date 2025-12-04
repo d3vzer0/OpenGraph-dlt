@@ -1,5 +1,7 @@
+from collections.abc import Iterator
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from opengraph_dlt.sources.aws.models.graph import Node, Edge, AWSCollector, NodeTypes
 from opengraph_dlt.sources.kubernetes.models.cluster import Cluster
@@ -37,15 +39,15 @@ class EKSClusterNode(Node):
     properties: NodeProperties
 
     @property
-    def _managed_by(self):
+    def _managed_by(self) -> Iterator[Edge]:
         k8s_cluster = Cluster(name=self.properties.name)
         start = EdgePath(value=k8s_cluster.uid, match_by="id")
         end = EdgePath(value=self.id, match_by="id")
-        return [Edge(start=start, end=end, kind="K8sManagedBy")]
+        yield Edge(start=start, end=end, kind="K8sManagedBy")
 
     @property
-    def edges(self) -> list[Edge]:
-        return [*self._managed_by]
+    def edges(self) -> Iterator[Edge]:
+        yield from self._managed_by
 
     @classmethod
     def from_input(cls, **kwargs) -> "EKSClusterNode":
@@ -117,8 +119,7 @@ class EKSAccessEntryEdges(BaseModel):
         )
 
     @property
-    def access_policies(self):
-        all_policy_edges = []
+    def access_policies(self) -> Iterator[Edge]:
         for policy in self._access_entry.policies:
             eks_groups = AWS_EKS_ACCESS_POLICY_GROUPS.get(
                 policy.policy_arn.split("/")[-1], ["system:authenticated"]
@@ -129,17 +130,8 @@ class EKSAccessEntryEdges(BaseModel):
                 group_node = group_model.as_node
                 group_node._cluster = self._access_entry.cluster_name
                 end = EdgePath(value=group_node.id, match_by="id")
-                all_policy_edges.append(Edge(start=start, end=end, kind="K8sMemberOf"))
-
-        return all_policy_edges
+                yield Edge(start=start, end=end, kind="K8sMemberOf")
 
     @property
-    def edges(self) -> list[Edge]:
-        return [*self.access_policies]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "EKSAccessEntryEdges":
-        model = EKSAccesssEntry(**kwargs)
-        edges = cls()
-        edges._access_entry = model
-        return edges
+    def edges(self) -> Iterator[Edge]:
+        yield from self.access_policies

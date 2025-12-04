@@ -1,9 +1,11 @@
+from collections.abc import Iterator
 from pydantic import BaseModel, ConfigDict, computed_field, Field
 from opengraph_dlt.sources.aws.models.graph import (
     Node,
     NodeProperties,
     NodeTypes,
     AWSCollector,
+    Edge,
 )
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
@@ -47,8 +49,8 @@ class Resource(BaseModel):
         return self.arn.split(":")[-1]
 
     @property
-    def edges(self):
-        return []
+    def edges(self) -> Iterator[Edge]:
+        yield from ()
 
     @property
     def as_node(self) -> "ResourceNode":

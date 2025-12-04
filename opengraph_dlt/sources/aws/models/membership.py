@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, ConfigDict, Field
 from opengraph_dlt.sources.shared.models.entries import EdgePath, Edge
 from opengraph_dlt.sources.aws.models.graph import NodeTypes, AWSCollector
@@ -41,7 +43,7 @@ class UserGroupMembership(BaseModel):
         )
 
     @property
-    def edges(self) -> list[Edge]:
+    def edges(self) -> Iterator[Edge]:
         start = EdgePath(value=self._user_id, match_by="id")
         end = EdgePath(value=self._group_id, match_by="id")
-        return [Edge(kind="AWSMemberOf", start=start, end=end)]
+        yield Edge(kind="AWSMemberOf", start=start, end=end)

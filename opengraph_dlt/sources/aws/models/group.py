@@ -1,5 +1,7 @@
+from collections.abc import Iterator
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, Edge
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
@@ -13,10 +15,6 @@ class GroupProperties(NodeProperties):
 
 class GroupNode(Node):
     properties: GroupProperties
-
-    @property
-    def edges(self):
-        return []
 
 
 @graph_resource(
@@ -49,5 +47,5 @@ class Group(BaseModel):
         return node
 
     @property
-    def edges(self) -> list[Edge]:
-        return []
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

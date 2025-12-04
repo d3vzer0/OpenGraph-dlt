@@ -1,4 +1,6 @@
+from collections.abc import Iterator
 from datetime import datetime
+
 from pydantic import ConfigDict, Field
 from opengraph_dlt.sources.aws.models.graph import (
     NodeProperties,
@@ -71,8 +73,7 @@ class Policy(BaseResource):
         return all_resources
 
     @property
-    def _has_permissions(self):
-        all_permissions = []
+    def _has_permissions(self) -> Iterator[Edge]:
         start_path = EdgePath(value=self.as_node.id, match_by="id")
         for statement in self.policy_document["Statement"]:
             resources = statement.get("Resource")
@@ -84,16 +85,11 @@ class Policy(BaseResource):
                     rec["arn"], kind, rec["account"], rec["region"]
                 )
                 end_path = EdgePath(value=end_id, match_by="id")
-                all_permissions.append(
-                    Edge(kind="AWSCanAction", start=start_path, end=end_path)
-                )
-
-        return all_permissions
+                yield Edge(kind="AWSCanAction", start=start_path, end=end_path)
 
     @property
-    def edges(self) -> list[Edge]:
-        return []
-        # return [*self._assume_roles, *self._has_permissions]
+    def edges(self) -> Iterator[Edge]:
+        yield from ()
 
     @property
     def as_node(self) -> "PolicyNode":

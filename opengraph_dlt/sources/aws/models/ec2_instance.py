@@ -1,7 +1,9 @@
+from collections.abc import Iterator
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
-from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties
+from opengraph_dlt.sources.aws.models.graph import Edge, Node, NodeProperties
 from .role import Role
 
 
@@ -40,8 +42,8 @@ class EC2InstanceNode(Node):
     properties: EC2InstanceProperties
 
     @property
-    def edges(self):
-        return []
+    def edges(self) -> Iterator[Edge]:
+        yield from ()
 
     # @classmethod
     # def from_input(cls, **kwargs) -> "EC2InstanceNode":

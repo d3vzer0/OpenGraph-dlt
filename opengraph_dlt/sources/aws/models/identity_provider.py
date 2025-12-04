@@ -1,9 +1,10 @@
+from collections.abc import Iterator
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes
+from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, Edge
 
 
 class IdentityProviderProperties(NodeProperties):
@@ -14,10 +15,6 @@ class IdentityProviderProperties(NodeProperties):
 
 class IdentityProviderNode(Node):
     properties: IdentityProviderProperties
-
-    @property
-    def edges(self):
-        return []
 
 
 class IdentityProvider(BaseModel):
@@ -47,6 +44,10 @@ class IdentityProvider(BaseModel):
         )
         node.attach_context(self.account_id)
         return node
+
+    @property
+    def edges(self) -> Iterator[Edge]:
+        yield from ()
 
     # @classmethod
     # def from_input(cls, **kwargs) -> "IdentityProviderNode":
