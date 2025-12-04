@@ -11,7 +11,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from opengraph_dlt.sources.kubernetes.models.pod import Container
-import json
+from dlt.common import json
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 

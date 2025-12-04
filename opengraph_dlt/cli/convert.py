@@ -104,3 +104,32 @@ def eks(output_path: OutputPath = Path("./graph")):
     )
 
     pipeline.run(kubernetes_eks_opengraph(cluster=cluster_name, lookup=lookup))
+
+
+@convert.command()
+def dummy(
+    input_path: InputPath,
+    output_path: OutputPath = Path("./graph"),
+    resource_count: int = 10,
+):
+    from opengraph_dlt.sources.dummy.convert import dummy_opengraph
+
+    # dest = filesystem()
+
+    # dest = filesystem(
+    #     bucket_url=str(output_path),
+    # )
+    pipeline = dlt.pipeline(
+        pipeline_name="dummy_opengraph_convert_2",
+        destination=opengraph_file(output_path=str(output_path)),
+        progress="enlighten",
+    )
+
+    pipeline.run(
+        dummy_opengraph(
+            resource_count=resource_count,
+            bucket_url=str(input_path),
+            chunk_size=10000,
+        ),
+        write_disposition="replace",
+    )

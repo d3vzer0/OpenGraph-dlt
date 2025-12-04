@@ -13,7 +13,6 @@ from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath, EdgeProp
 from typing import Optional, Any
 from enum import Enum
 import fnmatch
-import json
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 

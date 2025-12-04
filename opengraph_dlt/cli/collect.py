@@ -21,7 +21,7 @@ OutputPath = Annotated[
 
 
 @collect.command()
-def dummy(output_path: OutputPath):
+def dummy(output_path: OutputPath, resource_count: int = 10, node_count: int = 10000):
 
     from opengraph_dlt.sources.dummy.collect import dummy_resources
 
@@ -36,10 +36,8 @@ def dummy(output_path: OutputPath):
         progress="enlighten",
     )
 
-    all_resources = dummy_resources()
-
     pipeline.run(
-        all_resources,
+        dummy_resources(resource_count=resource_count, node_count=node_count),
         write_disposition="replace",
     )
 

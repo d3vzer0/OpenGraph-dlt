@@ -10,7 +10,7 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
 from opengraph_dlt.sources.kubernetes.models.pod import Container
 from opengraph_dlt.sources.shared.models.entries import Edge
 from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
-import json
+from dlt.common import json
 
 
 class Metadata(BaseModel):

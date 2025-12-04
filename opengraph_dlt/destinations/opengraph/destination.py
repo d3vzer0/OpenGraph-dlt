@@ -10,7 +10,7 @@ from opengraph_dlt.destinations.opengraph.models.graph import (
 from .client import BloodHound
 from collections import defaultdict
 from pathlib import Path
-import json
+from dlt.common import json
 
 
 @dlt.destination(batch_size=1000)
@@ -37,7 +37,11 @@ def bloodhound(
 DEST_PART = defaultdict(int)
 
 
-@dlt.destination(skip_dlt_columns_and_tables=True)
+@dlt.destination(
+    skip_dlt_columns_and_tables=True,
+    batch_size=1000,
+    loader_parallelism_strategy="parallel",
+)
 def opengraph_file(items: TDataItems, table: TTableSchema, output_path="./output"):
     table_name = table["name"]
     output_dir = Path(output_path)
@@ -48,8 +52,10 @@ def opengraph_file(items: TDataItems, table: TTableSchema, output_path="./output
         file_name = f"{table_name}-{DEST_PART[table_name]}.json"
         file_path = output_dir / file_name
         with file_path.open("w", encoding="utf-8") as fh:
-            json.dump(
-                graph.model_dump(mode="json", exclude_none=True),
-                fh,
-                indent=2,
+            fh.write(
+                graph.model_dump_json(exclude_none=True),
             )
+            # json.dump(
+            #     graph.model_dump(mode="json", exclude_none=True),
+            #     fh,
+            # )

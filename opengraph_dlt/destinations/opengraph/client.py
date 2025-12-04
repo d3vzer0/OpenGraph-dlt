@@ -4,7 +4,7 @@ import hashlib
 import base64
 import datetime
 from datetime import timedelta
-import json
+from dlt.common import json
 
 
 class BloodHound:
