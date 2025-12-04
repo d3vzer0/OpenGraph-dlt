@@ -14,7 +14,9 @@ from opengraph_dlt.sources.aws.models.policy import Policy
 from opengraph_dlt.sources.aws.models.inline_policy import InlinePolicy
 from opengraph_dlt.sources.aws.models.policy_attachments import PolicyAttachment
 from opengraph_dlt.sources.aws.models.resource import Resource
-from opengraph_dlt.sources.aws.models.graph import GraphEntries, Graph, Node, Edge
+
+# from opengraph_dlt.sources.aws.models.graph import GraphEntries, Graph, Node, Edge
+from opengraph_dlt.sources.shared.convert import generate_graph
 
 import dlt
 
@@ -40,23 +42,8 @@ def aws_opengraph(
     bucket_url: str = dlt.config.value,
     chunk_size: int = dlt.config.value,
 ):
-
-    @dlt.transformer(columns=Graph, max_table_nesting=0)
-    def bundle_graph(resources, model):
-        graph_entries = GraphEntries(nodes=[], edges=[])
-        for resource in resources:
-            resource_object = model(**resource)
-            resource_object._lookup = lookup
-            if hasattr(resource_object, "as_node"):
-                graph_entries.nodes.append(resource_object.as_node)
-
-            graph_entries.edges.extend(resource_object.edges)
-
-            if len(graph_entries.nodes) + len(graph_entries.edges) >= chunk_size:
-                yield Graph(graph=graph_entries)
-                graph_entries = GraphEntries(nodes=[], edges=[])
-
-        yield Graph(graph=graph_entries)
+    def aws_context(obj):
+        obj._lookup = lookup
 
     for table, model in AWS_NODES.items():
         reader = (
@@ -64,4 +51,7 @@ def aws_opengraph(
             | read_jsonl()
         ).with_name(f"{table}_fs")
 
-        yield (reader | bundle_graph(model)).with_name(f"{table}_fs_graph")
+        yield (
+            reader
+            | generate_graph(model, apply_context=aws_context, chunk_size=chunk_size)
+        ).with_name(f"{table}_fs_graph")
