@@ -1,7 +1,14 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
-from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
-import json
+from opengraph_dlt.sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    BaseResource,
+)
+from opengraph_dlt.sources.shared.models.entries import Edge
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class Metadata(BaseModel):
@@ -10,18 +17,6 @@ class Metadata(BaseModel):
     namespace: str | None = None
     creation_timestamp: datetime | None = None
     labels: dict | None = None
-
-
-class Generic(BaseModel):
-    metadata: Metadata
-    kind: str
-
-    @field_validator("metadata", mode="before")
-    @classmethod
-    def parse_json_string(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
 
 
 class ExtendedProperties(NodeProperties):
@@ -33,18 +28,27 @@ class ExtendedProperties(NodeProperties):
 class GenericNode(Node):
     properties: ExtendedProperties
 
-    @property
-    def edges(self):
-        return []
 
-    @classmethod
-    def from_input(cls, **kwargs) -> "GenericNode":
-        model = Generic(**kwargs)
+@graph_resource(
+    node=NodeDef(kind="Kube{Kind}", description="Unmapped Kubernetes resource"),
+    edges=[],
+)
+class Generic(BaseResource):
+    metadata: Metadata
+    kind: str
+
+    @property
+    def as_node(self) -> "GenericNode":
         properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            namespace=model.metadata.namespace,
-            uid=model.metadata.uid,
-            kind=model.kind,
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+            kind=self.kind,
+            cluster=self._cluster,
         )
-        return cls(kinds=[f"Kube{model.kind}"], properties=properties)
+        return GenericNode(kinds=[f"Kube{self.kind}"], properties=properties)
+
+    @property
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

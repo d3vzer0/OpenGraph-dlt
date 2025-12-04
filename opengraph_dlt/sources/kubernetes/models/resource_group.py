@@ -1,11 +1,16 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, computed_field
 from opengraph_dlt.sources.kubernetes.models.graph import (
     Node,
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from typing import Optional
+from opengraph_dlt.sources.shared.models.entries import Edge
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class GroupVersion(BaseModel):
@@ -13,7 +18,16 @@ class GroupVersion(BaseModel):
     version: str
 
 
-class ResourceGroup(BaseModel):
+class ResourceGroupNode(Node):
+    pass
+
+
+@graph_resource(
+    node=NodeDef(
+        kind=NodeTypes.KubeResourceGroup.value, description="Kubernetes API group"
+    )
+)
+class ResourceGroup(BaseResource):
     name: str
     api_version: Optional[str] = None
 
@@ -22,17 +36,17 @@ class ResourceGroup(BaseModel):
     def uid(self) -> str:
         return KubernetesCollector.guid(self.name, NodeTypes.KubeResourceGroup, "")
 
-
-class ResourceGroupNode(Node):
+    @property
+    def as_node(self) -> "ResourceGroupNode":
+        properties = NodeProperties(
+            name=self.name,
+            displayname=self.name,
+            uid=self.uid,
+            namespace=None,
+            cluster=self._cluster,
+        )
+        return ResourceGroupNode(kinds=["KubeResourceGroup"], properties=properties)
 
     @property
-    def edges(self):
-        return []
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "ResourceGroupNode":
-        model = ResourceGroup(**kwargs)
-        properties = NodeProperties(
-            name=model.name, displayname=model.name, uid=model.uid, namespace=None
-        )
-        return cls(kinds=["KubeResourceGroup"], properties=properties)
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

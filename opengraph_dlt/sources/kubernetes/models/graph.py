@@ -3,7 +3,7 @@ from opengraph_dlt.sources.shared.models.graph import MetaData, Graph as CommonG
 from abc import ABC
 from enum import Enum
 from datetime import datetime
-from typing import Optional, ClassVar
+from typing import Optional
 from opengraph_dlt.sources.kubernetes.lookup import KubernetesLookup
 from opengraph_dlt.sources.shared.models.entries import Node as BaseNode, Edge
 from opengraph_dlt.sources.shared.guid import Collector
@@ -50,20 +50,27 @@ class KubernetesCollector(Collector):
         return str(uuid.uuid5(uuid_namespace, resource_path))
 
 
+class BaseResource(BaseModel):
+    _lookup: KubernetesLookup = PrivateAttr()
+    _cluster: str = PrivateAttr()
+    _scope: Optional[str] = PrivateAttr(default=None)
+
+
 class NodeProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: str
     displayname: str
     namespace: str | None
+    cluster: str
     last_seen: datetime = Field(default_factory=datetime.now)
     uid: str | None
 
 
-class Node(BaseNode, ABC):
+class Node(BaseNode):
     properties: NodeProperties
-    _lookup: KubernetesLookup = PrivateAttr()
-    _cluster: str = PrivateAttr()
-    _scope: Optional[str] = PrivateAttr(default=None)
+    # _lookup: KubernetesLookup = PrivateAttr()
+    # _cluster: str = PrivateAttr()
+    # _scope: Optional[str] = PrivateAttr(default=None)
 
     @computed_field
     @property
@@ -75,7 +82,7 @@ class Node(BaseNode, ABC):
         kind = self.kinds[0]
         resource_type = NodeTypes[kind] if kind in NodeTypes else kind
         dyn_uid = KubernetesCollector.guid(
-            self.properties.name, resource_type, self._cluster, scope
+            self.properties.name, resource_type, self.properties.cluster, scope
         )
         return dyn_uid
 

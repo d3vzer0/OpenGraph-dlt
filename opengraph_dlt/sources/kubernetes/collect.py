@@ -10,10 +10,10 @@ from .models.statefulset import StatefulSet
 from .models.deployment import Deployment
 from .models.resource_group import ResourceGroup
 from .models.generic import Generic
-from .models.node import Node as KubeNode
+from .models.node import KubeNode
 from .models.role import Role
 from .models.role_binding import RoleBinding
-from .models.cluster_role import ClusterRole, ClusterRoleNode
+from .models.cluster_role import ClusterRole
 from .models.cluster_role_binding import ClusterRoleBinding
 from .models.service_account import ServiceAccount
 from .models.resource import Resource
@@ -270,9 +270,10 @@ def kubernetes_eks_opengraph(
 ):
 
     def build_graph(model_cls, resource: dict) -> Graph:
-        node = model_cls.from_input(**resource)
-        node._cluster = cluster
-        node._lookup = lookup
+        resource_model = model_cls(**resource)
+        resource_model._cluster = cluster
+        resource_model._lookup = lookup
+        node = resource_model.as_node
 
         entries = GraphEntries(
             nodes=[node],
@@ -286,6 +287,6 @@ def kubernetes_eks_opengraph(
         virtual_admin = EKSVirtualClusterAdminRole()
         print(virtual_admin.model_dump())
 
-        yield build_graph(ClusterRoleNode, virtual_admin.model_dump())
+        yield build_graph(ClusterRole, virtual_admin.model_dump())
 
     return eks_cluster_roles

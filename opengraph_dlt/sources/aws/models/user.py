@@ -1,21 +1,10 @@
+from collections.abc import Iterator
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
-from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes
-
-
-class User(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
-
-    user_name: str = Field(alias="UserName")
-    user_id: str = Field(alias="UserId")
-    arn: str = Field(alias="Arn")
-    path: str = Field(alias="Path")
-    create_date: datetime = Field(alias="CreateDate")
-    password_last_used: Optional[datetime] = Field(
-        alias="PasswordLastUsed", default=None
-    )
-    account_id: Optional[str] = Field(alias="AccountId", default=None)
+from opengraph_dlt.sources.aws.models.graph import Node, NodeProperties, NodeTypes, Edge
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class UserProperties(NodeProperties):
@@ -28,24 +17,39 @@ class UserProperties(NodeProperties):
 class UserNode(Node):
     properties: UserProperties
 
-    @property
-    def edges(self):
-        return []
 
-    @classmethod
-    def from_input(cls, **kwargs) -> "UserNode":
-        model = User(**kwargs)
+@graph_resource(node=NodeDef(kind=NodeTypes.AWSUser.value, description="AWS User node"))
+class User(BaseModel):
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    user_name: str = Field(alias="UserName")
+    user_id: str = Field(alias="UserId")
+    arn: str = Field(alias="Arn")
+    path: str = Field(alias="Path")
+    create_date: datetime = Field(alias="CreateDate")
+    password_last_used: Optional[datetime] = Field(
+        alias="PasswordLastUsed", default=None
+    )
+    account_id: Optional[str] = Field(alias="AccountId", default=None)
+
+    @property
+    def as_node(self) -> "UserNode":
         properties = UserProperties(
-            name=model.user_name,
-            displayname=model.user_name,
-            aws_account_id=model.account_id,
+            name=self.user_name,
+            displayname=self.user_name,
+            aws_account_id=self.account_id,
             aws_region="global",
-            user_id=model.user_id,
-            arn=model.arn,
-            path=model.path,
-            password_last_used=model.password_last_used,
-            created_at=model.create_date,
+            user_id=self.user_id,
+            arn=self.arn,
+            path=self.path,
+            password_last_used=self.password_last_used,
+            created_at=self.create_date,
         )
-        node = cls(kinds=[NodeTypes.AWSUser.value], properties=properties)
-        node.attach_context(model.account_id)
+        node = UserNode(kinds=[NodeTypes.AWSUser.value], properties=properties)
+        node.attach_context(self.account_id)
         return node
+
+    @property
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -5,9 +7,11 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from opengraph_dlt.sources.kubernetes.models.pod import Container
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 
 
 class Metadata(BaseModel):
@@ -45,7 +49,18 @@ class Spec(BaseModel):
     template: Template
 
 
-class StatefulSet(BaseModel):
+class ExtendedProperties(NodeProperties):
+    model_config = ConfigDict(extra="allow")
+
+
+class StatefulSetNode(Node):
+    properties: ExtendedProperties
+
+
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeStatefulSet.value, description="StatefulSet node")
+)
+class StatefulSet(BaseResource):
     kind: str | None = "StatefulSet"
     metadata: Metadata
     spec: Spec
@@ -54,26 +69,17 @@ class StatefulSet(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "StatefulSet"
 
-
-class ExtendedProperties(NodeProperties):
-    model_config = ConfigDict(extra="allow")
-
-
-class StatefulSetNode(Node):
-    properties: ExtendedProperties
+    @property
+    def as_node(self) -> "StatefulSetNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+            cluster=self._cluster,
+        )
+        return StatefulSetNode(kinds=["KubeStatefulSet"], properties=properties)
 
     @property
-    def edges(self):
-        return []
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "StatefulSetNode":
-        model = StatefulSet(**kwargs)
-        properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            namespace=model.metadata.namespace,
-            uid=model.metadata.uid,
-        )
-        node = cls(kinds=["KubeStatefulSet"], properties=properties)
-        return node
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

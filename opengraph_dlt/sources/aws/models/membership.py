@@ -1,9 +1,21 @@
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
-from opengraph_dlt.sources.aws.lookup import LookupManager
+from collections.abc import Iterator
+
+from pydantic import BaseModel, ConfigDict, Field
 from opengraph_dlt.sources.shared.models.entries import EdgePath, Edge
 from opengraph_dlt.sources.aws.models.graph import NodeTypes, AWSCollector
+from opengraph_dlt.sources.shared.docs import graph_resource, EdgeDef
 
 
+@graph_resource(
+    edges=[
+        EdgeDef(
+            start=NodeTypes.AWSUser.value,
+            end=NodeTypes.AWSGroup.value,
+            kind="AWSMemberOf",
+            description="User to Group membership",
+        )
+    ]
+)
 class UserGroupMembership(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
@@ -14,34 +26,24 @@ class UserGroupMembership(BaseModel):
     group_arn: str = Field(alias="GroupArn")
     account_id: str = Field(alias="AccountId")
 
-
-class MembershipEdges(BaseModel):
-    membership: UserGroupMembership
-    _lookup: LookupManager = PrivateAttr()
-
     @property
     def _user_id(self) -> str:
         return AWSCollector.guid(
-            name=self.membership.user_arn,
+            name=self.user_arn,
             node_type=NodeTypes.AWSUser,
-            account_id=self.membership.account_id,
+            account_id=self.account_id,
         )
 
     @property
     def _group_id(self) -> str:
         return AWSCollector.guid(
-            name=self.membership.group_arn,
+            name=self.group_arn,
             node_type=NodeTypes.AWSGroup,
-            account_id=self.membership.account_id,
+            account_id=self.account_id,
         )
 
     @property
-    def edges(self) -> list[Edge]:
+    def edges(self) -> Iterator[Edge]:
         start = EdgePath(value=self._user_id, match_by="id")
         end = EdgePath(value=self._group_id, match_by="id")
-        return [Edge(kind="AWSMemberOf", start=start, end=end)]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "MembershipEdges":
-        model = UserGroupMembership(**kwargs)
-        return cls(membership=model)
+        yield Edge(kind="AWSMemberOf", start=start, end=end)

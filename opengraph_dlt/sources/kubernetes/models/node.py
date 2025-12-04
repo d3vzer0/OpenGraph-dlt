@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -5,8 +7,10 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     Node as GraphNode,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class Metadata(BaseModel):
@@ -16,7 +20,27 @@ class Metadata(BaseModel):
     labels: dict = {}
 
 
-class Node(BaseModel):
+class NodeOutput(GraphNode): ...
+
+
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeNode.value, description="Kubernetes node"),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeNode.value,
+            end=NodeTypes.KubeCluster.value,
+            kind="KubeBelongsTo",
+            description="Node belongs to the cluster",
+        ),
+        # EdgeDef(
+        #     start=NodeTypes.KubeNode.value,
+        #     end=NodeTypes.KubeGroup.value,
+        #     kind="KubeMemberOf",
+        #     description="Groups",
+        # ),
+    ],
+)
+class KubeNode(BaseResource):
     metadata: Metadata
     kind: str | None = "Node"
 
@@ -24,15 +48,23 @@ class Node(BaseModel):
     def set_default_if_none(cls, v):
         return v if v is not None else "Node"
 
-
-class NodeOutput(GraphNode):
+    @property
+    def as_node(self) -> "NodeOutput":
+        properties = NodeProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            uid=self.metadata.uid,
+            namespace=None,
+            cluster=self._cluster,
+        )
+        return NodeOutput(kinds=["KubeNode"], properties=properties)
 
     @property
     def _authenticated_group_edge(self):
         target_id = KubernetesCollector.guid(
             "system:authenticated", NodeTypes.KubeGroup, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
@@ -42,7 +74,7 @@ class NodeOutput(GraphNode):
         target_id = KubernetesCollector.guid(
             "system:nodes", NodeTypes.KubeGroup, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeMemberOf", start=start_path, end=end_path)
         return edge
@@ -52,26 +84,13 @@ class NodeOutput(GraphNode):
         target_id = KubernetesCollector.guid(
             self._cluster, NodeTypes.KubeCluster, self._cluster
         )
-        start_path = EdgePath(value=self.id, match_by="id")
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
         end_path = EdgePath(value=target_id, match_by="id")
         edge = Edge(kind="KubeBelongsTo", start=start_path, end=end_path)
         return edge
 
     @property
-    def edges(self):
-        return [
-            self._cluster_edge,
-            self._authenticated_group_edge,
-            self._nodes_group_edge,
-        ]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "NodeOutput":
-        node_out = Node(**kwargs)
-        properties = NodeProperties(
-            name=node_out.metadata.name,
-            displayname=node_out.metadata.name,
-            uid=node_out.metadata.uid,
-            namespace=None,
-        )
-        return cls(kinds=["KubeNode"], properties=properties)
+    def edges(self) -> Iterator[Edge]:
+        yield self._cluster_edge
+        yield self._authenticated_group_edge
+        yield self._nodes_group_edge

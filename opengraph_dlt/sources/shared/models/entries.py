@@ -28,13 +28,13 @@ class Node(BaseModel, ABC):
     @abstractmethod
     def id(self) -> str: ...  # noqa: E704
 
-    @classmethod
-    @abstractmethod
-    def from_input(cls, **kwargs) -> "Node": ...  # noqa: E704
+    # @classmethod
+    # @abstractmethod
+    # def from_input(cls, **kwargs) -> "Node": ...  # noqa: E704
 
-    @property
-    @abstractmethod
-    def edges(self) -> list["Edge"]: ...  # noqa: E704
+    # @property
+    # @abstractmethod
+    # def edges(self) -> list["Edge"]: ...  # noqa: E704
 
 
 class EdgePath(BaseModel):
@@ -45,6 +45,7 @@ class EdgePath(BaseModel):
 class EdgeProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
     composed: bool = False
+    traversable: bool = False
 
 
 class Edge(BaseModel):

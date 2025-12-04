@@ -1,7 +1,15 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
-from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
+from opengraph_dlt.sources.kubernetes.models.graph import (
+    Node,
+    NodeProperties,
+    BaseResource,
+)
 from opengraph_dlt.sources.kubernetes.models.pod import Container
+from opengraph_dlt.sources.shared.models.entries import Edge
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef
 import json
 
 
@@ -40,7 +48,17 @@ class Spec(BaseModel):
     template: Template
 
 
-class Deployment(BaseModel):
+class ExtendedProperties(NodeProperties):
+    model_config = ConfigDict(extra="allow")
+    namespace: str
+
+
+class DeploymentNode(Node):
+    properties: ExtendedProperties
+
+
+@graph_resource(node=NodeDef(kind="KubeDeployment", description="Kube deployment"))
+class Deployment(BaseResource):
     kind: str | None = "Deployment"
     metadata: Metadata
     spec: Spec
@@ -56,31 +74,17 @@ class Deployment(BaseModel):
             return json.loads(v)
         return v
 
-
-class ExtendedProperties(NodeProperties):
-    model_config = ConfigDict(extra="allow")
-    namespace: str
-
-
-class DeploymentNode(Node):
-    properties: ExtendedProperties
-
-    # @property
-    # def _volume_edges(self):
-    #     print()
+    @property
+    def as_node(self) -> "DeploymentNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+            cluster=self._cluster,
+        )
+        return DeploymentNode(kinds=["KubeDeployment"], properties=properties)
 
     @property
-    def edges(self):
-        return []
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "DeploymentNode":
-        model = Deployment(**kwargs)
-        properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            namespace=model.metadata.namespace,
-            uid=model.metadata.uid,
-        )
-        node = cls(kinds=["KubeDeployment"], properties=properties)
-        return node
+    def edges(self) -> Iterator[Edge]:
+        yield from ()

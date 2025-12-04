@@ -1,5 +1,45 @@
+from collections.abc import Iterator
+
 from opengraph_dlt.sources.kubernetes.models.graph import Node, NodeProperties
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
+from pydantic import BaseModel
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
+
+
+class SourceRef(BaseModel):
+    uid: str
+
+
+@graph_resource(
+    node=NodeDef(kind="Kube{StaleResource}", description="Placeholder for stale resource"),
+    edges=[
+        EdgeDef(
+            start="Kube{Source}",
+            end="Kube{StaleResource}",
+            kind="StaleReference",
+            description="Stale reference from a source entity",
+        )
+    ],
+)
+class StaleReference(BaseModel):
+    name: str
+    resource_type: str
+    edge_type: str
+    source_ref: SourceRef
+
+    @property
+    def as_node(self) -> "StaleNode":
+        properties = ExtendedProperties(
+            name=self.name,
+            displayname=self.name,
+            exists=False,
+            source_ref=self.source_ref.uid,
+            source_edge_type=self.edge_type,
+            namespace=None,
+            uid=None,
+            cluster=self._cluster,
+        )
+        return StaleNode(kinds=[self.resource_type], properties=properties)
 
 
 class ExtendedProperties(NodeProperties):
@@ -23,17 +63,5 @@ class StaleNode(Node):
         return edge
 
     @property
-    def edges(self):
-        return [self._source_refs]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "StaleNode":
-        model = StaleReference(**kwargs)
-        properties = ExtendedProperties(
-            name=model.name,
-            displayname=model.name,
-            exists=False,
-            source_ref=model.source_ref.uid,
-            source_edge_type=model.edge_type,
-        )
-        return cls(kinds=[model.resource_type], properties=properties)
+    def edges(self) -> Iterator[Edge]:
+        yield self._source_refs

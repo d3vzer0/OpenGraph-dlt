@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from pydantic import BaseModel, field_validator, ConfigDict, PrivateAttr
 from datetime import datetime
 from opengraph_dlt.sources.kubernetes.models.graph import (
@@ -5,10 +7,12 @@ from opengraph_dlt.sources.kubernetes.models.graph import (
     NodeProperties,
     NodeTypes,
     KubernetesCollector,
+    BaseResource,
 )
 from opengraph_dlt.sources.shared.models.entries import Edge, EdgePath
 from opengraph_dlt.sources.kubernetes.models.pod import Container
 import json
+from opengraph_dlt.sources.shared.docs import graph_resource, NodeDef, EdgeDef
 
 
 class OwnerReferences(BaseModel):
@@ -32,7 +36,27 @@ class Metadata(BaseModel):
         return v if v is not None else {}
 
 
-class ReplicaSet(BaseModel):
+class ExtendedProperties(NodeProperties):
+    model_config = ConfigDict(extra="allow")
+    namespace: str
+
+
+class ReplicaSetNode(Node):
+    properties: ExtendedProperties
+
+
+@graph_resource(
+    node=NodeDef(kind=NodeTypes.KubeReplicaSet.value, description="ReplicaSet node"),
+    edges=[
+        EdgeDef(
+            start=NodeTypes.KubeReplicaSet.value,
+            end="Kube{Controller}",
+            kind="KubeOwnedBy",
+            description="",
+        )
+    ],
+)
+class ReplicaSet(BaseResource):
     kind: str | None = "ReplicaSet"
     metadata: Metadata
 
@@ -47,45 +71,32 @@ class ReplicaSet(BaseModel):
             return json.loads(v)
         return v
 
-
-class ExtendedProperties(NodeProperties):
-    model_config = ConfigDict(extra="allow")
-    namespace: str
-
-
-class ReplicaSetNode(Node):
-    properties: ExtendedProperties
-    _replicaset: ReplicaSet = PrivateAttr()
+    @property
+    def as_node(self) -> "ReplicaSetNode":
+        properties = ExtendedProperties(
+            name=self.metadata.name,
+            displayname=self.metadata.name,
+            namespace=self.metadata.namespace,
+            uid=self.metadata.uid,
+            cluster=self._cluster,
+        )
+        node = ReplicaSetNode(kinds=["KubeReplicaSet"], properties=properties)
+        return node
 
     @property
-    def _owned_by(self):
-        edges = []
-        start_path = EdgePath(value=self.id, match_by="id")
-        if self._replicaset.metadata.owner_references:
-            for owner in self._replicaset.metadata.owner_references:
+    def _owned_by(self) -> Iterator[Edge]:
+        start_path = EdgePath(value=self.as_node.id, match_by="id")
+        if self.metadata.owner_references:
+            for owner in self.metadata.owner_references:
                 end_path_id = KubernetesCollector.guid(
                     owner.name,
                     f"Kube{owner.kind}",
                     cluster=self._cluster,
-                    namespace=self.properties.namespace,
+                    namespace=self.metadata.namespace,
                 )
                 end_path = EdgePath(value=end_path_id, match_by="id")
-                edges.append(Edge(kind="KubeOwnedBy", start=start_path, end=end_path))
-        return edges
+                yield Edge(kind="KubeOwnedBy", start=start_path, end=end_path)
 
     @property
-    def edges(self):
-        return [*self._owned_by]
-
-    @classmethod
-    def from_input(cls, **kwargs) -> "ReplicaSetNode":
-        model = ReplicaSet(**kwargs)
-        properties = ExtendedProperties(
-            name=model.metadata.name,
-            displayname=model.metadata.name,
-            namespace=model.metadata.namespace,
-            uid=model.metadata.uid,
-        )
-        node = cls(kinds=["KubeReplicaSet"], properties=properties)
-        node._replicaset = model
-        return node
+    def edges(self) -> Iterator[Edge]:
+        yield from self._owned_by

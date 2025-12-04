@@ -1,5 +1,8 @@
 from opengraph_dlt.destinations.opengraph.destination import opengraph_file
 from opengraph_dlt.sources.bloodhound.lookup import BloodHoundLookup
+from dlt.destinations import filesystem
+from dlt.sources.filesystem import filesystem as fs_source, read_jsonl
+
 from typing import Annotated
 from pathlib import Path
 from kubernetes import config
@@ -35,11 +38,14 @@ def aws(
     lookup = AWSLookup(client)
 
     pipeline = dlt.pipeline(
-        pipeline_name="aws_opengraph_convert",
+        pipeline_name="aws_opengraph_convert_2",
         destination=opengraph_file(output_path=str(output_path)),
         progress="enlighten",
     )
-    pipeline.run(aws_opengraph(lookup=lookup, bucket_url=str(input_path)))
+
+    pipeline.run(
+        aws_opengraph(lookup=lookup, bucket_url=str(input_path), chunk_size=10)
+    )
 
 
 @convert.command()
@@ -58,7 +64,10 @@ def kubernetes(input_path: InputPath, output_path: OutputPath = Path("./graph"))
     )
     pipeline.run(
         kubernetes_opengraph(
-            cluster=cluster_name, lookup=lookup, bucket_url=str(input_path)
+            cluster=cluster_name,
+            lookup=lookup,
+            bucket_url=str(input_path),
+            chunk_size=1000,
         )
     )
 
